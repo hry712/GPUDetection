@@ -43,4 +43,4 @@ struct DeviceResetDetection : public ModulePass {
 }
 
 char DeviceResetDetection::ID = 0;
-static RegisterPass<DeviceResetDetection> DT2("DeviceResetDetection", "GPU kernel malware detection Pass", false, false);
+static RegisterPass<DeviceResetDetection> X("DeviceResetDetection", "GPU kernel malware detection Pass", false, false);
