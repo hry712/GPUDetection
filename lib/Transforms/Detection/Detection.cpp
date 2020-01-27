@@ -9,7 +9,7 @@ struct Detection : public ModulePass {
   static char ID;
   Detection() : ModulePass(ID) {}
 
-  bool runOnModule(Module &M) {
+  virtual bool runOnModule(Module &M) {
     
     return false;
   }
@@ -17,6 +17,6 @@ struct Detection : public ModulePass {
 }  // end of anonymous namespace
 
 char Detection::ID = 0;
-static RegisterPass<Detection> X("detection", "GPU kernel malware detection Pass",
+static RegisterPass<Detection> DT1("detection", "GPU kernel malware detection Pass",
                              false /* Only looks at CFG */,
                              false /* Analysis Pass */);
