@@ -37,6 +37,7 @@ struct DeviceResetDetection : public ModulePass {
           }
         }
       }
+    return true;
   }
 };
 }
