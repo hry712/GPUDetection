@@ -8,9 +8,9 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
-static cl::opt<bool> DeviceResetDetection("devrstdt", 
-                                          cl::init(false), 
-                                          cl::desc("Enable the detection for cudaDeviceReset() API."));
+static cl::opt<bool> DRD("devrstdt", 
+                        cl::init(false), 
+                        cl::desc("Enable the detection for cudaDeviceReset() API."));
 
 namespace {
 struct DeviceResetDetection : public ModulePass {
