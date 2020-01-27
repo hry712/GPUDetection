@@ -17,7 +17,7 @@ struct DeviceResetDetection : public ModulePass {
   static char ID;
   bool kernelCalled;
   bool hasGPUKernel;
-  Detection() : ModulePass(ID) {}
+  DeviceResetDetection() : ModulePass(ID) {}
   virtual bool runOnModule(Module &M) {
       kernelCalled = false;
       hasGPUKernel = false;
