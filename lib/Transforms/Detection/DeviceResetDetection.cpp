@@ -4,15 +4,17 @@
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Instruction.h"
+#include "llvm/IR/LegacyPassManager.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/IR/LegacyPassManager.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 
 using namespace llvm;
-static cl::opt<bool> DRD("devrstdt", 
-                        cl::init(false), 
-                        cl::desc("Enable the detection for cudaDeviceReset() API."));
+static cl::opt<bool> DRD("devrstdt",
+                        cl::Hidden,
+                        cl::desc("Enable the detection for cudaDeviceReset() API."),
+                        cl::init(false));
 
 namespace {
 struct DeviceResetDetection : public ModulePass {
@@ -20,6 +22,8 @@ struct DeviceResetDetection : public ModulePass {
   bool kernelCalled;
   bool hasGPUKernel;
   DeviceResetDetection() : ModulePass(ID) {}
+  DeviceResetDetection(bool flag) : ModulePass(ID) {this->flag = flag; DeviceResetDetection();}
+
   virtual bool runOnModule(Module &M) {
       kernelCalled = false;
       hasGPUKernel = false;
@@ -54,3 +58,10 @@ static RegisterPass<DeviceResetDetection> DT2("DeviceResetDetection", "GPU kerne
 static llvm::RegisterStandardPasses Y2(llvm::PassManagerBuilder::EP_EarlyAsPossible,
                                       [](const llvm::PassManagerBuilder &Builder,
                                       llvm::legacy::PassManagerBase &PM) { PM.add(new DeviceResetDetection()); });
+Pass *llvm::createDRD() {
+  return new DeviceResetDetection();
+}
+
+Pass *llvm::createDRD(bool flag) {
+  return new DeviceResetDetection(flag);
+}
