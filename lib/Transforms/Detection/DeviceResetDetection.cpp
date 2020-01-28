@@ -22,7 +22,6 @@ struct DeviceResetDetection : public ModulePass {
   bool kernelCalled;
   bool hasGPUKernel;
   DeviceResetDetection() : ModulePass(ID) {}
-  DeviceResetDetection(bool flag) : ModulePass(ID) {this->flag = flag; DeviceResetDetection();}
 
   virtual bool runOnModule(Module &M) {
       kernelCalled = false;
@@ -60,8 +59,4 @@ static llvm::RegisterStandardPasses Y2(llvm::PassManagerBuilder::EP_EarlyAsPossi
                                       llvm::legacy::PassManagerBase &PM) { PM.add(new DeviceResetDetection()); });
 Pass *llvm::createDRD() {
   return new DeviceResetDetection();
-}
-
-Pass *llvm::createDRD(bool flag) {
-  return new DeviceResetDetection(flag);
 }

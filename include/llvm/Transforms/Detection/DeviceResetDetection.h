@@ -14,7 +14,6 @@ using namespace llvm;
 
 namespace llvm {
     Pass *createDRD ();
-	Pass *createDRD (bool flag);
 }
 
 #endif
