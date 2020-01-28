@@ -21,26 +21,31 @@ struct DeviceResetDetection : public ModulePass {
   virtual bool runOnModule(Module &M) {
       kernelCalled = false;
       hasGPUKernel = false;
-      for (Module::iterator fi = M.begin(), fe = M.end(); fi != fe; fi++){
-        // Get the current func name string
-        std::string curFuncNameStr = (fi->getName()).str();
-        for (Function::iterator bi = fi->begin(), be = fi->end(); bi != be; bi++){
-          for (BasicBlock::iterator ii = bi->begin(), ie = bi->end(); ii != ie; ii++){
-            if (auto* callOp = dyn_cast<CallInst>(&(*ii))) {
-              Function* calledFunc = callOp->getCalledFunction();
-              std::string calleeNameStr = (calledFunc->getName()).str();
-              if (calleeNameStr.find("cudaLaunchKernel") != std::string::npos) {
-                errs() << "We found the cudaLaunchKernel() called here!\n";
-                hasGPUKernel = true;
+      if (DRD){
+        errs() << "We entered the devrstdt pass module.\n";
+        for (Module::iterator fi = M.begin(), fe = M.end(); fi != fe; fi++){
+          // Get the current func name string
+          std::string curFuncNameStr = (fi->getName()).str();
+          for (Function::iterator bi = fi->begin(), be = fi->end(); bi != be; bi++){
+            for (BasicBlock::iterator ii = bi->begin(), ie = bi->end(); ii != ie; ii++){
+              if (auto* callOp = dyn_cast<CallInst>(&(*ii))) {
+                Function* calledFunc = callOp->getCalledFunction();
+                std::string calleeNameStr = (calledFunc->getName()).str();
+                if (calleeNameStr.find("cudaLaunchKernel") != std::string::npos) {
+                  errs() << "We found the cudaLaunchKernel() called here!\n";
+                  hasGPUKernel = true;
+                }
               }
             }
           }
         }
-      }
+      } else
+        errs() << "The option devrstdt seems not work well.\n";
+      
     return true;
   }
 };
 }
 
 char DeviceResetDetection::ID = 0;
-static RegisterPass<DeviceResetDetection> X("DeviceResetDetection", "GPU kernel malware detection Pass", false, false);
+static RegisterPass<DeviceResetDetection> DT2("DeviceResetDetection", "GPU kernel malware detection Pass", false, false);
