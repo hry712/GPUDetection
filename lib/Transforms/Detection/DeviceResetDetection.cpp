@@ -12,7 +12,7 @@
 
 using namespace llvm;
 static cl::opt<bool> DRD("devrstdt",
-                        cl::Hidden,
+                        cl::Optional,
                         cl::desc("Enable the detection for cudaDeviceReset() API."),
                         cl::init(false));
 
