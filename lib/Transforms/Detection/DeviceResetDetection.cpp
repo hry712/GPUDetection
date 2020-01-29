@@ -9,6 +9,8 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Transforms/Detection/DeviceResetDetection.h"
+#include <vector>
+#include <string>
 
 using namespace llvm;
 static cl::opt<bool> DRD("devrstdt",
@@ -21,11 +23,13 @@ struct DeviceResetDetection : public ModulePass {
   static char ID;
   bool kernelCalled;
   bool hasGPUKernel;
+  std::vector<std::string> gpuKernelNameStrList;
   DeviceResetDetection() : ModulePass(ID) {}
 
   virtual bool runOnModule(Module &M) {
       kernelCalled = false;
       hasGPUKernel = false;
+      gpuKernelNameStrList.clear();
       if (DRD){
         errs() << "We entered the devrstdt pass module.\n";
         for (Module::iterator fi = M.begin(), fe = M.end(); fi != fe; fi++){
@@ -33,12 +37,23 @@ struct DeviceResetDetection : public ModulePass {
           std::string curFuncNameStr = (fi->getName()).str();
           for (Function::iterator bi = fi->begin(), be = fi->end(); bi != be; bi++){
             for (BasicBlock::iterator ii = bi->begin(), ie = bi->end(); ii != ie; ii++){
-              if (auto* callOp = dyn_cast<CallInst>(&(*ii))) {
+              if (CallInst* callOp = dyn_cast<CallInst>(&(*ii))) {
                 Function* calledFunc = callOp->getCalledFunction();
                 std::string calleeNameStr = (calledFunc->getName()).str();
                 if (calleeNameStr.find("cudaLaunchKernel") != std::string::npos) {
                   errs() << "We found the cudaLaunchKernel() called here!\n";
                   hasGPUKernel = true;
+                  // Get the Param List of cudaLaunchKernel and withdraw the first one for further comparing
+                  if (BitCastInst* bitcastOp = dyn_cast<BitCastInst>(&(*(calledFunc->arg_begin())))) {
+                    errs() << "We can identify the BitCastInst in the first argu position.\n";
+                    if (FunctionType* srcFuncTy = dyn_cast<FunctionType>(bitcastOp->getOperand(0))) {
+                      errs() << "We can transform the bitcast operation's 1st opnd into the FunctionType.\n";
+                      if (srcFuncTy->getName().str() == calleeNameStr) {
+                        errs() << "We are now comparing the opnd func name with the name of defined func.Cheers!\n";
+                        gpuKernelNameStrList.push_back(calleeNameStr);
+                      }
+                    }
+                  }
                 }
               }
             }
