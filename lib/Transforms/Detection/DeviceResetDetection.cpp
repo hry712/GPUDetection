@@ -54,9 +54,9 @@ struct DeviceResetDetection : public ModulePass {
 
 char DeviceResetDetection::ID = 0;
 static RegisterPass<DeviceResetDetection> DT2("DeviceResetDetection", "GPU kernel malware detection Pass", false, false);
-static llvm::RegisterStandardPasses Y2(llvm::PassManagerBuilder::EP_EarlyAsPossible,
-                                      [](const llvm::PassManagerBuilder &Builder,
-                                      llvm::legacy::PassManagerBase &PM) { PM.add(new DeviceResetDetection()); });
+// static llvm::RegisterStandardPasses Y2(llvm::PassManagerBuilder::EP_EarlyAsPossible,
+//                                       [](const llvm::PassManagerBuilder &Builder,
+//                                       llvm::legacy::PassManagerBase &PM) { PM.add(new DeviceResetDetection()); });
 Pass *llvm::createDRD() {
   return new DeviceResetDetection();
 }
