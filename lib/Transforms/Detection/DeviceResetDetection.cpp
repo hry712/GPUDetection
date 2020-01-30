@@ -13,10 +13,12 @@
 #include <string>
 
 using namespace llvm;
-static cl::opt<bool> DRD("devrstdt",
-                        cl::Optional,
-                        cl::desc("Enable the detection for cudaDeviceReset() API."),
-                        cl::init(false));
+#define DEBUG_TYPE "dev-rst-dt"
+
+// static cl::opt<bool> DRD("devrstdt",
+//                         cl::Optional,
+//                         cl::desc("Enable the detection for cudaDeviceReset() API."),
+//                         cl::init(false));
 
 namespace {
 struct DeviceResetDetection : public ModulePass {
@@ -46,13 +48,16 @@ struct DeviceResetDetection : public ModulePass {
                   // Get the Param List of cudaLaunchKernel and withdraw the first one for further comparing
                   if (BitCastInst* bitcastOp = dyn_cast<BitCastInst>(&(*(calledFunc->arg_begin())))) {
                     errs() << "We can identify the BitCastInst in the first argu position.\n";
-                    if (FunctionType* srcFuncTy = dyn_cast<FunctionType>(bitcastOp->getOperand(0))) {
-                      errs() << "We can transform the bitcast operation's 1st opnd into the FunctionType.\n";
-                      if (srcFuncTy->getName().str() == calleeNameStr) {
-                        errs() << "We are now comparing the opnd func name with the name of defined func.Cheers!\n";
-                        gpuKernelNameStrList.push_back(calleeNameStr);
-                      }
+                    if (PointerType* OpndTy = dyn_cast<PointerType>(bitcastOp->getOperand(0)->getType())) {
+                      errs() << "Now we think the current Function is of GPU kernel.";
                     }
+                    // if (FunctionType* srcFuncTy = dyn_cast<FunctionType>(bitcastOp->getOperand(0))) {
+                    //   errs() << "We can transform the bitcast operation's 1st opnd into the FunctionType.\n";
+                    //   if (srcFuncTy->getName().str() == calleeNameStr) {
+                    //     errs() << "We are now comparing the opnd func name with the name of defined func.Cheers!\n";
+                    //     gpuKernelNameStrList.push_back(calleeNameStr);
+                    //   }
+                    // }
                   }
                 }
               }
@@ -68,7 +73,8 @@ struct DeviceResetDetection : public ModulePass {
 }
 
 char DeviceResetDetection::ID = 0;
-static RegisterPass<DeviceResetDetection> DT2("DeviceResetDetection", "GPU kernel malware detection Pass", false, false);
+INITIALIZE_PASS(DeviceResetDetection, "devrstdt", "DeviceResetDetectionPass", false, false)
+// static RegisterPass<DeviceResetDetection> DT2("DeviceResetDetection", "GPU kernel malware detection Pass", false, false);
 // static llvm::RegisterStandardPasses Y2(llvm::PassManagerBuilder::EP_EarlyAsPossible,
 //                                       [](const llvm::PassManagerBuilder &Builder,
 //                                       llvm::legacy::PassManagerBase &PM) { PM.add(new DeviceResetDetection()); });
