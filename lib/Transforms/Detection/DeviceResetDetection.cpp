@@ -14,7 +14,7 @@
 
 using namespace llvm;
 #define DEBUG_TYPE "dev-rst-dt"
-
+#define DEBUG_DRD
 // static cl::opt<bool> DRD("devrstdt",
 //                         cl::Optional,
 //                         cl::desc("Enable the detection for cudaDeviceReset() API."),
@@ -32,7 +32,9 @@ struct DeviceResetDetection : public ModulePass {
       kernelCalled = false;
       hasGPUKernel = false;
       gpuKernelNameStrList.clear();
+#ifndef DEBUG_DRD
       if (DRD){
+#endif
         errs() << "We entered the devrstdt pass module.\n";
         for (Module::iterator fi = M.begin(), fe = M.end(); fi != fe; fi++){
           // Get the current func name string
@@ -64,8 +66,10 @@ struct DeviceResetDetection : public ModulePass {
             }
           }
         }
+#ifndef DEBUG_DRD
       } else
         errs() << "The option devrstdt seems not work well.\n";
+#endif
       
     return true;
   }
