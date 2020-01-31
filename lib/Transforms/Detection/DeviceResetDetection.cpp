@@ -26,6 +26,7 @@ struct DeviceResetDetection : public ModulePass {
   bool kernelCalled;
   bool hasGPUKernel;
   std::vector<std::string> gpuKernelNameStrList;
+
   DeviceResetDetection() : ModulePass(ID) {}
 
   virtual bool runOnModule(Module &M) {
@@ -40,33 +41,33 @@ struct DeviceResetDetection : public ModulePass {
           // Get the current func name string
           std::string curFuncNameStr = (fi->getName()).str();
           errs() << "The current func name is "<< curFuncNameStr <<"\n";
-          for (Function::iterator bi = fi->begin(), be = fi->end(); bi != be; bi++){
-            for (BasicBlock::iterator ii = bi->begin(), ie = bi->end(); ii != ie; ii++){
-              if (CallInst* callOp = dyn_cast<CallInst>(&(*ii))) {
-                Function* calledFunc = callOp->getCalledFunction();
-                std::string calleeNameStr = (calledFunc->getName()).str();
-                errs() << "The called func name in the"<< curFuncNameStr <<" is "<< calleeNameStr <<"\n";
-                if (calleeNameStr.find("cudaLaunchKernel") != std::string::npos) {
-                  errs() << "We found the cudaLaunchKernel() called here!\n";
-                  hasGPUKernel = true;
-                  // Get the Param List of cudaLaunchKernel and withdraw the first one for further comparing
-                  if (BitCastInst* bitcastOp = dyn_cast<BitCastInst>(&(*(calledFunc->arg_begin())))) {
-                    errs() << "We can identify the BitCastInst in the first argu position.\n";
-                    if (PointerType* OpndTy = dyn_cast<PointerType>(bitcastOp->getOperand(0)->getType())) {
-                      errs() << "Now we think the current Function is of GPU kernel.";
-                    }
-                    // if (FunctionType* srcFuncTy = dyn_cast<FunctionType>(bitcastOp->getOperand(0))) {
-                    //   errs() << "We can transform the bitcast operation's 1st opnd into the FunctionType.\n";
-                    //   if (srcFuncTy->getName().str() == calleeNameStr) {
-                    //     errs() << "We are now comparing the opnd func name with the name of defined func.Cheers!\n";
-                    //     gpuKernelNameStrList.push_back(calleeNameStr);
-                    //   }
-                    // }
-                  }
-                }
-              }
-            }
-          }
+          // for (Function::iterator bi = fi->begin(), be = fi->end(); bi != be; bi++){
+          //   for (BasicBlock::iterator ii = bi->begin(), ie = bi->end(); ii != ie; ii++){
+          //     if (CallInst* callOp = dyn_cast<CallInst>(&(*ii))) {
+          //       Function* calledFunc = callOp->getCalledFunction();
+          //       std::string calleeNameStr = (calledFunc->getName()).str();
+          //       errs() << "The called func name in the"<< curFuncNameStr <<" is "<< calleeNameStr <<"\n";
+          //       if (calleeNameStr.find("cudaLaunchKernel") != std::string::npos) {
+          //         errs() << "We found the cudaLaunchKernel() called here!\n";
+          //         hasGPUKernel = true;
+          //         // Get the Param List of cudaLaunchKernel and withdraw the first one for further comparing
+          //         if (BitCastInst* bitcastOp = dyn_cast<BitCastInst>(&(*(calledFunc->arg_begin())))) {
+          //           errs() << "We can identify the BitCastInst in the first argu position.\n";
+          //           if (PointerType* OpndTy = dyn_cast<PointerType>(bitcastOp->getOperand(0)->getType())) {
+          //             errs() << "Now we think the current Function is of GPU kernel.";
+          //           }
+          //           // if (FunctionType* srcFuncTy = dyn_cast<FunctionType>(bitcastOp->getOperand(0))) {
+          //           //   errs() << "We can transform the bitcast operation's 1st opnd into the FunctionType.\n";
+          //           //   if (srcFuncTy->getName().str() == calleeNameStr) {
+          //           //     errs() << "We are now comparing the opnd func name with the name of defined func.Cheers!\n";
+          //           //     gpuKernelNameStrList.push_back(calleeNameStr);
+          //           //   }
+          //           // }
+          //         }
+          //       }
+          //     }
+          //   }
+          // }
         }
 #ifndef DEBUG_DRD
       } else
