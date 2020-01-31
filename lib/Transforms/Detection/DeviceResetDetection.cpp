@@ -36,7 +36,7 @@ struct DeviceResetDetection : public ModulePass {
 // #ifndef DEBUG_DRD
 //       if (DRD){
 // #endif
-        errs() << "We entered the devrstdt pass module.\n";
+        errs() << "We entered the devrstdt pass module. The current Module is "<< M.getName().str() <<"\n";
         // for (Module::iterator fi = M.begin(), fe = M.end(); fi != fe; fi++){
         //   // Get the current func name string
         //   // std::string curFuncNameStr = (fi->getName()).str();
