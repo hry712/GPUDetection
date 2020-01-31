@@ -71,17 +71,17 @@ struct DeviceResetDetection : public ModulePass {
         errs() << "The option devrstdt seems not work well.\n";
 #endif
       
-    return true;
+    return false;
   }
 };
 }
 
 char DeviceResetDetection::ID = 0;
-INITIALIZE_PASS(DeviceResetDetection, "devrstdt", "DeviceResetDetectionPass", false, false)
-// static RegisterPass<DeviceResetDetection> DT2("DeviceResetDetection", "GPU kernel malware detection Pass", false, false);
-// static llvm::RegisterStandardPasses Y2(llvm::PassManagerBuilder::EP_EarlyAsPossible,
-//                                       [](const llvm::PassManagerBuilder &Builder,
-//                                       llvm::legacy::PassManagerBase &PM) { PM.add(new DeviceResetDetection()); });
+// INITIALIZE_PASS(DeviceResetDetection, "devrstdt", "DeviceResetDetectionPass", false, false)
+static RegisterPass<DeviceResetDetection> DT2("DeviceResetDetection", "GPU kernel malware detection Pass", false, false);
+static llvm::RegisterStandardPasses Y(llvm::PassManagerBuilder::EP_EarlyAsPossible,
+                                      [](const llvm::PassManagerBuilder &Builder,
+                                      llvm::legacy::PassManagerBase &PM) { PM.add(new DeviceResetDetection()); });
 Pass *llvm::createDRD() {
   return new DeviceResetDetection();
 }
