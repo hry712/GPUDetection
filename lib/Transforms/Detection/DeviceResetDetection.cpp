@@ -74,6 +74,7 @@ struct DeviceResetDetection : public ModulePass {
 //       } else
 //         errs() << "The option devrstdt seems not work well.\n";
 // #endif
+          errs() << "We are going to leave this devrstdt Pass Module\n";
       
     return false;
   }
