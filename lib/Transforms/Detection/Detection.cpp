@@ -39,7 +39,7 @@ struct Detection : public FunctionPass {
     }
 
     if (hasGPUKernel && isReseted) {
-      errs() << "The source file is safe.\n"
+      errs() << "The source file is safe.\n";
     }
     return false;
   }
