@@ -12,17 +12,34 @@ using namespace llvm;
 
 namespace {
 struct Detection : public FunctionPass {
+  bool hasGPUKernel;
+  bool isReseted;
   static char ID;
   Detection() : FunctionPass(ID) {}
   virtual bool runOnFunction(Function &F) {
     errs() << "We are now in the Detection Pass Module.\n";
+    hasGPUKernel = false;
+    isReseted = false;
+    std::string funcNameStr = F.getName().str();
     for (Instruction &I : instructions(F)) {
         CallInst *Call = dyn_cast<CallInst>(&I);
         if (!Call)
           continue;
         if (Function *Callee = Call->getCalledFunction()) {
           errs() << "Cheers!We can reach the called function "<< Callee->getName().str() <<".\n";
+          std::string calleeNameStr = Callee->getName().str();
+          if (calleeNameStr == "cudaLaunchKernel") {
+            errs() << "Function " << funcNameStr <<" is a GPU kernel func.\n";
+            hasGPUKernel = true;
+          } else if (calleeNameStr == "cudaDeviceReset") {
+            errs() << "Function " << funcNameStr <<" called the cudaDevRst API.\n";
+            isReseted = true;
+          }
         }
+    }
+
+    if (hasGPUKernel && isReseted) {
+      errs() << "The source file is safe.\n"
     }
     return false;
   }
