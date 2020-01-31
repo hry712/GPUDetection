@@ -39,11 +39,13 @@ struct DeviceResetDetection : public ModulePass {
         for (Module::iterator fi = M.begin(), fe = M.end(); fi != fe; fi++){
           // Get the current func name string
           std::string curFuncNameStr = (fi->getName()).str();
+          errs() << "The current func name is "<< curFuncNameStr <<"\n";
           for (Function::iterator bi = fi->begin(), be = fi->end(); bi != be; bi++){
             for (BasicBlock::iterator ii = bi->begin(), ie = bi->end(); ii != ie; ii++){
               if (CallInst* callOp = dyn_cast<CallInst>(&(*ii))) {
                 Function* calledFunc = callOp->getCalledFunction();
                 std::string calleeNameStr = (calledFunc->getName()).str();
+                errs() << "The called func name in the"<< curFuncNameStr <<" is "<< calleeNameStr <<"\n";
                 if (calleeNameStr.find("cudaLaunchKernel") != std::string::npos) {
                   errs() << "We found the cudaLaunchKernel() called here!\n";
                   hasGPUKernel = true;
