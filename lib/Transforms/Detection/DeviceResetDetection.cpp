@@ -39,7 +39,7 @@ struct DeviceResetDetection : public ModulePass {
         errs() << "We entered the devrstdt pass module. The current Module is "<< M.getName().str() <<"\n";
         for (Module::iterator fi = M.begin(), fe = M.end(); fi != fe; fi++){
           // Get the current func name string
-          // std::string curFuncNameStr = (fi->getName()).str();
+          std::string curFuncNameStr = (fi->getName()).str();
           // errs() << "The current func name is "<< curFuncNameStr <<"\n";
           errs() << "We have entered the first for loop body\n";
           for (Function::iterator bi = fi->begin(), be = fi->end(); bi != be; bi++){
