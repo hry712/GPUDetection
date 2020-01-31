@@ -13,7 +13,14 @@ struct Detection : public FunctionPass {
   Detection() : FunctionPass(ID) {}
   virtual bool runOnFunction(Function &F) {
     errs() << "We are now in the Detection Pass Module.\n";
-
+    for (Instruction &I : instructions(F)) {
+        CallInst *Call = dyn_cast<CallInst>(&I);
+        if (!Call)
+          continue;
+        if (Function *Callee = Call->getCalledFunction()) {
+          errs() << "Cheers!We can reach the called function "<< Callee->getName().str() <<".\n";
+        }
+    }
     return false;
   }
 }; 
