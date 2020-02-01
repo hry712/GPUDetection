@@ -67,7 +67,8 @@ struct Detection : public FunctionPass {
       lastModule = curModule;
     } else {                       // We entered the Function which exists in the same Module.
       if (hasGPUKernel) {
-        isReseted = hasDeviceResetCheck(F);
+        if (!isReseted)
+          isReseted = hasDeviceResetCheck(F);
       } else {
         hasGPUKernel = hasGPUKernelCheck(F);
       }
