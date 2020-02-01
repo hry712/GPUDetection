@@ -78,6 +78,19 @@ struct Detection : public FunctionPass {
 
     return false;
   }
+
+  virtual bool doFinalization(Module &M) {
+    errs() << "We have entered the doFinalization process.\n";
+    if (hasGPUKernel) {
+      errs() << "The former Module has GPU kernel.\n";
+      if (isReseted)
+        errs() << "The former Module is safe.\n";
+      else
+        errs() << "The former Module is not safe!!!\n";
+      hasGPUKernel = false;
+    }
+    return false;
+  }
 }; 
 }  // end of anonymous namespace
 
