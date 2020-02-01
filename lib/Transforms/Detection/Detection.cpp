@@ -55,6 +55,7 @@ struct Detection : public FunctionPass {
     
     // record the current Module for the subsequent Functions' check
     if (lastModule != curModule) { // OK, we have met a new Module and a new round for check will begin
+      errs() << "We have entered a function whicn belongs to a new Module.\n";
       if (hasGPUKernel) {
         errs() << "The former Module has GPU kernel.\n";
         if (isReseted)
@@ -66,6 +67,7 @@ struct Detection : public FunctionPass {
       isReseted = false;
       lastModule = curModule;
     } else {                       // We entered the Function which exists in the same Module.
+      errs() << "We have entered a function whicn belongs to the same Module.\n";
       if (hasGPUKernel) {
         if (!isReseted)
           isReseted = hasDeviceResetCheck(F);
