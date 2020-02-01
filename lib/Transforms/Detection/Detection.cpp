@@ -66,6 +66,9 @@ struct Detection : public FunctionPass {
       }
       isReseted = false;
       lastModule = curModule;
+      hasGPUKernel = hasGPUKernelCheck(F);
+      if (hasGPUKernel)
+        isReseted = hasDeviceResetCheck(F);
     } else {                       // We entered the Function which exists in the same Module.
       errs() << "We have entered a function whicn belongs to the same Module.\n";
       if (hasGPUKernel) {
@@ -87,7 +90,7 @@ struct Detection : public FunctionPass {
         errs() << "The former Module is safe.\n";
       else
         errs() << "The former Module is not safe!!!\n";
-      hasGPUKernel = false;
+      // hasGPUKernel = false;
     }
     return false;
   }
