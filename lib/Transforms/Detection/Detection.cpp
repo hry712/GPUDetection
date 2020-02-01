@@ -27,8 +27,10 @@ struct Detection : public FunctionPass {
         continue;
       if (Function *Callee = Call->getCalledFunction()) {
         std::string calleeNameStr = Callee->getName().str();
-        if (calleeNameStr == "cudaLaunchKernel")
+        if (calleeNameStr == "cudaLaunchKernel") {
           return true;
+          errs() << "We have found cudaLaunchKernel in the "<< F.getName().str() <<"\n";
+        }
       }
     }
     return false;
@@ -42,8 +44,10 @@ struct Detection : public FunctionPass {
         continue;
       if (Function *Callee = Call->getCalledFunction()) {
         std::string calleeNameStr = Callee->getName().str();
-        if (calleeNameStr == "cudaDeviceReset")
+        if (calleeNameStr == "cudaDeviceReset") {
           return true;
+          errs() << "We have found cudaDeviceReset in the "<< F.getName().str() <<"\n";
+        }
       }
     }
     return false;
