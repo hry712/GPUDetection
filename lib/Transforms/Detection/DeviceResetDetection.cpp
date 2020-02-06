@@ -3,6 +3,7 @@
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Instruction.h"
+#include "llvm/IR/InstIterator.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
@@ -29,6 +30,40 @@ struct DeviceResetDetection : public ModulePass {
 
   DeviceResetDetection() : ModulePass(ID) {}
 
+  bool hasGPUKernelCheck(Function &F) {
+    CallInst *Call = nullptr;
+    for (Instruction &I : instructions(F)) {
+      Call = dyn_cast<CallInst>(&I);
+      if (!Call)
+        continue;
+      if (Function *Callee = Call->getCalledFunction()) {
+        std::string calleeNameStr = Callee->getName().str();
+        if (calleeNameStr == "cudaLaunchKernel") {
+          errs() << "We have found cudaLaunchKernel in the "<< F.getName().str() <<"\n";
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  bool hasDeviceResetCheck(Function &F) {
+    CallInst *Call = nullptr;
+    for (Instruction &I : instructions(F)) {
+      Call = dyn_cast<CallInst>(&I);
+      if (!Call)
+        continue;
+      if (Function *Callee = Call->getCalledFunction()) {
+        std::string calleeNameStr = Callee->getName().str();
+        if (calleeNameStr == "cudaDeviceReset") {
+          errs() << "We have found cudaDeviceReset in the "<< F.getName().str() <<"\n";
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   virtual bool runOnModule(Module &M) {
       kernelCalled = false;
       hasGPUKernel = false;
@@ -36,7 +71,10 @@ struct DeviceResetDetection : public ModulePass {
 // #ifndef DEBUG_DRD
 //       if (DRD){
 // #endif
-        // errs() << "We entered the devrstdt pass module. The current Module is "<< M.getName().str() <<"\n";
+        errs() << "We entered the devrstdt pass module. The current Module is "<< M.getName().str() <<"\n";
+        for (Function &F : functions(M)) {
+          errs() << "The current func name is: " << F.getName().str() <<"\n.";
+        }
         // for (Module::iterator fi = M.begin(), fe = M.end(); fi != fe; fi++){
         //   // Get the current func name string
         //   std::string curFuncNameStr = (fi->getName()).str();
