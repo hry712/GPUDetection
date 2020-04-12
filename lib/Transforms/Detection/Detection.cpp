@@ -9,13 +9,21 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 
+#include <list>
+#include <regex>
+
 using namespace llvm;
+using namespace std;
 
 namespace {
 struct Detection : public FunctionPass {
   bool hasGPUKernel = false;
   bool isReseted = false;
   Module* lastModule = nullptr;
+  std::list<std::string> cudaMallocHostArgQueue;
+  std::list<std::string> cudaMallocArgQueue;
+  std::list<std::string> cudaEventCreateArgQueue;
+
   static char ID;
   Detection() : FunctionPass(ID) {}
 
@@ -53,15 +61,76 @@ struct Detection : public FunctionPass {
     return false;
   }
 
+  void split(const string& s, vector<string>& tokens, const string& delimiters = " ") {
+    string::size_type lastPos = s.find_first_not_of(delimiters, 0);
+    string::size_type pos = s.find_first_of(delimiters, lastPos);
+    while (string::npos != pos || string::npos != lastPos) {
+      tokens.push_back(s.substr(lastPos, pos - lastPos));
+      lastPos = s.find_first_not_of(delimiters, pos);
+      pos = s.find_first_of(delimiters, lastPos);
+    }
+  }
+
+  bool hasCudaCalling(string Src, string APIName) {
+    std::string voidPtrArgPattern("/[(]void [*]+[)][&][a-zA-Z]+[_0-9a-zA-Z]*/g");
+    std::string cudaMallocHostCallingPattern("/^cudaMallocHost[(]/g");
+    smatch results;
+    if (APIName == "cudaMallocHost"){
+      if (regex_match(Src, regex(cudaMallocHostCallingPattern))) {
+        if (regex_match(Src, results, regex(voidPtrArgPattern))) {
+          // find the (void **)&XXX here then get the arg name string after the "&" char
+          // finally insert it into the recording queue for later matching
+          std::string argName = *results.begin();
+          vector<string> tokensArg;
+          tokensArg.clear();
+          split(argName, tokensArg, "&");
+          cudaMallocHostArgQueue.insert(tokensArg.front());
+          errs() << "get the arg name from cudaMallocHost : " << tokensArg.front() << "\n";
+          return true;
+        }
+      }
+      
+    } else if (APIName == "cudaMalloc") {
+      return false;
+
+    } else if (APIName == "cudaEventCreate") {
+      return false;
+
+    } else
+      return false;
+  }
+
+  // find out all the @global_strings which begin with ".str." and store
+  // them into the globalStrs arg part
+  void processGlobalVar(Module *M, vector<string>& globalStrs) {
+    for (Module::global_iterator GVI = M->global_begin(), E = M->global_end();
+      GVI != E; GVI++) {
+        GlobalVariable *GV = &*GVI;
+        if (!GV->hasName() && !GV->isDeclaration() && !GV->hasLocalLinkage()) {
+          if (GV.getName().startswith(".str.")){
+            ConstantDataArray globalVarArr = dyn_cast<ConstantDataArray>(GV->getInitializer());
+            if (globalVarArr)
+              globalStrs.insert(globalVarArr.getAsCString());
+          }
+        }
+    }  
+  }
+
   virtual bool runOnFunction(Function &F) {
     errs() << "We are now in the Detection Pass Module.\n";
     Module* curModule = F.getParent();
+    vector<string> globalStrHolder;
     
     // record the current Module for the subsequent Functions' check
     if (lastModule != curModule) { // OK, we have met a new Module and a new round for check will begin
       errs() << "We have entered a function whicn belongs to a new Module.\n";
       if (hasGPUKernel) {
         errs() << "The former Module has GPU kernel.\n";
+        globalStrHolder.clear();
+        processGlobalVar(lastModule, globalStrHolder);
+        if (globalStrHolder.empty()) {
+          errs() << "we did not find any global string @.str.xxx in the src file" << "\n";
+        }
         if (isReseted)
           errs() << "The former Module is safe.\n";
         else
