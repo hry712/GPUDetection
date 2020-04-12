@@ -107,10 +107,10 @@ struct Detection : public FunctionPass {
       GVI != E; GVI++) {
         GlobalVariable *GV = &*GVI;
         if (!GV->hasName() && !GV->isDeclaration() && !GV->hasLocalLinkage()) {
-          if (GV.getName().startswith(".str.")){
-            ConstantDataArray globalVarArr = dyn_cast<ConstantDataArray>(GV->getInitializer());
+          if (GV->getName().startswith(".str.")){
+            ConstantDataArray* globalVarArr = dyn_cast<ConstantDataArray* >(GV->getInitializer());
             if (globalVarArr)
-              globalStrs.insert(globalVarArr.getAsCString());
+              globalStrs.insert(globalVarArr->getAsCString());
           }
         }
     }  
