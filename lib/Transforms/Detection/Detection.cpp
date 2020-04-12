@@ -84,8 +84,8 @@ struct Detection : public FunctionPass {
           vector<string> tokensArg;
           tokensArg.clear();
           split(argName, tokensArg, "&");
-          cudaMallocHostArgQueue.insert(tokensArg.front());
-          errs() << "get the arg name from cudaMallocHost : " << tokensArg.front() << "\n";
+          cudaMallocHostArgQueue.insert(tokensArg[0]);
+          errs() << "get the arg name from cudaMallocHost : " << tokensArg[0] << "\n";
           return true;
         }
       }
@@ -127,6 +127,9 @@ struct Detection : public FunctionPass {
       if (hasGPUKernel) {
         errs() << "The former Module has GPU kernel.\n";
         globalStrHolder.clear();
+        cudaMallocHostArgQueue.clear();
+        cudaEventCreateArgQueue.clear();
+        cudaMallocArgQueue.clear();
         processGlobalVar(lastModule, globalStrHolder);
         if (globalStrHolder.empty()) {
           errs() << "we did not find any global string @.str.xxx in the src file" << "\n";
