@@ -71,6 +71,15 @@ struct Detection : public FunctionPass {
     }
   }
 
+  void printQueue(std::vector<std::string>& Queue) {
+    if (Queue.empty()) {
+      errs() << "This queue contained nothing!!!\n";
+    } else {
+      for (std::string element : Queue)
+        errs() << element << "\n";
+    }
+  }
+
   bool hasCudaCalling(string Src, string APIName) {
     std::string voidPtrArgPattern("/[(]void [*]+[)][&][a-zA-Z]+[_0-9a-zA-Z]*/g");
     std::string cudaMallocHostCallingPattern("/^cudaMallocHost[(]/g");
@@ -139,6 +148,7 @@ struct Detection : public FunctionPass {
         cudaEventCreateArgQueue.clear();
         cudaMallocArgQueue.clear();
         processGlobalVar(lastModule, globalStrHolder);
+        printQueue(globalStrHolder);
         if (globalStrHolder.empty()) {
           errs() << "we did not find any global string @.str.xxx in the src file" << "\n";
         }
