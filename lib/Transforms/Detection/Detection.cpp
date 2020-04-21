@@ -20,9 +20,9 @@ struct Detection : public FunctionPass {
   bool hasGPUKernel = false;
   bool isReseted = false;
   Module* lastModule = nullptr;
-  std::list<std::string> cudaMallocHostArgQueue;
-  std::list<std::string> cudaMallocArgQueue;
-  std::list<std::string> cudaEventCreateArgQueue;
+  std::vector<std::string> cudaMallocHostArgQueue;
+  std::vector<std::string> cudaMallocArgQueue;
+  std::vector<std::string> cudaEventCreateArgQueue;
 
   static char ID;
   Detection() : FunctionPass(ID) {}
@@ -84,7 +84,7 @@ struct Detection : public FunctionPass {
           vector<string> tokensArg;
           tokensArg.clear();
           split(argName, tokensArg, "&");
-          cudaMallocHostArgQueue.insert(tokensArg[0]);
+          cudaMallocHostArgQueue.push_back(tokensArg[0]);
           errs() << "get the arg name from cudaMallocHost : " << tokensArg[0] << "\n";
           return true;
         }
