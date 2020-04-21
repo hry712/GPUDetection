@@ -3,6 +3,16 @@
     "files.associations": {
         "iosfwd": "cpp",
         "string": "cpp",
-        "vector": "cpp"
+        "vector": "cpp",
+        "*.inc": "cpp",
+        "deque": "cpp",
+        "functional": "cpp",
+        "hash_map": "cpp",
+        "hash_set": "cpp",
+        "list": "cpp",
+        "map": "cpp",
+        "set": "cpp",
+        "unordered_map": "cpp",
+        "unordered_set": "cpp"
     }
 }

@@ -102,7 +102,7 @@ struct Detection : public FunctionPass {
 
   // find out all the @global_strings which begin with ".str." and store
   // them into the globalStrs arg part
-  void processGlobalVar(Module *M, vector<std::string>& globalStrs) {
+  void processGlobalVar(Module *M, std::vector<std::string>& globalStrs) {
     for (Module::global_iterator GVI = M->global_begin(), E = M->global_end();
       GVI != E; GVI++) {
         GlobalVariable *GV = &*GVI;
@@ -112,10 +112,10 @@ struct Detection : public FunctionPass {
             std::string strContent = "";
             if (globalVarArr->isString()){
               strContent = globalVarArr->getAsString();
-              globalStrs.insert(strContent);
+              globalStrs.push_back(strContent);
             } else if (globalVarArr->isCString()) {
               strContent = globalVarArr->getAsCString();
-              globalStrs.insert(strContent);
+              globalStrs.push_back(strContent);
             } else {
               continue;
             }
