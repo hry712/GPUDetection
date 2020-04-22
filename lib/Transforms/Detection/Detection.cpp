@@ -148,9 +148,10 @@ struct Detection : public FunctionPass {
         cudaEventCreateArgQueue.clear();
         cudaMallocArgQueue.clear();
         processGlobalVar(lastModule, globalStrHolder);
-        printQueue(globalStrHolder);
         if (globalStrHolder.empty()) {
           errs() << "we did not find any global string @.str.xxx in the src file" << "\n";
+        } else {
+          printQueue(globalStrHolder);
         }
         if (isReseted)
           errs() << "The former Module is safe.\n";
@@ -172,7 +173,6 @@ struct Detection : public FunctionPass {
         hasGPUKernel = hasGPUKernelCheck(F);
       }
     }
-
     return false;
   }
 
