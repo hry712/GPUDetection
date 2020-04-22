@@ -23,6 +23,7 @@ struct Detection : public FunctionPass {
   std::vector<std::string> cudaMallocHostArgQueue;
   std::vector<std::string> cudaMallocArgQueue;
   std::vector<std::string> cudaEventCreateArgQueue;
+  std::vector<std::string> globalStrHolder;
 
   static char ID;
   Detection() : FunctionPass(ID) {}
@@ -122,9 +123,11 @@ struct Detection : public FunctionPass {
             if (globalVarArr->isString()){
               strContent = globalVarArr->getAsString();
               globalStrs.push_back(strContent);
+              errs() << "The current string is: " << strContent << "\n";
             } else if (globalVarArr->isCString()) {
               strContent = globalVarArr->getAsCString();
               globalStrs.push_back(strContent);
+              errs() << "The current string is: " << strContent << "\n";
             } else {
               continue;
             }
@@ -136,8 +139,6 @@ struct Detection : public FunctionPass {
   virtual bool runOnFunction(Function &F) {
     errs() << "We are now in the Detection Pass Module.\n";
     Module* curModule = F.getParent();
-    vector<string> globalStrHolder;
-    
     // record the current Module for the subsequent Functions' check
     if (lastModule != curModule) { // OK, we have met a new Module and a new round for check will begin
       errs() << "We have entered a function whicn belongs to a new Module.\n";
@@ -149,7 +150,7 @@ struct Detection : public FunctionPass {
         cudaMallocArgQueue.clear();
         processGlobalVar(lastModule, globalStrHolder);
         if (globalStrHolder.empty()) {
-          errs() << "we did not find any global string @.str.xxx in the src file" << "\n";
+          errs() << "we did not find any global string @.str.xxx in the src file.\n";
         } else {
           printQueue(globalStrHolder);
         }
