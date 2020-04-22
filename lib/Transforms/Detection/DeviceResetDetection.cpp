@@ -69,9 +69,9 @@ struct DeviceResetDetection : public ModulePass {
       hasGPUKernel = false;
       gpuKernelNameStrList.clear();
       errs() << "We entered the devrstdt pass module. \n";
-      for (Module::iterator fi = M.begin(), fe = M.end(); fi != fe; fi++){
-        errs() << "test whether we can use the iterator of Module class.\n";
-      }
+      // for (Module::iterator fi = M.begin(), fe = M.end(); fi != fe; fi++){
+      //   errs() << "test whether we can use the iterator of Module class.\n";
+      // }
     return false;
   }
 };
