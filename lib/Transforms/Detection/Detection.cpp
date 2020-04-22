@@ -166,7 +166,7 @@ struct Detection : public FunctionPass {
       if (hasGPUKernel)
         isReseted = hasDeviceResetCheck(F);
     } else {                       // We entered the Function which exists in the same Module.
-      errs() << "We have entered a function whicn belongs to the same Module.\n";
+      // errs() << "We have entered a function whicn belongs to the same Module.\n";
       if (hasGPUKernel) {
         if (!isReseted)
           isReseted = hasDeviceResetCheck(F);
