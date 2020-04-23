@@ -104,13 +104,13 @@ struct DeviceResetDetection : public ModulePass {
       kernelCalled = false;
       hasGPUKernel = false;
       gpuKernelNameStrList.clear();
-      errs() << "We entered the devrstdt pass module. \n";
-      processGlobalVar(&M, globalStrHolder);
-      if (globalStrHolder.empty()) {
-        errs() << "we did not find any global string @.str.xxx in the src file.\n";
-      } else {
-        printQueue(globalStrHolder);
-      }
+      // errs() << "We entered the devrstdt pass module. \n";
+      // processGlobalVar(&M, globalStrHolder);
+      // if (globalStrHolder.empty()) {
+      //   errs() << "we did not find any global string @.str.xxx in the src file.\n";
+      // } else {
+      //   printQueue(globalStrHolder);
+      // }
       // for (Module::iterator fi = M.begin(), fe = M.end(); fi != fe; fi++){
       //   errs() << "test whether we can use the iterator of Module class.\n";
       // }
