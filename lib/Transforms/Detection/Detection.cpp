@@ -117,6 +117,7 @@ struct Detection : public FunctionPass {
       GVI != E; GVI++) {
         GlobalVariable *GV = &*GVI;
         if (!GV->hasName() && !GV->isDeclaration() && !GV->hasLocalLinkage()) {
+          errs() << "the global var name is: " << GV->getName() << "\n";
           if (GV->getName().startswith(".str.")){
             ConstantDataSequential* globalVarArr = dyn_cast<ConstantDataSequential>(GV->getInitializer());
             std::string strContent = "";
