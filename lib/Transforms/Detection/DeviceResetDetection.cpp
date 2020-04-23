@@ -64,11 +64,52 @@ struct DeviceResetDetection : public ModulePass {
     return false;
   }
 
+  void processGlobalVar(Module *M, std::vector<std::string>& globalStrs) {
+    for (Module::global_iterator GVI = M->global_begin(), E = M->global_end();
+      GVI != E; GVI++) {
+        GlobalVariable *GV = &*GVI;
+        if (!GV->hasName() && !GV->isDeclaration() && !GV->hasLocalLinkage()) {
+          if (GV->getName().startswith(".str.")){
+            ConstantDataSequential* globalVarArr = dyn_cast<ConstantDataSequential>(GV->getInitializer());
+            std::string strContent = "";
+            if (globalVarArr->isString()){
+              strContent = globalVarArr->getAsString();
+              globalStrs.push_back(strContent);
+              errs() << "The current string is: " << strContent << "\n";
+            } else if (globalVarArr->isCString()) {
+              strContent = globalVarArr->getAsCString();
+              globalStrs.push_back(strContent);
+              errs() << "The current string is: " << strContent << "\n";
+            } else {
+              continue;
+            }
+          }
+        }
+    }  
+  }
+
+  void printQueue(std::vector<std::string>& Queue) {
+    if (Queue.empty()) {
+      errs() << "This queue contained nothing!!!\n";
+    } else {
+      for (std::string element : Queue)
+        errs() << element << "\n";
+    }
+  }
+
   virtual bool runOnModule(Module &M) {
+      std::vector<std::string> globalStrHolder;
+      globalStrHolder.clear();
       kernelCalled = false;
       hasGPUKernel = false;
       gpuKernelNameStrList.clear();
       errs() << "We entered the devrstdt pass module. \n";
+      processGlobalVar(&M, globalStrHolder);
+      if (globalStrHolder.empty()) {
+        errs() << "we did not find any global string @.str.xxx in the src file.\n";
+      } else {
+        printQueue(globalStrHolder);
+      }
       // for (Module::iterator fi = M.begin(), fe = M.end(); fi != fe; fi++){
       //   errs() << "test whether we can use the iterator of Module class.\n";
       // }
