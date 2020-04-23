@@ -116,7 +116,7 @@ struct Detection : public FunctionPass {
     for (Module::global_iterator GVI = M->global_begin(), E = M->global_end();
       GVI != E; GVI++) {
         GlobalVariable *GV = &*GVI;
-        if (!GV->hasName() && !GV->isDeclaration() && !GV->hasLocalLinkage()) {
+        if (!GV->hasName()) {
           errs() << "the global var name is: " << GV->getName() << "\n";
           if (GV->getName().startswith(".str.")){
             ConstantDataSequential* globalVarArr = dyn_cast<ConstantDataSequential>(GV->getInitializer());
