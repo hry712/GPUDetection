@@ -142,7 +142,7 @@ struct Detection : public FunctionPass {
     Module* curModule = F.getParent();
     // record the current Module for the subsequent Functions' check
     if (lastModule != curModule) { // OK, we have met a new Module and a new round for check will begin
-      errs() << "We have entered a function whicn belongs to a new Module.\n";
+      errs() << "Entered a function whicn belongs to a new Module.\n";
       if (hasGPUKernel) {
         errs() << "The former Module has GPU kernel.\n";
         globalStrHolder.clear();
@@ -156,9 +156,9 @@ struct Detection : public FunctionPass {
           printQueue(globalStrHolder);
         }
         if (isReseted)
-          errs() << "The former Module is safe.\n";
+          errs() << "The src file is safe.\n";
         else
-          errs() << "The former Module is not safe!!!\n";
+          errs() << "The src file is not safe!!!\n";
         hasGPUKernel = false;
       }
       isReseted = false;
@@ -179,15 +179,14 @@ struct Detection : public FunctionPass {
   }
 
   virtual bool doFinalization(Module &M) {
-    errs() << "We have entered the doFinalization process.\n";
-    if (hasGPUKernel) {
-      errs() << "The former Module has GPU kernel.\n";
-      if (isReseted)
-        errs() << "The former Module is safe.\n";
-      else
-        errs() << "The former Module is not safe!!!\n";
-      // hasGPUKernel = false;
-    }
+    // errs() << "We have entered the doFinalization process.\n";
+    // if (hasGPUKernel) {
+    //   errs() << "The former Module has GPU kernel.\n";
+    //   if (isReseted)
+    //     errs() << "The former Module is safe.\n";
+    //   else
+    //     errs() << "The former Module is not safe!!!\n";
+    // }
     return false;
   }
 }; 
