@@ -138,23 +138,23 @@ struct Detection : public FunctionPass {
   }
 
   virtual bool runOnFunction(Function &F) {
-    errs() << "We are now in the Detection Pass Module.\n";
+    // errs() << "We are now in the Detection Pass Module.\n";
     Module* curModule = F.getParent();
     // record the current Module for the subsequent Functions' check
     if (lastModule != curModule) { // OK, we have met a new Module and a new round for check will begin
       errs() << "Entered a function whicn belongs to a new Module.\n";
       if (hasGPUKernel) {
         errs() << "The former Module has GPU kernel.\n";
-        globalStrHolder.clear();
-        cudaMallocHostArgQueue.clear();
-        cudaEventCreateArgQueue.clear();
-        cudaMallocArgQueue.clear();
-        processGlobalVar(lastModule, globalStrHolder);
-        if (globalStrHolder.empty()) {
-          errs() << "we did not find any global string @.str.xxx in the src file.\n";
-        } else {
-          printQueue(globalStrHolder);
-        }
+        // globalStrHolder.clear();
+        // cudaMallocHostArgQueue.clear();
+        // cudaEventCreateArgQueue.clear();
+        // cudaMallocArgQueue.clear();
+        // processGlobalVar(lastModule, globalStrHolder);
+        // if (globalStrHolder.empty()) {
+        //   errs() << "we did not find any global string @.str.xxx in the src file.\n";
+        // } else {
+        //   printQueue(globalStrHolder);
+        // }
         if (isReseted)
           errs() << "The src file is safe.\n";
         else
@@ -180,13 +180,13 @@ struct Detection : public FunctionPass {
 
   virtual bool doFinalization(Module &M) {
     // errs() << "We have entered the doFinalization process.\n";
-    // if (hasGPUKernel) {
-    //   errs() << "The former Module has GPU kernel.\n";
-    //   if (isReseted)
-    //     errs() << "The former Module is safe.\n";
-    //   else
-    //     errs() << "The former Module is not safe!!!\n";
-    // }
+    if (hasGPUKernel) {
+      errs() << "The former Module has GPU kernel.\n";
+      if (isReseted)
+        errs() << "The former Module is safe.\n";
+      else
+        errs() << "The former Module is not safe!!!\n";
+    }
     return false;
   }
 }; 
