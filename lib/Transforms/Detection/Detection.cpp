@@ -183,9 +183,9 @@ struct Detection : public FunctionPass {
     if (hasGPUKernel) {
       errs() << "The former Module has GPU kernel.\n";
       if (isReseted)
-        errs() << "The former Module is safe.\n";
+        errs() << "The src file is safe.\n";
       else
-        errs() << "The former Module is not safe!!!\n";
+        errs() << "The src file is not safe!!!\n";
     }
     return false;
   }
