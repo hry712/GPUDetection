@@ -180,6 +180,7 @@ struct Detection : public FunctionPass {
 
 virtual bool runOnFunction(Function &F) {
   errs()<< F.getParent()->getTargetTriple().compare("nvptx64-nvidia-cuda") << "\n";
+  errs()<< "The current func name is: " << F.getName() << "\n";
 }
 
   virtual bool doFinalization(Module &M) {
