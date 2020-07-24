@@ -36,13 +36,13 @@ char *argv[];
   int seed;
 
   if (argc!=2){
-  fprintf(stderr, "usage: backprop <num of input elements> <bypass threshold>\n");
-  exit(0);
+    fprintf(stderr, "usage: backprop <num of input elements> <bypass threshold>\n");
+    exit(0);
   }
   layer_size = atoi(argv[1]);
   if (layer_size%16!=0){
-  fprintf(stderr, "The number of input points must be divided by 16\n");
-  exit(0);
+    fprintf(stderr, "The number of input points must be divided by 16\n");
+    exit(0);
   }
   
   seed = 7;   

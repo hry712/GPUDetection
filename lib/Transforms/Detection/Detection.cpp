@@ -137,46 +137,50 @@ struct Detection : public FunctionPass {
     }  
   }
 
-  virtual bool runOnFunction(Function &F) {
-    // errs() << "We are now in the Detection Pass Module.\n";
-    Module* curModule = F.getParent();
-    // record the current Module for the subsequent Functions' check
-    if (lastModule != curModule) { // OK, we have met a new Module and a new round for check will begin
-      errs() << "Entered a function whicn belongs to a new Module.\n";
-      if (hasGPUKernel) {
-        errs() << "The former Module has GPU kernel.\n";
-        // globalStrHolder.clear();
-        // cudaMallocHostArgQueue.clear();
-        // cudaEventCreateArgQueue.clear();
-        // cudaMallocArgQueue.clear();
-        // processGlobalVar(lastModule, globalStrHolder);
-        // if (globalStrHolder.empty()) {
-        //   errs() << "we did not find any global string @.str.xxx in the src file.\n";
-        // } else {
-        //   printQueue(globalStrHolder);
-        // }
-        if (isReseted)
-          errs() << "The src file is safe.\n";
-        else
-          errs() << "The src file is not safe!!!\n";
-        hasGPUKernel = false;
-      }
-      isReseted = false;
-      lastModule = curModule;
-      hasGPUKernel = hasGPUKernelCheck(F);
-      if (hasGPUKernel)
-        isReseted = hasDeviceResetCheck(F);
-    } else {                       // We entered the Function which exists in the same Module.
-      // errs() << "We have entered a function whicn belongs to the same Module.\n";
-      if (hasGPUKernel) {
-        if (!isReseted)
-          isReseted = hasDeviceResetCheck(F);
-      } else {
-        hasGPUKernel = hasGPUKernelCheck(F);
-      }
-    }
-    return false;
-  }
+  // virtual bool runOnFunction(Function &F) {
+  //   // errs() << "We are now in the Detection Pass Module.\n";
+  //   Module* curModule = F.getParent();
+  //   // record the current Module for the subsequent Functions' check
+  //   if (lastModule != curModule) { // OK, we have met a new Module and a new round for check will begin
+  //     errs() << "Entered a function whicn belongs to a new Module.\n";
+  //     if (hasGPUKernel) {
+  //       errs() << "The former Module has GPU kernel.\n";
+  //       // globalStrHolder.clear();
+  //       // cudaMallocHostArgQueue.clear();
+  //       // cudaEventCreateArgQueue.clear();
+  //       // cudaMallocArgQueue.clear();
+  //       // processGlobalVar(lastModule, globalStrHolder);
+  //       // if (globalStrHolder.empty()) {
+  //       //   errs() << "we did not find any global string @.str.xxx in the src file.\n";
+  //       // } else {
+  //       //   printQueue(globalStrHolder);
+  //       // }
+  //       if (isReseted)
+  //         errs() << "The src file is safe.\n";
+  //       else
+  //         errs() << "The src file is not safe!!!\n";
+  //       hasGPUKernel = false;
+  //     }
+  //     isReseted = false;
+  //     lastModule = curModule;
+  //     hasGPUKernel = hasGPUKernelCheck(F);
+  //     if (hasGPUKernel)
+  //       isReseted = hasDeviceResetCheck(F);
+  //   } else {                       // We entered the Function which exists in the same Module.
+  //     // errs() << "We have entered a function whicn belongs to the same Module.\n";
+  //     if (hasGPUKernel) {
+  //       if (!isReseted)
+  //         isReseted = hasDeviceResetCheck(F);
+  //     } else {
+  //       hasGPUKernel = hasGPUKernelCheck(F);
+  //     }
+  //   }
+  //   return false;
+  // }
+
+virtual bool runOnFunction(Function &F) {
+  errs()<< F.getParent()->getTargetTriple().compare("nvptx64-nvidia-cuda") << "\n";
+}
 
   virtual bool doFinalization(Module &M) {
     // errs() << "We have entered the doFinalization process.\n";
