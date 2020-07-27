@@ -183,8 +183,7 @@ virtual bool runOnFunction(Function &F) {
   errs()<< "The current func name is: " << F.getName() << "\n";
   if (F.getParent()->getTargetTriple().compare("nvptx64-nvidia-cuda") == 0) {
     // Now we are parsing a nvptx function
-    Function::iterator funcItr = F.getIterator();
-    for (;!funcItr.isEnd();funcItr++) {
+    for (Function::iterator funcItr = F.begin(), end = F.end(); funcItr!=end ; funcItr++) {
       errs() << (*funcItr) << "\n";
     }
     errs() << "finished this function.\n";
