@@ -179,8 +179,19 @@ struct Detection : public FunctionPass {
   // }
 
 virtual bool runOnFunction(Function &F) {
-  errs()<< F.getParent()->getTargetTriple().compare("nvptx64-nvidia-cuda") << "\n";
+  // errs()<< F.getParent()->getTargetTriple().compare("nvptx64-nvidia-cuda") << "\n";
   errs()<< "The current func name is: " << F.getName() << "\n";
+  if (F.getParent()->getTargetTriple().compare("nvptx64-nvidia-cuda") == 0) {
+    // Now we are parsing a nvptx function
+    Function::iterator funcItr = F.getIterator();
+    for (;!funcItr.isEnd();funcItr++) {
+      errs() << (*funcItr) << "\n";
+    }
+    errs() << "finished this function.\n";
+    return false;
+  } else {
+    return false;
+  }
 }
 
   virtual bool doFinalization(Module &M) {
