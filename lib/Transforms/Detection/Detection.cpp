@@ -28,6 +28,7 @@ struct Detection : public FunctionPass {
   std::vector<std::string> cudaEventCreateArgQueue;
   std::vector<std::string> globalStrHolder;
   std::map<const BasicBlock*, int> BBVisitedMap;
+  std::vector<BasicBlock*> VisitedBBs;
 
   static char ID;
   Detection() : FunctionPass(ID) {}
@@ -141,98 +142,63 @@ struct Detection : public FunctionPass {
     }  
   }
 
-  // virtual bool runOnFunction(Function &F) {
-  //   // errs() << "We are now in the Detection Pass Module.\n";
-  //   Module* curModule = F.getParent();
-  //   // record the current Module for the subsequent Functions' check
-  //   if (lastModule != curModule) { // OK, we have met a new Module and a new round for check will begin
-  //     errs() << "Entered a function whicn belongs to a new Module.\n";
-  //     if (hasGPUKernel) {
-  //       errs() << "The former Module has GPU kernel.\n";
-  //       // globalStrHolder.clear();
-  //       // cudaMallocHostArgQueue.clear();
-  //       // cudaEventCreateArgQueue.clear();
-  //       // cudaMallocArgQueue.clear();
-  //       // processGlobalVar(lastModule, globalStrHolder);
-  //       // if (globalStrHolder.empty()) {
-  //       //   errs() << "we did not find any global string @.str.xxx in the src file.\n";
-  //       // } else {
-  //       //   printQueue(globalStrHolder);
-  //       // }
-  //       if (isReseted)
-  //         errs() << "The src file is safe.\n";
-  //       else
-  //         errs() << "The src file is not safe!!!\n";
-  //       hasGPUKernel = false;
-  //     }
-  //     isReseted = false;
-  //     lastModule = curModule;
-  //     hasGPUKernel = hasGPUKernelCheck(F);
-  //     if (hasGPUKernel)
-  //       isReseted = hasDeviceResetCheck(F);
-  //   } else {                       // We entered the Function which exists in the same Module.
-  //     // errs() << "We have entered a function whicn belongs to the same Module.\n";
-  //     if (hasGPUKernel) {
-  //       if (!isReseted)
-  //         isReseted = hasDeviceResetCheck(F);
-  //     } else {
-  //       hasGPUKernel = hasGPUKernelCheck(F);
-  //     }
-  //   }
-  //   return false;
-  // }
+  virtual bool runOnFunction(Function &F) {
+    // errs()<< F.getParent()->getTargetTriple().compare("nvptx64-nvidia-cuda") << "\n";
+    errs()<< "The current func name is: " << F.getName() << "\n";
+    if (F.getParent()->getTargetTriple().compare("nvptx64-nvidia-cuda") == 0) {
+      // Now we are parsing a nvptx function
+      for (Function::iterator funcItr = F.begin(), end = F.end(); funcItr!=end ; funcItr++) {
+        errs() << (*funcItr) << "\n";
+        // We can parse each IR in the nvptx-cuda IR part here
+        // TO-DO:
+        // 1. realize some pattern detection for GPU IR simulating the CPU codes reviewing algorithm
+        // 2. Write some test cases with C language for testing
+        // Part 1: data stream analysis - CFG analysis
+        //=====------------------------Cycle Detection-------------------------=====
+        if (DFSCycleDetecting(&(*funcItr), 10)) {
+          errs() << "A cycle exists in the function: " << F.getName() << " .\n";
 
-virtual bool runOnFunction(Function &F) {
-  // errs()<< F.getParent()->getTargetTriple().compare("nvptx64-nvidia-cuda") << "\n";
-  errs()<< "The current func name is: " << F.getName() << "\n";
-  if (F.getParent()->getTargetTriple().compare("nvptx64-nvidia-cuda") == 0) {
-    // Now we are parsing a nvptx function
-    for (Function::iterator funcItr = F.begin(), end = F.end(); funcItr!=end ; funcItr++) {
-      errs() << (*funcItr) << "\n";
-      // We can parse each IR in the nvptx-cuda IR part here
-      // TO-DO:
-      // 1. realize some pattern detection for GPU IR simulating the CPU codes reviewing algorithm
-      // 2. Write some test cases with C language for testing
-      // Part 1: data stream analysis - CFG analysis
-      //=====------------------------Cycle Detection-------------------------=====
-      if (DFSCycleDetecting(&(*funcItr), 10)) {
-        errs() << "A cycle exists in the function: " << F.getName() << " .\n";
-      } else {
-        errs() << "No cycle is found in function: " << F.getName() << " .\n";
+        } else {
+          errs() << "No cycle is found in function: " << F.getName() << " .\n";
+        }
+        // Part 2: 
       }
-      // Part 2: 
-    }
-    errs() << "finished this function.\n";
-    return false;
-  } else {
-    return false;
-  }
-}
-
-private bool DFSCycleDetecting(const BasicBlock* BB, int LoopLimit) {
-  const TerminatorInst* terminatorInst = BB->getTerminator();
-  // examine if this terminator is a BR inst, then check its condition part
-  // unsigned opcode = terminatorInst->getOpcode();
-
-  for (unsigned int i=0, SUCCESSOR_NUM = terminatorInst; i<SUCCESSOR_NUM; i++) {
-    BasicBlock* successorBB = terminatorInst->getSuccessor(i);
-    if (BBVisitedMap.find(successorBB) != BBVisitedMap.end()) {
-      // the current BB exists in the map, then refresh its visited count number and
-      // return true to indicate the cycle's existing.
-      BBVisitedMap[successorBB] += 1;
-      return true;
+      errs() << "finished this function.\n";
+      return false;
     } else {
-      // insert a new record into the BB visited map
-      BBVisitedMap.insert(std::pair<BasicBlock*, int>(successorBB, 1));
-      // dfs start
-      if (!DFSCycleDetecting(successorBB, LoopLimit)) {
-        return false;
-      }
+      return false;
     }
-
   }
-  return false;
-}
+
+  bool LoopCycleDetecting(const BasicBlock* BB) {
+    
+    return false;
+  }
+
+  bool DFSCycleDetecting(const BasicBlock* BB, int LoopLimit) {
+    const TerminatorInst* terminatorInst = BB->getTerminator();
+    // examine if this terminator is a BR inst, then check its condition part
+    // unsigned opcode = terminatorInst->getOpcode();
+
+    for (unsigned int i=0, SUCCESSOR_NUM = terminatorInst; i<SUCCESSOR_NUM; i++) {
+      BasicBlock* successorBB = terminatorInst->getSuccessor(i);
+      if (BBVisitedMap.find(successorBB) != BBVisitedMap.end()) {
+        // the current BB exists in the map, then refresh its visited count number and
+        // return true to indicate the cycle's existing.
+        BBVisitedMap[successorBB] += 1;
+        return true;
+      } else {
+        // insert a new record into the BB visited map
+        BBVisitedMap.insert(std::pair<BasicBlock*, int>(successorBB, 1));
+        // dfs start
+        if (!DFSCycleDetecting(successorBB, LoopLimit)) {
+          return false;
+        }
+      }
+
+    }
+    return false;
+  }
 
   virtual bool doFinalization(Module &M) {
     // errs() << "We have entered the doFinalization process.\n";
