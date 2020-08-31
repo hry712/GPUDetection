@@ -176,10 +176,10 @@ struct Detection : public FunctionPass {
   }
 
   bool DFSCycleDetecting(const BasicBlock* BB, int LoopLimit) {
-    Instruction* terminatorInst = BB->getTerminator();
+    const Instruction* terminatorInst = BB->getTerminator();
     // examine if this terminator is a BR inst, then check its condition part
     // unsigned opcode = terminatorInst->getOpcode();
-    if (BranchInst* brInst = dyn_cast<BranchInst> terminatorInst) {
+    if (BranchInst* brInst = dyn_cast<BranchInst>(terminatorInst)) {
       unsigned int SUCCESSOR_NUM = brInst->getNumSuccessors();
       for (unsigned int i=0; i<SUCCESSOR_NUM; i++) {
         BasicBlock* successorBB = brInst->getSuccessor(i);
