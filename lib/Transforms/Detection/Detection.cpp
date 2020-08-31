@@ -8,6 +8,9 @@
 // #include "llvm/IR/Module.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Type.h"
+#include "llvm/IR/InstrTypes.h"
 
 #include <list>
 #include <regex>
@@ -24,6 +27,7 @@ struct Detection : public FunctionPass {
   std::vector<std::string> cudaMallocArgQueue;
   std::vector<std::string> cudaEventCreateArgQueue;
   std::vector<std::string> globalStrHolder;
+  std::map<const BasicBlock*, int> BBVisitedMap;
 
   static char ID;
   Detection() : FunctionPass(ID) {}
@@ -185,12 +189,49 @@ virtual bool runOnFunction(Function &F) {
     // Now we are parsing a nvptx function
     for (Function::iterator funcItr = F.begin(), end = F.end(); funcItr!=end ; funcItr++) {
       errs() << (*funcItr) << "\n";
+      // We can parse each IR in the nvptx-cuda IR part here
+      // TO-DO:
+      // 1. realize some pattern detection for GPU IR simulating the CPU codes reviewing algorithm
+      // 2. Write some test cases with C language for testing
+      // Part 1: data stream analysis - CFG analysis
+      //=====------------------------Cycle Detection-------------------------=====
+      if (DFSCycleDetecting(&(*funcItr), 10)) {
+        errs() << "A cycle exists in the function: " << F.getName() << " .\n";
+      } else {
+        errs() << "No cycle is found in function: " << F.getName() << " .\n";
+      }
+      // Part 2: 
     }
     errs() << "finished this function.\n";
     return false;
   } else {
     return false;
   }
+}
+
+private bool DFSCycleDetecting(const BasicBlock* BB, int LoopLimit) {
+  const TerminatorInst* terminatorInst = BB->getTerminator();
+  // examine if this terminator is a BR inst, then check its condition part
+  // unsigned opcode = terminatorInst->getOpcode();
+
+  for (unsigned int i=0, SUCCESSOR_NUM = terminatorInst; i<SUCCESSOR_NUM; i++) {
+    BasicBlock* successorBB = terminatorInst->getSuccessor(i);
+    if (BBVisitedMap.find(successorBB) != BBVisitedMap.end()) {
+      // the current BB exists in the map, then refresh its visited count number and
+      // return true to indicate the cycle's existing.
+      BBVisitedMap[successorBB] += 1;
+      return true;
+    } else {
+      // insert a new record into the BB visited map
+      BBVisitedMap.insert(std::pair<BasicBlock*, int>(successorBB, 1));
+      // dfs start
+      if (!DFSCycleDetecting(successorBB, LoopLimit)) {
+        return false;
+      }
+    }
+
+  }
+  return false;
 }
 
   virtual bool doFinalization(Module &M) {
