@@ -176,27 +176,29 @@ struct Detection : public FunctionPass {
   }
 
   bool DFSCycleDetecting(const BasicBlock* BB, int LoopLimit) {
-    const Instruction* terminatorInst = BB->getTerminator();
+    Instruction* terminatorInst = BB->getTerminator();
     // examine if this terminator is a BR inst, then check its condition part
     // unsigned opcode = terminatorInst->getOpcode();
-
-    for (unsigned int i=0, SUCCESSOR_NUM = terminatorInst; i<SUCCESSOR_NUM; i++) {
-      BasicBlock* successorBB = terminatorInst->getSuccessor(i);
-      if (BBVisitedMap.find(successorBB) != BBVisitedMap.end()) {
-        // the current BB exists in the map, then refresh its visited count number and
-        // return true to indicate the cycle's existing.
-        BBVisitedMap[successorBB] += 1;
-        return true;
-      } else {
-        // insert a new record into the BB visited map
-        BBVisitedMap.insert(std::pair<BasicBlock*, int>(successorBB, 1));
-        // dfs start
-        if (!DFSCycleDetecting(successorBB, LoopLimit)) {
-          return false;
+    if (BranchInst* brInst = dyn_cast<BranchInst> terminatorInst) {
+      unsigned int SUCCESSOR_NUM = brInst->getNumSuccessors();
+      for (unsigned int i=0; i<SUCCESSOR_NUM; i++) {
+        BasicBlock* successorBB = brInst->getSuccessor(i);
+        if (BBVisitedMap.find(successorBB) != BBVisitedMap.end()) {
+          // the current BB exists in the map, then refresh its visited count number and
+          // return true to indicate the cycle's existing.
+          BBVisitedMap[successorBB] += 1;
+          return true;
+        } else {
+          // insert a new record into the BB visited map
+          BBVisitedMap.insert(std::pair<BasicBlock*, int>(successorBB, 1));
+          // dfs start
+          if (!DFSCycleDetecting(successorBB, LoopLimit)) {
+            return false;
+          }
         }
       }
-
     }
+
     return false;
   }
 
