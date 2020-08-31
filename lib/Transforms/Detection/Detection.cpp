@@ -179,7 +179,7 @@ struct Detection : public FunctionPass {
     const Instruction* terminatorInst = BB->getTerminator();
     // examine if this terminator is a BR inst, then check its condition part
     // unsigned opcode = terminatorInst->getOpcode();
-    if (BranchInst* brInst = dyn_cast<BranchInst>(terminatorInst)) {
+    if (const BranchInst* brInst = dyn_cast<const BranchInst>(terminatorInst)) {
       unsigned int SUCCESSOR_NUM = brInst->getNumSuccessors();
       for (unsigned int i=0; i<SUCCESSOR_NUM; i++) {
         BasicBlock* successorBB = brInst->getSuccessor(i);
