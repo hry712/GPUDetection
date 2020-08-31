@@ -171,12 +171,12 @@ struct Detection : public FunctionPass {
   }
 
   bool LoopCycleDetecting(const BasicBlock* BB) {
-    
+
     return false;
   }
 
   bool DFSCycleDetecting(const BasicBlock* BB, int LoopLimit) {
-    const TerminatorInst* terminatorInst = BB->getTerminator();
+    const Instruction* terminatorInst = BB->getTerminator();
     // examine if this terminator is a BR inst, then check its condition part
     // unsigned opcode = terminatorInst->getOpcode();
 
