@@ -161,7 +161,7 @@ struct Detection : public FunctionPass {
   }
 
   bool hasLoopCFG(const Function &F) {
-    BasicBlock* entryBB = F.getEntryBlock();
+    const BasicBlock* entryBB = F.getEntryBlock();
     if (entryBB != nullptr) {
       return DFSCycleDetecting(entryBB, 10);
     } else {
