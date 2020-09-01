@@ -152,6 +152,7 @@ struct Detection : public FunctionPass {
       errs()<< "\nStart to detect Loop CFG in the GPU Kernel function: "<< F.getName() <<"...\n";
       if (hasLoopCFG(F)) {
         errs() << "Caution: Function " << F.getName() << " contains a Loop CFG !!\n";
+        hasLoopBRInst(F);
       } else {
         errs() << F.getName() << " is Loop safe.\n";
       }
@@ -188,6 +189,24 @@ struct Detection : public FunctionPass {
         }
       }
     }
+    return false;
+  }
+
+  bool hasLoopBRInst(const Function & F) {
+    std::map<BasicBlock*, int>::iterator visitedIter = BBVisitedMap.begin();
+    while (visitedIter != BBVisitedMap.end()) {
+      if (visitedIter->second == 2) {
+        errs() << "\nCaution: we found a BB which is visited twice!!\n";
+        errs() << "The BasicBlock name is: " << visitedIter->first->getName() << "\n";
+        return true;
+      } 
+      visitedIter++;
+    }
+    return false;
+  }
+
+
+  bool SimpleLoopDetecting(Function &F) {
     return false;
   }
 
