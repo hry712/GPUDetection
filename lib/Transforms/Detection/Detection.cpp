@@ -144,35 +144,29 @@ struct Detection : public FunctionPass {
 
   virtual bool runOnFunction(Function &F) {
     // errs()<< F.getParent()->getTargetTriple().compare("nvptx64-nvidia-cuda") << "\n";
-    errs()<< "The current func name is: " << F.getName() << "\n";
+    // errs()<< "The current func name is: " << F.getName() << "\n";
     if (F.getParent()->getTargetTriple().compare("nvptx64-nvidia-cuda") == 0) {
       // Now we are parsing a nvptx function
-      for (Function::iterator funcItr = F.begin(), end = F.end(); funcItr!=end ; funcItr++) {
-        errs() << (*funcItr) << "\n";
-        // We can parse each IR in the nvptx-cuda IR part here
-        // TO-DO:
-        // 1. realize some pattern detection for GPU IR simulating the CPU codes reviewing algorithm
-        // 2. Write some test cases with C language for testing
-        // Part 1: data stream analysis - CFG analysis
-        //=====------------------------Cycle Detection-------------------------=====
-        if (DFSCycleDetecting(&(*funcItr), 10)) {
-          errs() << "A cycle exists in the function: " << F.getName() << " .\n";
-
-        } else {
-          errs() << "No cycle is found in function: " << F.getName() << " .\n";
-        }
-        // Part 2: 
+      errs()<< "\nStart to detect Loop CFG in the GPU Kernel function: "<< F.getName() <<"...\n";
+      if (hasLoopCFG(F)) {
+        errs() << "Caution: Function " << F.getName() " contains Loop CFG !!\n";
+      } else {
+        errs() << F.getName() << " is Loop safe.\n";
       }
-      errs() << "finished this function.\n";
       return false;
     } else {
+      // just skip the CPU IR codes
       return false;
     }
   }
 
-  bool LoopCycleDetecting(const BasicBlock* BB) {
-
-    return false;
+  bool hasLoopCFG(const Function &F) {
+    BasicBlock* entryBB = F.getEntryBlock();
+    if (entryBB != nullptr) {
+      return DFSCycleDetecting(entryBB, 10);
+    } else {
+      return false;
+    }
   }
 
   bool DFSCycleDetecting(const BasicBlock* BB, int LoopLimit) {
@@ -191,14 +185,13 @@ struct Detection : public FunctionPass {
         } else {
           // insert a new record into the BB visited map
           BBVisitedMap.insert(std::pair<BasicBlock*, int>(successorBB, 1));
-          // dfs start
+          // dfs continues
           if (!DFSCycleDetecting(successorBB, LoopLimit)) {
             return false;
           }
         }
       }
     }
-
     return false;
   }
 
