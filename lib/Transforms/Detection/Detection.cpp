@@ -193,7 +193,7 @@ struct Detection : public FunctionPass {
   }
 
   bool hasLoopBRInst(const Function & F) {
-    std::map<BasicBlock*, int>::iterator visitedIter = BBVisitedMap.begin();
+    std::map<const BasicBlock*, int>::iterator visitedIter = BBVisitedMap.begin();
     while (visitedIter != BBVisitedMap.end()) {
       if (visitedIter->second == 2) {
         errs() << "\nCaution: we found a BB which is visited twice!!\n";
