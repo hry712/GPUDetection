@@ -196,8 +196,9 @@ struct Detection : public FunctionPass {
     std::map<const BasicBlock*, int>::iterator visitedIter = BBVisitedMap.begin();
     while (visitedIter != BBVisitedMap.end()) {
       if (visitedIter->second == 2) {
-        errs() << "\nCaution: we found a BB which is visited twice!!\n";
-        errs() << "The BasicBlock name is: " << visitedIter->first->getName() << "\n";
+        errs() << "Caution: we found a BB which is visited twice!!\n";
+        // errs() << "The BasicBlock name is: " << visitedIter->first->getName() << "\n";
+        errs() << *(visitedIter->first) << "\n";
         return true;
       } 
       visitedIter++;
