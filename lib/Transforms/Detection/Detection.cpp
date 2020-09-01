@@ -149,7 +149,7 @@ struct Detection : public FunctionPass {
       // Now we are parsing a nvptx function
       errs()<< "\nStart to detect Loop CFG in the GPU Kernel function: "<< F.getName() <<"...\n";
       if (hasLoopCFG(F)) {
-        errs() << "Caution: Function " << F.getName() " contains Loop CFG !!\n";
+        errs() << "Caution: Function " << F.getName() << " contains a Loop CFG !!\n";
       } else {
         errs() << F.getName() << " is Loop safe.\n";
       }
