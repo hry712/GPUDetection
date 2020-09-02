@@ -162,7 +162,7 @@ struct Detection : public FunctionPass {
         }
         const Instruction* terminatorInst = visitedIter->first->getTerminator();
         if (const BranchInst* brInst = dyn_cast<const BranchInst>(terminatorInst)) {
-          if (brInst->isConditional) {        // loop control BB ----- for, while{}
+          if (brInst->isConditional()) {        // loop control BB ----- for, while{}
             if (hasSpecialBrInst(visitedIter->first)) {
               // make a further confirm that this function contains a loop structure
               errs()<< "For/While loop exists in this function!\n";
@@ -172,7 +172,15 @@ struct Detection : public FunctionPass {
           } else {                            // loop body BB ----- do {} while
             if (visitedIter->first->hasNPredecessors(2)) {
               BasicBlock* predBB = nullptr;
-              for (auto BBIter = pred_begin(visitedIter->first), endIter = pred_end(visitedIter->first); BBIter!=endIter; ++BBIter) {
+              // for (auto BBIter = pred_begin(visitedIter->first), endIter = pred_end(visitedIter->first); BBIter!=endIter; ++BBIter) {
+              //   predBB = *BBIter;
+              //   if (hasSpecialBrInst(predBB)) {
+              //     errs()<< "Do-while loop exists in this function!\n";
+              //     break;
+              //   }
+              // }
+
+              for (predBB : predecessors(visitedIter->first)) {
                 predBB = *BBIter;
                 if (hasSpecialBrInst(predBB)) {
                   errs()<< "Do-while loop exists in this function!\n";
