@@ -167,22 +167,14 @@ struct Detection : public FunctionPass {
             if (hasSpecialBrInst(visitedIter->first)) {
               // make a further confirm that this function contains a loop structure
               errs()<< "For/While loop exists in this function!\n";
+              // TO-DO: withdraw the control variable from the branchInst and monitor its changing
+              // ......
             } else {
               errs()<< "May be this is an unknown/intricate loop structure...\n";
             }
           } else {                            // loop body BB ----- do {} while
             if (visitedIter->first->hasNPredecessors(2)) {
-              // BasicBlock* predBB = nullptr;
-              // for (auto BBIter = pred_begin(visitedIter->first), endIter = pred_end(visitedIter->first); BBIter!=endIter; ++BBIter) {
-              //   predBB = *BBIter;
-              //   if (hasSpecialBrInst(predBB)) {
-              //     errs()<< "Do-while loop exists in this function!\n";
-              //     break;
-              //   }
-              // }
-
               for (BasicBlock* predBB : predecessors(visitedIter->first)) {
-                // predBB = *BBIter;
                 if (hasSpecialBrInst(predBB)) {
                   errs()<< "Do-while loop exists in this function!\n";
                   break;
@@ -260,10 +252,6 @@ struct Detection : public FunctionPass {
         }
       }
     }
-    return false;
-  }
-
-  bool SimpleLoopDetecting(Function &F) {
     return false;
   }
 
