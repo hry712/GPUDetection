@@ -155,7 +155,7 @@ struct Detection : public FunctionPass {
       if (hasLoopCFG(F)) {
         errs() << "Caution: Function " << F.getName() << " contains a Loop CFG !!\n";
         // hasLoopBRInst(F);
-        std::map<const BasicBlock*, int>::iterator visitedIter = BBVisitedMap.begin();
+        std::map<BasicBlock*, int>::iterator visitedIter = BBVisitedMap.begin();
         while (visitedIter != BBVisitedMap.end()) {
           if (visitedIter->second == 2)
             break;
@@ -234,7 +234,7 @@ struct Detection : public FunctionPass {
   }
 
   bool hasLoopBRInst(const Function & F) {
-    std::map<const BasicBlock*, int>::iterator visitedIter = BBVisitedMap.begin();
+    std::map<BasicBlock*, int>::iterator visitedIter = BBVisitedMap.begin();
     while (visitedIter != BBVisitedMap.end()) {
       if (visitedIter->second == 2) {
         errs() << "Caution: we found a BB which is visited twice!!\n";
@@ -251,8 +251,8 @@ struct Detection : public FunctionPass {
     const Instruction* terminatorInst = BB->getTerminator();
     if (const BranchInst* brInst = dyn_cast<const BranchInst>(terminatorInst)) {
       if (brInst->getNumSuccessors() == 2 && brInst->isConditional()) {
-        const BasicBlock* firstBB = brInst->getSuccessor(0);
-        const BasicBlock* secondBB = brInst->getSuccessor(1);
+        BasicBlock* firstBB = brInst->getSuccessor(0);
+        BasicBlock* secondBB = brInst->getSuccessor(1);
         int firstCount = BBVisitedMap.count(firstBB);
         int secondCount = BBVisitedMap.count(secondBB);
         if (firstCount==1 || secondCount==1) {
