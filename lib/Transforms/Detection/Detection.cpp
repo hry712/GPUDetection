@@ -30,7 +30,7 @@ struct Detection : public FunctionPass {
   std::vector<std::string> cudaMallocArgQueue;
   std::vector<std::string> cudaEventCreateArgQueue;
   std::vector<std::string> globalStrHolder;
-  std::map<const BasicBlock*, int> BBVisitedMap;
+  std::map<BasicBlock*, int> BBVisitedMap;
   std::vector<BasicBlock*> VisitedBBs;
 
   static char ID;
@@ -182,7 +182,7 @@ struct Detection : public FunctionPass {
               // }
 
               for (BasicBlock* predBB : predecessors(visitedIter->first)) {
-                predBB = *BBIter;
+                // predBB = *BBIter;
                 if (hasSpecialBrInst(predBB)) {
                   errs()<< "Do-while loop exists in this function!\n";
                   break;
