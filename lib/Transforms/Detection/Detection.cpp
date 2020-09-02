@@ -150,9 +150,41 @@ struct Detection : public FunctionPass {
     if (F.getParent()->getTargetTriple().compare("nvptx64-nvidia-cuda") == 0) {
       // Now we are parsing a nvptx function
       errs()<< "\nStart to detect Loop CFG in the GPU Kernel function: "<< F.getName() <<"...\n";
+      BBVisitedMap.clear();
       if (hasLoopCFG(F)) {
         errs() << "Caution: Function " << F.getName() << " contains a Loop CFG !!\n";
-        hasLoopBRInst(F);
+        // hasLoopBRInst(F);
+        std::map<const BasicBlock*, int>::iterator visitedIter = BBVisitedMap.begin();
+        while (visitedIter != BBVisitedMap.end()) {
+          if (visitedIter->second == 2)
+            break;
+          visitedIter++;
+        }
+        const Instruction* terminatorInst = visitedIter->first->getTerminator();
+        if (const BranchInst* brInst = dyn_cast<const BranchInst>(terminatorInst)) {
+          if (brInst->isConditional) {        // loop control BB ----- for, while{}
+            if (hasSpecialBrInst(visitedIter->first)) {
+              // make a further confirm that this function contains a loop structure
+              errs()<< "For/While loop exists in this function!\n";
+            } else {
+              errs()<< "May be this is an unknown/intricate loop structure...\n";
+            }
+          } else {                            // loop body BB ----- do {} while
+            if (visitedIter->first->hasNPredecessors(2)) {
+              BasicBlock* predBB = nullptr;
+              for (auto BBIter = pred_begin(visitedIter->first), endIter = pred_end(visitedIter->first); BBIter!=endIter; ++BBIter) {
+                predBB = *BBIter;
+                if (hasSpecialBrInst(predBB)) {
+                  errs()<< "Do-while loop exists in this function!\n";
+                  break;
+                }
+              }
+            } else {
+              errs()<< "May be this is an unknown/intricate loop structure...\n";
+            }            
+          }
+        }
+
       } else {
         errs() << F.getName() << " is Loop safe.\n";
       }
@@ -206,6 +238,21 @@ struct Detection : public FunctionPass {
     return false;
   }
 
+  bool hasSpecialBrInst(const BasicBlock* BB) {
+    const Instruction* terminatorInst = BB->getTerminator();
+    if (const BranchInst* brInst = dyn_cast<const BranchInst>(terminatorInst)) {
+      if (brInst->getNumSuccessors() == 2 && brInst->isConditional()) {
+        const BasicBlock* firstBB = brInst->getSuccessor(0);
+        const BasicBlock* secondBB = brInst->getSuccessor(1);
+        int firstCount = BBVisitedMap.count(firstBB);
+        int secondCount = BBVisitedMap.count(secondBB);
+        if (firstCount==1 || secondCount==1) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
 
   bool SimpleLoopDetecting(Function &F) {
     return false;
