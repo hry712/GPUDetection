@@ -11,6 +11,7 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/InstrTypes.h"
+#include "llvm/IR/CFG.h"
 
 
 #include <list>
@@ -171,7 +172,7 @@ struct Detection : public FunctionPass {
             }
           } else {                            // loop body BB ----- do {} while
             if (visitedIter->first->hasNPredecessors(2)) {
-              BasicBlock* predBB = nullptr;
+              // BasicBlock* predBB = nullptr;
               // for (auto BBIter = pred_begin(visitedIter->first), endIter = pred_end(visitedIter->first); BBIter!=endIter; ++BBIter) {
               //   predBB = *BBIter;
               //   if (hasSpecialBrInst(predBB)) {
@@ -180,7 +181,7 @@ struct Detection : public FunctionPass {
               //   }
               // }
 
-              for (predBB : predecessors(visitedIter->first)) {
+              for (BasicBlock* predBB : predecessors(visitedIter->first)) {
                 predBB = *BBIter;
                 if (hasSpecialBrInst(predBB)) {
                   errs()<< "Do-while loop exists in this function!\n";
