@@ -156,7 +156,6 @@ struct Detection : public FunctionPass {
       errs()<< "\nStart to detect Loop CFG in the GPU Kernel function: "<< F.getName() <<"...\n";
       BBVisitedMap.clear();
       TracedBBs.clear();
-      LoopPathBBs.clear();
       if (hasLoopCFG(F)) {
         errs() << "Caution: Function " << F.getName() << " contains a Loop CFG !!\n";
         // hasLoopBRInst(F);
@@ -261,7 +260,7 @@ struct Detection : public FunctionPass {
     return false;
   }
 
-  bool DFSCycleDetecting(const BasicBlock* BB) {
+  bool DFSCycleDetecting(BasicBlock* BB) {
     if (BB == nullptr) {
       return false;
     }
