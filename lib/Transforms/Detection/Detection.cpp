@@ -30,9 +30,9 @@ struct Detection : public FunctionPass {
   std::vector<std::string> cudaMallocArgQueue;
   std::vector<std::string> cudaEventCreateArgQueue;
   std::vector<std::string> globalStrHolder;
-  std::map<BasicBlock*, int> BBVisitedMap;
+  std::map<const BasicBlock*, int> BBVisitedMap;
   std::vector<BasicBlock*> VisitedBBs;
-  std::vector<BasicBlock*> TracedBBs;
+  std::vector<const BasicBlock*> TracedBBs;
   std::vector<BasicBlock*>* PathBBs;
   std::vector<std::vector<BasicBlock*>*> BBLoopPaths;
 
@@ -260,7 +260,7 @@ struct Detection : public FunctionPass {
     return false;
   }
 
-  bool DFSCycleDetecting(BasicBlock* BB) {
+  bool DFSCycleDetecting(const BasicBlock* BB) {
     if (BB == nullptr) {
       return false;
     }
@@ -277,7 +277,7 @@ struct Detection : public FunctionPass {
       }
       return true;
     } else {    // current BB has not been visited
-      BBVisitedMap.insert(std::pair<BasicBlock*, int>(BB, 1));
+      BBVisitedMap.insert(std::pair<const BasicBlock*, int>(BB, 1));
       TracedBBs.push_back(BB);
       const Instruction* terminatorInst = BB->getTerminator();
       BasicBlock* successorBB = nullptr;
