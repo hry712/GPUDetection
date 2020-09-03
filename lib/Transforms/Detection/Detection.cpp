@@ -160,6 +160,7 @@ struct Detection : public FunctionPass {
         errs() << "Caution: Function " << F.getName() << " contains a Loop CFG !!\n";
         // hasLoopBRInst(F);
         // debug trace path
+        LoopPathScaning(&(F.getEntryBlock()));
         errs() << "Try to print out the loop path in the CFG...\n";
         for (auto path: BBLoopPaths) {
           errs()<<"Path: ";
@@ -225,7 +226,7 @@ struct Detection : public FunctionPass {
     const BasicBlock* entryBB = &(F.getEntryBlock());
     if (entryBB != nullptr) {
       // return DFSCycleDetecting(entryBB, 10);
-      return DFSCycleDetecting(entryBB);
+      return DFSCycleDetecting(entryBB, 10);
     } else {
       return false;
     }
@@ -260,7 +261,7 @@ struct Detection : public FunctionPass {
     return false;
   }
 
-  bool DFSCycleDetecting(const BasicBlock* BB) {
+  bool LoopPathScaning(const BasicBlock* BB) {
     if (BB == nullptr) {
       return false;
     }
