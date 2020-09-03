@@ -188,7 +188,7 @@ struct Detection : public FunctionPass {
             }
           } else {                            // loop body BB ----- do {} while
             if (visitedIter->first->hasNPredecessors(2)) {
-              for (BasicBlock* predBB : predecessors(visitedIter->first)) {
+              for (const BasicBlock* predBB : predecessors(visitedIter->first)) {
                 if (hasSpecialBrInst(predBB)) {
                   errs()<< "Do-while loop exists in this function!\n";
                   break;
@@ -210,7 +210,7 @@ struct Detection : public FunctionPass {
     }
   }
 
-  int hasBB(std::vector<BasicBlock*> src, const BasicBlock* target) {
+  int hasBB(std::vector<const BasicBlock*> src, const BasicBlock* target) {
     int i = 0;
     int len = src.size();
     while (i<len) {
