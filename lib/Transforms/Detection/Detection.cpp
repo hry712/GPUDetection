@@ -32,6 +32,9 @@ struct Detection : public FunctionPass {
   std::vector<std::string> globalStrHolder;
   std::map<BasicBlock*, int> BBVisitedMap;
   std::vector<BasicBlock*> VisitedBBs;
+  std::vector<BasicBlock*> TracedBBs;
+  std::vector<BasicBlock*>* PathBBs;
+  std::vector<std::vector<BasicBlock*>*> BBLoopPaths;
 
   static char ID;
   Detection() : FunctionPass(ID) {}
@@ -152,9 +155,21 @@ struct Detection : public FunctionPass {
       // Now we are parsing a nvptx function
       errs()<< "\nStart to detect Loop CFG in the GPU Kernel function: "<< F.getName() <<"...\n";
       BBVisitedMap.clear();
+      TracedBBs.clear();
+      LoopPathBBs.clear();
       if (hasLoopCFG(F)) {
         errs() << "Caution: Function " << F.getName() << " contains a Loop CFG !!\n";
         // hasLoopBRInst(F);
+        // debug trace path
+        errs() << "Try to print out the loop path in the CFG...\n";
+        for (auto path: BBLoopPaths) {
+          errs()<<"Path: ";
+          for (auto bb: *path) {
+            StringRef bbName(bb->getName());
+            errs()<< bbName << " ";
+          }
+          errs()<< "\nPath print finished.\n";
+        }
         std::map<BasicBlock*, int>::iterator visitedIter = BBVisitedMap.begin();
         while (visitedIter != BBVisitedMap.end()) {
           if (visitedIter->second == 2)
@@ -199,7 +214,8 @@ struct Detection : public FunctionPass {
   bool hasLoopCFG(const Function &F) {
     const BasicBlock* entryBB = &(F.getEntryBlock());
     if (entryBB != nullptr) {
-      return DFSCycleDetecting(entryBB, 10);
+      // return DFSCycleDetecting(entryBB, 10);
+      return DFSCycleDetecting(entryBB);
     } else {
       return false;
     }
@@ -214,15 +230,53 @@ struct Detection : public FunctionPass {
         successorBB = brInst->getSuccessor(i);
         if (BBVisitedMap.find(successorBB) != BBVisitedMap.end()) {
           BBVisitedMap[successorBB] += 1;
+          // if (TracedBBs.find(BB) != TracedBBs.end()) {
+          //   // start from the traced BB to the rest of other traced BBs
+          //   for (auto bbIter=TracedBBs.find(BB), endIter=TracedBBs.end(); bbIter!=endIter; bbIter++) {
+          //     LoopPathBBs.push_back(*bbIter);
+          //   }
+          //   BBLoopPaths.push_back(LoopPathBBs);
+          //   TracedBBs.pop_back();
+          // }
           return true;
         } else {
           BBVisitedMap.insert(std::pair<BasicBlock*, int>(successorBB, 1));
+          // TracedBBs.push_back(successorBB);
           // dfs continues
           return DFSCycleDetecting(successorBB, LoopLimit);
         }
       }
     }
     return false;
+  }
+
+  bool DFSCycleDetecting(const BasicBlock* BB) {
+    if (BB == nullptr) {
+      return false;
+    }
+
+    if (BBVisitedMap.find(BB) != BBVisitedMap) {    // current BB is visited
+      if (TracedBBs.find(BB) != TracedBBs.end()) {
+        PathBBs = new std::vector<BasicBlock*>();
+        for (auto bbIter=TracedBBs.find(BB), endIter=TracedBBs.end(); bbIter!=endIter; bbIter++) {
+          PathBBs->push_back(*bbIter);
+        }
+        BBLoopPaths.push_back(PathBBs);
+        TracedBBs.pop_back();
+      }
+    } else {    // current BB has not been visited
+      BBVisitedMap.insert(std::pair<BasicBlock*, int>(successorBB, 1));
+      TracedBBs.push_back(successorBB);
+      const Instruction* terminatorInst = BB->getTerminator();
+      BasicBlock* successorBB = nullptr;
+      if (const BranchInst* brInst = dyn_cast<const BranchInst>(terminatorInst)) {
+        unsigned int SUCCESSOR_NUM = brInst->getNumSuccessors();
+        for (unsigned int i=0; i<SUCCESSOR_NUM; i++) {
+          successorBB = brInst->getSuccessor(i);
+          DFSCycleDetecting(successorBB);
+        }
+      }
+    }
   }
 
   bool hasLoopBRInst(const Function & F) {
