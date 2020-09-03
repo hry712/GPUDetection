@@ -33,7 +33,7 @@ struct Detection : public FunctionPass {
   std::map<const BasicBlock*, int> BBVisitedMap;
   std::vector<BasicBlock*> VisitedBBs;
   std::vector<const BasicBlock*> TracedBBs;
-  std::vector<BasicBlock*>* PathBBs;
+  std::vector<const BasicBlock*>* PathBBs;
   std::vector<std::vector<BasicBlock*>*> BBLoopPaths;
 
   static char ID;
@@ -169,7 +169,7 @@ struct Detection : public FunctionPass {
           }
           errs()<< "\nPath print finished.\n";
         }
-        std::map<BasicBlock*, int>::iterator visitedIter = BBVisitedMap.begin();
+        std::map<const BasicBlock*, int>::iterator visitedIter = BBVisitedMap.begin();
         while (visitedIter != BBVisitedMap.end()) {
           if (visitedIter->second == 2)
             break;
@@ -294,7 +294,7 @@ struct Detection : public FunctionPass {
   }
 
   bool hasLoopBRInst(const Function & F) {
-    std::map<BasicBlock*, int>::iterator visitedIter = BBVisitedMap.begin();
+    std::map<const BasicBlock*, int>::iterator visitedIter = BBVisitedMap.begin();
     while (visitedIter != BBVisitedMap.end()) {
       if (visitedIter->second == 2) {
         errs() << "Caution: we found a BB which is visited twice!!\n";
