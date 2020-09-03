@@ -34,7 +34,7 @@ struct Detection : public FunctionPass {
   std::vector<BasicBlock*> VisitedBBs;
   std::vector<const BasicBlock*> TracedBBs;
   std::vector<const BasicBlock*>* PathBBs;
-  std::vector<std::vector<BasicBlock*>*> BBLoopPaths;
+  std::vector<std::vector<const BasicBlock*>*> BBLoopPaths;
 
   static char ID;
   Detection() : FunctionPass(ID) {}
@@ -268,7 +268,7 @@ struct Detection : public FunctionPass {
       // int existRet = std::count(TracedBBs.begin(), TracedBBs.end(), BB);
       int existRet = hasBB(TracedBBs, BB);
       if (existRet != -1) {
-        PathBBs = new std::vector<BasicBlock*>();
+        PathBBs = new std::vector<const BasicBlock*>();
         while (existRet < TracedBBs.size()) {
           PathBBs->push_back(TracedBBs[existRet]);
           ++existRet;
