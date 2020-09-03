@@ -211,6 +211,17 @@ struct Detection : public FunctionPass {
     }
   }
 
+  int hasBB(std::vector<BasicBlock*> src, const BasicBlock* target) {
+    int i = 0;
+    int len = src.size();
+    while (i<len) {
+      if (src[i] == target)
+        return i;
+      i++;
+    }
+    return -1;
+  }
+
   bool hasLoopCFG(const Function &F) {
     const BasicBlock* entryBB = &(F.getEntryBlock());
     if (entryBB != nullptr) {
@@ -254,19 +265,21 @@ struct Detection : public FunctionPass {
     if (BB == nullptr) {
       return false;
     }
-
-    if (BBVisitedMap.find(BB) != BBVisitedMap) {    // current BB is visited
-      if (TracedBBs.find(BB) != TracedBBs.end()) {
+    if (BBVisitedMap.find(BB) != BBVisitedMap.end()) {    // current BB is visited
+      // int existRet = std::count(TracedBBs.begin(), TracedBBs.end(), BB);
+      int existRet = hasBB(TracedBBs, BB);
+      if (existRet != -1) {
         PathBBs = new std::vector<BasicBlock*>();
-        for (auto bbIter=TracedBBs.find(BB), endIter=TracedBBs.end(); bbIter!=endIter; bbIter++) {
-          PathBBs->push_back(*bbIter);
+        while (existRet < TracedBBs.size()) {
+          PathBBs->push_back(TracedBBs[existRet]);
+          ++existRet;
         }
         BBLoopPaths.push_back(PathBBs);
-        TracedBBs.pop_back();
       }
+      return true;
     } else {    // current BB has not been visited
-      BBVisitedMap.insert(std::pair<BasicBlock*, int>(successorBB, 1));
-      TracedBBs.push_back(successorBB);
+      BBVisitedMap.insert(std::pair<BasicBlock*, int>(BB, 1));
+      TracedBBs.push_back(BB);
       const Instruction* terminatorInst = BB->getTerminator();
       BasicBlock* successorBB = nullptr;
       if (const BranchInst* brInst = dyn_cast<const BranchInst>(terminatorInst)) {
@@ -277,6 +290,8 @@ struct Detection : public FunctionPass {
         }
       }
     }
+    TracedBBs.pop_back();
+    return false;
   }
 
   bool hasLoopBRInst(const Function & F) {
