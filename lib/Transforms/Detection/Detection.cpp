@@ -262,12 +262,13 @@ struct Detection : public FunctionPass {
   }
 
   bool LoopPathScaning(const BasicBlock* BB) {
+    bool ans = false;
     if (BB == nullptr) {
       return false;
     }
     if (BBVisitedMap.find(BB) != BBVisitedMap.end()) {    // current BB is visited
       // int existRet = std::count(TracedBBs.begin(), TracedBBs.end(), BB);
-      int existRet = hasBB(TracedBBs, BB);
+      unsigned int existRet = hasBB(TracedBBs, BB);
       if (existRet != -1) {
         PathBBs = new std::vector<const BasicBlock*>();
         while (existRet < TracedBBs.size()) {
@@ -276,7 +277,7 @@ struct Detection : public FunctionPass {
         }
         BBLoopPaths.push_back(PathBBs);
       }
-      return true;
+      ans = true;
     } else {    // current BB has not been visited
       BBVisitedMap.insert(std::pair<const BasicBlock*, int>(BB, 1));
       TracedBBs.push_back(BB);
@@ -286,12 +287,12 @@ struct Detection : public FunctionPass {
         unsigned int SUCCESSOR_NUM = brInst->getNumSuccessors();
         for (unsigned int i=0; i<SUCCESSOR_NUM; i++) {
           successorBB = brInst->getSuccessor(i);
-          DFSCycleDetecting(successorBB);
+          ans = LoopPathScaning(successorBB);
         }
       }
+      TracedBBs.pop_back();
     }
-    TracedBBs.pop_back();
-    return false;
+    return ans;
   }
 
   bool hasLoopBRInst(const Function & F) {
