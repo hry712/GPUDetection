@@ -61,7 +61,7 @@ struct APIMatchDetection : public FunctionPass {
 }
 
 char APIMatchDetection::ID = 0;
-static RegisterPass<APIMatchDetection> DT2("APIMatchDetection", "The GPU Memory util API matching detection pass module.", false, false);
-static llvm::RegisterStandardPasses Y(llvm::PassManagerBuilder::EP_EarlyAsPossible,
-                                      [](const llvm::PassManagerBuilder &Builder,
-                                      llvm::legacy::PassManagerBase &PM) { PM.add(new APIMatchDetection()); });
+static RegisterPass<APIMatchDetection> DT3("APIMatchDetection", "The GPU Memory util API matching detection pass module.", false, false);
+// static llvm::RegisterStandardPasses Y(llvm::PassManagerBuilder::EP_EarlyAsPossible,
+//                                       [](const llvm::PassManagerBuilder &Builder,
+//                                       llvm::legacy::PassManagerBase &PM) { PM.add(new APIMatchDetection()); });
