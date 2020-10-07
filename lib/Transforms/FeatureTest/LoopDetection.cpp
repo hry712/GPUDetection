@@ -7,7 +7,7 @@ using namespace llvm;
 namespace {
     struct LoopDetection : public LoopPass {
         static char ID;
-        LoopDetection() : LoopPass(ID) {}
+        LoopDetection() : LoopPass() {}
 
         void printBBsOfLoop(Loop* L) {
             errs() << "Start to print the BBs from a loop...\n";
