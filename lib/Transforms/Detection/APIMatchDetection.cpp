@@ -16,7 +16,7 @@ struct APIMatchDetection : public FunctionPass {
     Value* rawPtrVar = nullptr;
 
     Value* getRawVarValue(Function &F, Value* FirstArgu) {
-        if (BitCastInst* bitcastInst = dyn_cast<BitCastInst> FirstArgu) {
+        if (BitCastInst* bitcastInst = dyn_cast<BitCastInst>(FirstArgu)) {
             return bitcastInst;
         }
         return nullptr;
@@ -44,7 +44,7 @@ struct APIMatchDetection : public FunctionPass {
                         // firstArgu->uses();
                         errs() << "The first argu content is: " << *firstArgu << "\n";
                         for (auto tmpU : firstArgu->users()) {
-                            if (Instruction* tmpI = dyn_cast<Instruction> tmpU) {
+                            if (Instruction* tmpI = dyn_cast<Instruction>(tmpU)) {
                                 errs() << "The user of the first argu: " << *tmpI << "\n";
                             }
                         }
