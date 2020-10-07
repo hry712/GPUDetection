@@ -16,7 +16,7 @@ struct APIMatchDetection : public FunctionPass {
     Value* rawPtrVar = nullptr;
 
     Value* getRawVarValue(Function &F, Value* FirstArgu) {
-        if (Instruction* bitcastInst = dyn_cast<BitCastInst> FirstArgu) {
+        if (BitCastInst* bitcastInst = dyn_cast<BitCastInst> FirstArgu) {
             return bitcastInst;
         }
         return nullptr;
@@ -44,8 +44,8 @@ struct APIMatchDetection : public FunctionPass {
                         // firstArgu->uses();
                         errs() << "The first argu content is: " << *firstArgu << "\n";
                         for (auto tmpU : firstArgu->users()) {
-                            if (auto tmpI = dyn_cast<Instruction> tmpU) {
-                                errs() << "The user of the first argu: " << tmpI << "\n";
+                            if (Instruction* tmpI = dyn_cast<Instruction> tmpU) {
+                                errs() << "The user of the first argu: " << *tmpI << "\n";
                             }
                         }
                         // realArguVal = 
@@ -61,7 +61,7 @@ struct APIMatchDetection : public FunctionPass {
 }
 
 char APIMatchDetection::ID = 0;
-static RegisterPass<APIMatchDetection> DT2("APIMatchDetection", "The GPU Memory util API matching detection pass module.", false, flase);
+static RegisterPass<APIMatchDetection> DT2("APIMatchDetection", "The GPU Memory util API matching detection pass module.", false, false);
 static llvm::RegisterStandardPasses Y(llvm::PassManagerBuilder::EP_EarlyAsPossible,
                                       [](const llvm::PassManagerBuilder &Builder,
                                       llvm::legacy::PassManagerBase &PM) { PM.add(new APIMatchDetection()); });
