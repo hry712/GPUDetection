@@ -1,7 +1,7 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
-#include "llvm/IR/InstrType.h"
+#include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Use.h"
 
 using namespace llvm;
@@ -13,6 +13,10 @@ namespace {
         Value* rawPtrVar = nullptr;
 
     };
+
+    Value* getRawVarValue(Function &F, Value* FirstArgu) {
+        if (Instruction* bitcastInst = dyn_cast<Bitca>)
+    }
     
     virtual bool runOnFunction(Function &F) {
         // unsigned opcode = 0;
