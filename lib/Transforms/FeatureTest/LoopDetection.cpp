@@ -1,5 +1,6 @@
 #include "llvm/Pass.h"
 #include "llvm/Analysis/LoopPass.h"
+#include "llvm/IR/LegacyPassManager.h"
 
 using namespace llvm;
 
@@ -22,7 +23,7 @@ namespace {
 }
 
 char LoopDetection::ID = 0;
-static RegisterPass<LoopDetection> DT2("LoopDetection", "Try to use the default utility from LoopPass to detect loop info.", false, false);
-static llvm::RegisterStandardPasses Y(llvm::PassManagerBuilder::EP_EarlyAsPossible,
+static RegisterPass<LoopDetection> X("LoopDetection", "Try to use the default utility from LoopPass to detect loop info.", false, false);
+static RegisterStandardPasses Y(llvm::PassManagerBuilder::EP_EarlyAsPossible,
                                       [](const llvm::PassManagerBuilder &Builder,
                                       llvm::legacy::PassManagerBase &PM) { PM.add(new LoopDetection()); });

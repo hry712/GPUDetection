@@ -25,7 +25,7 @@ struct LoopInfoDetection : public FunctionPass {
 }
 
 char LoopInfoDetection::ID = 0;
-static RegisterPass<LoopInfoDetection> DT2("LoopInfoDetection", "Try to use the getAnalysis() to detect loops' info of functions.", false, false);
-static llvm::RegisterStandardPasses Y(llvm::PassManagerBuilder::EP_EarlyAsPossible,
+static RegisterPass<LoopInfoDetection> X("LoopInfoDetection", "Try to use the getAnalysis() to detect loops' info of functions.", false, false);
+static RegisterStandardPasses Y(llvm::PassManagerBuilder::EP_EarlyAsPossible,
                                       [](const llvm::PassManagerBuilder &Builder,
                                       llvm::legacy::PassManagerBase &PM) { PM.add(new LoopInfoDetection()); });
