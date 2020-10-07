@@ -7,12 +7,10 @@
 using namespace llvm;
 
 namespace {
-    struct APIMatchDetection : public FunctionPass {
-        static char ID;
-        APIMatchDetection() : FunctionPass(ID) {}
-        Value* rawPtrVar = nullptr;
-
-    };
+struct APIMatchDetection : public FunctionPass {
+    static char ID;
+    APIMatchDetection() : FunctionPass(ID) {}
+    Value* rawPtrVar = nullptr;
 
     Value* getRawVarValue(Function &F, Value* FirstArgu) {
         if (Instruction* bitcastInst = dyn_cast<Bitca>)
@@ -53,6 +51,7 @@ namespace {
         }
         return false;
     }
+};
 }
 
 char APIMatchDetection::ID = 0;
