@@ -5,6 +5,7 @@ endif()
 add_llvm_library( LLVMDetection MODULE BUILDTREE_ONLY
   Detection.cpp
   DeviceResetDetection.cpp
+  APIMatchDetection.cpp
 
   DEPENDS
   intrinsics_gen
