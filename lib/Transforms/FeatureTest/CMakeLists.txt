@@ -3,7 +3,6 @@ if(WIN32 OR CYGWIN)
 endif()
 
 add_llvm_library( LLVMFeatureTest MODULE BUILDTREE_ONLY
-  LoopDetection.cpp
   LoopInfoDetection.cpp
 
   DEPENDS
