@@ -1,4 +1,4 @@
-#include "llvm/IR/Pass.h"
+#include "llvm/Pass.h"
 #include "llvm/IR/Function.h"
 #include "llvm/Analysis/LoopInfo.h"
 

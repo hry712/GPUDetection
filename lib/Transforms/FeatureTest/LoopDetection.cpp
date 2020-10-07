@@ -1,4 +1,4 @@
-#include "llvm/IR/Pass.h"
+#include "llvm/Pass.h"
 #include "llvm/Analysis/LoopPass.h"
 
 using namespace llvm;
