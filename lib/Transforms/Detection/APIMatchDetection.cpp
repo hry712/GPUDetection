@@ -3,6 +3,8 @@
 #include "llvm/IR/Value.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Use.h"
+#include "llvm/Pass.h"
+#include "llvm/IR/Instructions.h"
 
 using namespace llvm;
 
@@ -10,10 +12,14 @@ namespace {
 struct APIMatchDetection : public FunctionPass {
     static char ID;
     APIMatchDetection() : FunctionPass(ID) {}
+
     Value* rawPtrVar = nullptr;
 
     Value* getRawVarValue(Function &F, Value* FirstArgu) {
-        if (Instruction* bitcastInst = dyn_cast<Bitca>)
+        if (Instruction* bitcastInst = dyn_cast<BitCastInst> FirstArgu) {
+            return bitcastInst;
+        }
+        return nullptr;
     }
     
     virtual bool runOnFunction(Function &F) {
