@@ -62,4 +62,3 @@ struct APIMatchDetection : public FunctionPass {
 
 char APIMatchDetection::ID = 0;
 static RegisterPass<APIMatchDetection> APIMD("APIMatchDetection", "The GPU Memory util API matching detection pass module.", false, false);
-                                    llvm::legacy::PassManagerBase &PM) { PM.add(new APIMatchDetection()); });
