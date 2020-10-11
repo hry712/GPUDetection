@@ -17,7 +17,7 @@ struct LoopInfoDetection : public FunctionPass {
     }
 
     virtual bool runOnFunction(Function& F) {
-        LoopInfo &LI = getAnalysis<LoopInfo>(F);
+        LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>(F).getLoopInfo();
         for (LoopInfo::iterator LIT = LI.begin(), LEND = LI.end(); LIT!=LEND ; LIT++) {
             printBBsOfLoop(*LIT);
         }
