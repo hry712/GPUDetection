@@ -21,6 +21,7 @@ struct LoopInfoDetection : public FunctionPass {
         for (LoopInfo::iterator LIT = LI.begin(), LEND = LI.end(); LIT!=LEND ; LIT++) {
             printBBsOfLoop(*LIT);
         }
+        return false;
     }
 };
 }
