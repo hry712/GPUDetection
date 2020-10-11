@@ -25,7 +25,9 @@
         "__string": "cpp",
         "__tree": "cpp",
         "algorithm": "cpp",
-        "string_view": "cpp"
+        "string_view": "cpp",
+        "__locale": "cpp",
+        "regex": "cpp"
     },
     "restructuredtext.confPath": ""
 }

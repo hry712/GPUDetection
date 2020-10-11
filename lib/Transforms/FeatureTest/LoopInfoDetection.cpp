@@ -19,13 +19,15 @@ struct LoopInfoDetection : public FunctionPass {
     }
 
     virtual bool runOnFunction(Function& F) {
-        errs()<< "Entered the LoopInfoDetection pass module.\n";
-        LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>(F).getLoopInfo();
-        errs()<< "Try to print out the Loops' info.\n";
-        for (LoopInfo::iterator LIT = LI.begin(), LEND = LI.end(); LIT!=LEND ; LIT++) {
-            printBBsOfLoop(*LIT);
+        if (F.getParent()->getTargetTriple().compare("nvptx64-nvidia-cuda") == 0) {
+            errs()<< "Entered the LoopInfoDetection pass module for nvidia cuda funcs.\n";
+            LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>(F).getLoopInfo();
+            errs()<< "Try to print out the Loops' info.\n";
+            for (LoopInfo::iterator LIT = LI.begin(), LEND = LI.end(); LIT!=LEND ; LIT++) {
+                printBBsOfLoop(*LIT);
+            }
+            errs()<< "LoopInfoDetection pass finished.\n";
         }
-        errs()<< "LoopInfoDetection pass finished.\n";
         return false;
     }
 };
