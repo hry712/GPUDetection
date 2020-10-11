@@ -17,8 +17,19 @@ struct LoopInfoDetection : public FunctionPass {
             return ;
         }
         errs() << "Start to print the BBs from a loop...\n";
+        int BBNums = 0;
         for (Loop::block_iterator bbItr = L->block_begin(), endItr = L->block_end(); bbItr!=endItr; bbItr++) {
-            errs() << bbItr << "\n";
+            // errs()<< *(*bbItr) << "\n";
+            ++BBNums;
+        }
+        errs()<< "The BB number of the current loop is: " << BBNums << "\n";
+        BBNums = 0;
+        std::vector<Loop*> subLoops = L->getSubLoops();
+        Loop::iterator subLpItr = subLoops.begin();
+        Loop::iterator subLpEnd = subLoops.end();
+        while (subLpItr != subLpEnd) {
+            printBBsOfLoop(*subLpItr);
+            ++subLpItr;
         }
     }
 
