@@ -37,7 +37,7 @@ struct LoopInfoDetection : public FunctionPass {
         if (F.getParent()->getTargetTriple().compare("nvptx64-nvidia-cuda") == 0) {
             errs()<< "Entered the LoopInfoDetection pass module for nvidia cuda func: "<< F.getName() <<"\n";
             LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>(F).getLoopInfo();
-            errs()<< "Try to print out the Loops' info.\n";
+            errs()<< "Try to print out the Loop's info.\n";
             if (LI.empty()) {
                 errs()<< "Function: " << F.getName() << " has no loop.\n";
                 return false;
@@ -56,6 +56,6 @@ char LoopInfoDetection::ID = 0;
 static RegisterPass<LoopInfoDetection> LID("LoopInfoDetection",
                                         "Try to use the getAnalysis() to detect loops' info of functions.",
                                         false, false);
-static llvm::RegisterStandardPasses LIDY2(PassManagerBuilder::EP_EarlyAsPossible,
-                                      [](const PassManagerBuilder &Builder,
-                                      legacy::PassManagerBase &PM) { PM.add(new LoopInfoDetection()); });
+// static llvm::RegisterStandardPasses LIDY2(PassManagerBuilder::EP_EarlyAsPossible,
+//                                       [](const PassManagerBuilder &Builder,
+//                                       legacy::PassManagerBase &PM) { PM.add(new LoopInfoDetection()); });

@@ -4,6 +4,7 @@ endif()
 
 add_llvm_library( LLVMFeatureTest MODULE BUILDTREE_ONLY
   LoopInfoDetection.cpp
+  LoopInfoModuleDetection.cpp
 
   DEPENDS
   intrinsics_gen
