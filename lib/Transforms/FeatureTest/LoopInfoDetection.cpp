@@ -17,17 +17,22 @@ struct LoopInfoDetection : public FunctionPass {
     }
 
     virtual bool runOnFunction(Function& F) {
+        errs()<< "Entered the LoopInfoDetection pass module.\n";
         LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>(F).getLoopInfo();
+        errs()<< "Try to print out the Loops' info.\n";
         for (LoopInfo::iterator LIT = LI.begin(), LEND = LI.end(); LIT!=LEND ; LIT++) {
             printBBsOfLoop(*LIT);
         }
+        errs()<< "LoopInfoDetection pass finished.\n";
         return false;
     }
 };
 }
 
 char LoopInfoDetection::ID = 0;
-static RegisterPass<LoopInfoDetection> LID("LoopInfoDetection", "Try to use the getAnalysis() to detect loops' info of functions.", false, false);
-// static RegisterStandardPasses Y(llvm::PassManagerBuilder::EP_EarlyAsPossible,
-//                                       [](const llvm::PassManagerBuilder &Builder,
-//                                       llvm::legacy::PassManagerBase &PM) { PM.add(new LoopInfoDetection()); });
+static RegisterPass<LoopInfoDetection> LID("LoopInfoDetection",
+                                        "Try to use the getAnalysis() to detect loops' info of functions.",
+                                        false, false);
+static llvm::RegisterStandardPasses LID2(llvm::PassManagerBuilder::EP_EarlyAsPossible,
+                                      [](const llvm::PassManagerBuilder &Builder,
+                                      llvm::legacy::PassManagerBase &PM) { PM.add(new LoopInfoDetection()); });
