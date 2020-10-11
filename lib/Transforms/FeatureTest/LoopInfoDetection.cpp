@@ -12,9 +12,13 @@ struct LoopInfoDetection : public FunctionPass {
     LoopInfoDetection() : FunctionPass(ID) {}
 
     void printBBsOfLoop(Loop* L) {
+        if (L == nullptr) {
+            errs()<< "No loop was found in this code.\n";
+            return ;
+        }
         errs() << "Start to print the BBs from a loop...\n";
         for (Loop::block_iterator bbItr = L->block_begin(), endItr = L->block_end(); bbItr!=endItr; bbItr++) {
-            errs() << *bbItr << "\n";
+            errs() << bbItr << "\n";
         }
     }
 
@@ -23,6 +27,10 @@ struct LoopInfoDetection : public FunctionPass {
             errs()<< "Entered the LoopInfoDetection pass module for nvidia cuda funcs.\n";
             LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>(F).getLoopInfo();
             errs()<< "Try to print out the Loops' info.\n";
+            if (LI.empty()) {
+                errs()<< "Function: " << F.getName() << " has no loop.\n";
+                return false;
+            }
             for (LoopInfo::iterator LIT = LI.begin(), LEND = LI.end(); LIT!=LEND ; LIT++) {
                 printBBsOfLoop(*LIT);
             }
