@@ -29,5 +29,6 @@
         "__locale": "cpp",
         "regex": "cpp"
     },
-    "restructuredtext.confPath": ""
+    "restructuredtext.confPath": "",
+    "cmake.configureOnOpen": false
 }

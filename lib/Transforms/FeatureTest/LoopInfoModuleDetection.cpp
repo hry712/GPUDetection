@@ -26,8 +26,8 @@ struct LoopInfoModuleDetection : public ModulePass {
 }   // end namespace
 
 char LoopInfoModuleDetection::ID = 0;
-static RegisterPass<LoopInfoModuleDetection> LIMD("LoopInfoDetection",
-                                        "Try to use the getAnalysis() to detect loops' info of functions.",
+static RegisterPass<LoopInfoModuleDetection> LIMD("LoopInfoModuleDetection",
+                                        "Try to use the ModulePass to detect loops' info of functions.",
                                         false, false);
 static llvm::RegisterStandardPasses LIMDY2(PassManagerBuilder::EP_EarlyAsPossible,
                                         [](const PassManagerBuilder &Builder,
