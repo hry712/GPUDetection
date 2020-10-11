@@ -35,7 +35,7 @@ struct LoopInfoDetection : public FunctionPass {
 
     virtual bool runOnFunction(Function& F) {
         if (F.getParent()->getTargetTriple().compare("nvptx64-nvidia-cuda") == 0) {
-            errs()<< "Entered the LoopInfoDetection pass module for nvidia cuda funcs.\n";
+            errs()<< "Entered the LoopInfoDetection pass module for nvidia cuda func: "<< F.getName() <<"\n";
             LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>(F).getLoopInfo();
             errs()<< "Try to print out the Loops' info.\n";
             if (LI.empty()) {
