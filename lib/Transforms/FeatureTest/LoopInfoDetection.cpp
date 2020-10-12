@@ -1,8 +1,9 @@
 #include "llvm/Pass.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/Dominators.h"
+#include "llvm/IR/LegacyPassManager.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/IR/LegacyPassManager.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 
 using namespace llvm;
@@ -33,18 +34,33 @@ struct LoopInfoDetection : public FunctionPass {
         }
     }
 
+    // virtual void getAnalysisUsage(AnalysisUsage& AU) const {
+    //     AU.addRequired<LoopInfo>();
+    // }
+
     virtual bool runOnFunction(Function& F) {
         if (F.getParent()->getTargetTriple().compare("nvptx64-nvidia-cuda") == 0) {
             errs()<< "Entered the LoopInfoDetection pass module for nvidia cuda func: "<< F.getName() <<"\n";
-            LoopInfo &LI = getAnalysis<LoopInfo>();
-            errs()<< "Try to print out the Loop's info.\n";
-            if (LI.empty()) {
-                errs()<< "Function: " << F.getName() << " has no loop.\n";
-                return false;
+            // Try to use DominatorTree for Analyze methods' work
+            DominatorTree* DT = new DominatorTree();
+            DT->DT->recaculate(F);
+            LoopInfoBase<BasicBlock, Loop>* KLoop = new LoopInfoBase<BasicBlock, Loop>();
+            KLoop->releaseMemory();
+            KLoop->analyze(DT->getBase());
+            if (KLoop->isNotAlreadyContainedIn()) {
+                errs()<< "No loops is found!\n"
+            } else {
+                errs()<< "loop(s) exist(s)!\n"
             }
-            for (LoopInfo::iterator LIT = LI.begin(), LEND = LI.end(); LIT!=LEND ; LIT++) {
-                printBBsOfLoop(*LIT);
-            }
+            // LoopInfo &LI = getAnalysis<LoopInfo>();
+            // errs()<< "Try to print out the Loop's info.\n";
+            // if (LI.empty()) {
+            //     errs()<< "Function: " << F.getName() << " has no loop.\n";
+            //     return false;
+            // }
+            // for (LoopInfo::iterator LIT = LI.begin(), LEND = LI.end(); LIT!=LEND ; LIT++) {
+            //     printBBsOfLoop(*LIT);
+            // }
             errs()<< "LoopInfoDetection pass finished.\n";
         }
         return false;
