@@ -1,6 +1,6 @@
 #include "llvm/Pass.h"
 #include "llvm/IR/Function.h"
-#include "llvm/IR/Dominators.h"
+// #include "llvm/IR/Dominators.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/raw_ostream.h"
@@ -34,30 +34,28 @@ struct LoopInfoDetection : public FunctionPass {
         }
     }
 
-    // virtual void getAnalysisUsage(AnalysisUsage& AU) const {
-    //     AU.addRequired<LoopInfo>();
-    // }
+    virtual void getAnalysisUsage(AnalysisUsage& AU) const override {
+        AU.addRequired<LoopInfoWrapperPass>();
+    }
 
     virtual bool runOnFunction(Function& F) {
         if (F.getParent()->getTargetTriple().compare("nvptx64-nvidia-cuda") == 0) {
             errs()<< "Entered the LoopInfoDetection pass module for nvidia cuda func: "<< F.getName() <<"\n";
             // Try to use DominatorTree for Analyze methods' work
-            DominatorTree* DT = new DominatorTree();
-            DT->DT->recaculate(F);
-            LoopInfoBase<BasicBlock, Loop>* KLoop = new LoopInfoBase<BasicBlock, Loop>();
-            KLoop->releaseMemory();
-            KLoop->analyze(DT->getBase());
-            if (KLoop->isNotAlreadyContainedIn()) {
-                errs()<< "No loops is found!\n"
+            // DominatorTree* DT = new DominatorTree();
+            // DT->recaculate(F);
+            // LoopInfoBase<BasicBlock, Loop>* KLoop = new LoopInfoBase<BasicBlock, Loop>();
+            // KLoop->releaseMemory();
+            // KLoop->analyze(DT->Base());
+            //=====---------------------------------------------------------------------=====
+            LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
+            errs()<< "Try to print out the Loop's info.\n";
+            if (LI.empty()) {
+                errs()<< "Function: " << F.getName() << " has no loop.\n";
+                return false;
             } else {
-                errs()<< "loop(s) exist(s)!\n"
+                errs()<< "Function: " << F.getName() << " contains loops!!!\n";
             }
-            // LoopInfo &LI = getAnalysis<LoopInfo>();
-            // errs()<< "Try to print out the Loop's info.\n";
-            // if (LI.empty()) {
-            //     errs()<< "Function: " << F.getName() << " has no loop.\n";
-            //     return false;
-            // }
             // for (LoopInfo::iterator LIT = LI.begin(), LEND = LI.end(); LIT!=LEND ; LIT++) {
             //     printBBsOfLoop(*LIT);
             // }
