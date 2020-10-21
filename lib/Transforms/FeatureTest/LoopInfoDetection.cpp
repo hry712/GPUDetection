@@ -63,7 +63,7 @@ struct LoopInfoDetection : public FunctionPass {
                 LpInf->releaseMemory();
                 LpInf->analyze(DT);
                 // errs()<< "Try to print the LoopInfo through the LoopInfoBase print() method.\n";
-                LpInf->print(errs);
+                LpInf->print(errs());
             }
             // for (LoopInfo::iterator LIT = LI.begin(), LEND = LI.end(); LIT!=LEND ; LIT++) {
             //     printBBsOfLoop(*LIT);
