@@ -49,17 +49,25 @@ struct LoopInfoDetection : public FunctionPass {
             // KLoop->analyze(DT->Base());
             //=====---------------------------------------------------------------------=====
             LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-            errs()<< "Try to print out the Loop's info.\n";
             if (LI.empty()) {
-                errs()<< "Function: " << F.getName() << " has no loop.\n";
+                errs()<< "Function: " << F.getName() << " has no loop.\n\n";
                 return false;
             } else {
                 errs()<< "Function: " << F.getName() << " contains loops!!!\n";
+                errs()<< "Try to print out the Loop's info.\n";
+                // the main info of a loop is recorded in the LoopInfoBase class
+                DominatorTree DT = DominatorTree();
+                DT.recaculate(F);
+                LoopInfoBase<BasicBlock, Loop>* LpInf = new LoopInfoBase<BasicBlock, Loop>();
+                LpInf->releaseMemory();
+                LpInf->analyze(DT);
+                errs()<< "Try to print the LoopInfo through the LoopInfoBase print() method.\n";
+                LpInf->print();
             }
             // for (LoopInfo::iterator LIT = LI.begin(), LEND = LI.end(); LIT!=LEND ; LIT++) {
             //     printBBsOfLoop(*LIT);
             // }
-            errs()<< "LoopInfoDetection pass finished.\n";
+            errs()<< "LoopInfoDetection pass finished.\n\n";
         }
         return false;
     }
