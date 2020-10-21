@@ -39,6 +39,7 @@ struct LoopInfoDetection : public FunctionPass {
     }
 
     virtual bool runOnFunction(Function& F) {
+        // raw_ostream output;
         if (F.getParent()->getTargetTriple().compare("nvptx64-nvidia-cuda") == 0) {
             errs()<< "Entered the LoopInfoDetection pass module for nvidia cuda func: "<< F.getName() <<"\n";
             // Try to use DominatorTree for Analyze methods' work
@@ -57,12 +58,12 @@ struct LoopInfoDetection : public FunctionPass {
                 errs()<< "Try to print out the Loop's info.\n";
                 // the main info of a loop is recorded in the LoopInfoBase class
                 DominatorTree DT = DominatorTree();
-                DT.recaculate(F);
+                DT.recalculate(F);
                 LoopInfoBase<BasicBlock, Loop>* LpInf = new LoopInfoBase<BasicBlock, Loop>();
                 LpInf->releaseMemory();
                 LpInf->analyze(DT);
-                errs()<< "Try to print the LoopInfo through the LoopInfoBase print() method.\n";
-                LpInf->print();
+                // errs()<< "Try to print the LoopInfo through the LoopInfoBase print() method.\n";
+                LpInf->print(errs);
             }
             // for (LoopInfo::iterator LIT = LI.begin(), LEND = LI.end(); LIT!=LEND ; LIT++) {
             //     printBBsOfLoop(*LIT);
