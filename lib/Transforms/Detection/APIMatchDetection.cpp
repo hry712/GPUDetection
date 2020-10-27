@@ -38,14 +38,14 @@ struct APIMatchDetection : public FunctionPass {
     }
     
     virtual bool runOnFunction(Function &F) {
-        // unsigned opcode = 0;
-        CallInst* callInstPtr = nullptr;
-        Function* calledFunc = nullptr;
-        std::string calledFuncName;
-        Value* firstArgu = nullptr;
-        Value* realArguVal = nullptr;
         // this pass module is prepared for host codes detection
-        if (F.getParent()->getTargetTriple().compare("x86_64-unknown-linux-gnu") == 0) {
+        if (F.getParent().getTargetTriple().compare("x86_64-unknown-linux-gnu") == 0) {
+            // unsigned opcode = 0;
+            CallInst* callInstPtr = nullptr;
+            Function* calledFunc = nullptr;
+            std::string calledFuncName;
+            Value* firstArgu = nullptr;
+            Value* realArguVal = nullptr;
             for (Function::iterator BBItr = F.begin(), EndBB = F.end(); BBItr != EndBB; BBItr++) {
                 for (BasicBlock::iterator IRItr = (*BBItr).begin(), EndIR = (*BBItr).end(); IRItr != EndIR; IRItr++) {
                     if (isa<CallInst>(&(*IRItr))) {

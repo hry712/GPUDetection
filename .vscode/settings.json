@@ -27,7 +27,9 @@
         "algorithm": "cpp",
         "string_view": "cpp",
         "__locale": "cpp",
-        "regex": "cpp"
+        "regex": "cpp",
+        "__config": "cpp",
+        "__nullptr": "cpp"
     },
     "restructuredtext.confPath": "",
     "cmake.configureOnOpen": false
