@@ -79,6 +79,6 @@ char LoopInfoDetection::ID = 0;
 static RegisterPass<LoopInfoDetection> LID("LoopInfoDetection",
                                         "Try to use the getAnalysis() to detect loops' info of functions.",
                                         false, false);
-static llvm::RegisterStandardPasses LIDY2(PassManagerBuilder::EP_EarlyAsPossible,
-                                      [](const PassManagerBuilder &Builder,
-                                      legacy::PassManagerBase &PM) { PM.add(new LoopInfoDetection()); });
+// static llvm::RegisterStandardPasses LIDY2(PassManagerBuilder::EP_EarlyAsPossible,
+//                                       [](const PassManagerBuilder &Builder,
+//                                       legacy::PassManagerBase &PM) { PM.add(new LoopInfoDetection()); });

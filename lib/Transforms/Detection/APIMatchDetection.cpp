@@ -6,7 +6,10 @@
 #include "llvm/Pass.h"
 #include "llvm/IR/Instructions.h"
 
+#include <vector>
+
 using namespace llvm;
+using namespace std;
 
 namespace {
 struct APIMatchDetection : public FunctionPass {
@@ -14,12 +17,19 @@ struct APIMatchDetection : public FunctionPass {
     APIMatchDetection() : FunctionPass(ID) {}
 
     Value* rawPtrVar = nullptr;
+    std::vector<Value*> callInstVect;
 
     Value* getRawVarValue(Function &F, Value* FirstArgu) {
         if (BitCastInst* bitcastInst = dyn_cast<BitCastInst>(FirstArgu)) {
             return bitcastInst;
         }
         return nullptr;
+    }
+
+    void printCallInstVector(void) {
+        errs()<< "Start to print out the CallInst vector...\n";
+        for (auto inst : callInstVect)
+            errs()<< *inst << "\n";
     }
     
     virtual bool runOnFunction(Function &F) {
@@ -31,27 +41,30 @@ struct APIMatchDetection : public FunctionPass {
         Value* realArguVal = nullptr;
         for (Function::iterator BBItr = F.begin(), EndBB = F.end(); BBItr != EndBB; BBItr++) {
             for (BasicBlock::iterator IRItr = (*BBItr).begin(), EndIR = (*BBItr).end(); IRItr != EndIR; IRItr++) {
-                if (callInstPtr = dyn_cast<CallInst> (IRItr)) {
+                if (isa<CallInst>(&(*IRItr))) {
+                    callInstVect.push_back(&(*IRItr));
+                }
+                // if (callInstPtr = dyn_cast<CallInst> (IRItr)) {
                     // 1. identify the callee's function name
                     // 2. get the callee's first argu
-                    calledFunc = callInstPtr->getCalledFunction();
-                    calledFuncName = calledFunc->getName().str();
-                    if (calledFuncName == "cudaMalloc") {
+                    // calledFunc = callInstPtr->getCalledFunction();
+                    // calledFuncName = calledFunc->getName().str();
+                    // if (calledFuncName == "cudaMalloc") {
                         // 1. first check the called function whether exists in the records.
                         //    and the token is the first argument value
-                        firstArgu = dyn_cast<ConstantInt>(calledFunc->arg_begin());
+                        // firstArgu = dyn_cast<ConstantInt>(calledFunc->arg_begin());
                         // 2. Try to find out the according bitcast raw variable behind first argu through use
                         // firstArgu->uses();
-                        errs() << "The first argu content is: " << *firstArgu << "\n";
-                        for (auto tmpU : firstArgu->users()) {
-                            if (Instruction* tmpI = dyn_cast<Instruction>(tmpU)) {
-                                errs() << "The user of the first argu: " << *tmpI << "\n";
-                            }
-                        }
+                        // errs() << "The first argu content is: " << *firstArgu << "\n";
+                        // for (auto tmpU : firstArgu->users()) {
+                            // if (Instruction* tmpI = dyn_cast<Instruction>(tmpU)) {
+                            //     errs() << "The user of the first argu: " << *tmpI << "\n";
+                            // }
+                        // }
                         // realArguVal = 
-                    } else if (calledFuncName == "cudaFree") {
+                    // } else if (calledFuncName == "cudaFree") {
 
-                    }
+                    // }
                 }
             }
         }
@@ -61,4 +74,9 @@ struct APIMatchDetection : public FunctionPass {
 }
 
 char APIMatchDetection::ID = 0;
-static RegisterPass<APIMatchDetection> APIMD("APIMatchDetection", "The GPU Memory util API matching detection pass module.", false, false);
+static RegisterPass<APIMatchDetection> APIMD("APIMatchDetection", 
+                                            "The GPU Memory util API matching detection pass module.", 
+                                            false, false);
+static llvm::RegisterStandardPasses APIMDY2(PassManagerBuilder::EP_EarlyAsPossible,
+                                      [](const PassManagerBuilder &Builder,
+                                      legacy::PassManagerBase &PM) { PM.add(new APIMatchDetection()); });
