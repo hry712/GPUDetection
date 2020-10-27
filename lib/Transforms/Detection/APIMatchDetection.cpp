@@ -31,8 +31,10 @@ struct APIMatchDetection : public FunctionPass {
 
     void printCallInstVector(void) {
         errs()<< "Start to print out the CallInst vector...\n";
-        for (auto inst : callInstVect)
-            errs()<< *inst << "\n";
+        if (!callInstVect.empty()) {
+            for (auto inst : callInstVect)
+                errs()<< *inst << "\n";
+        }
     }
     
     virtual bool runOnFunction(Function &F) {
@@ -42,34 +44,38 @@ struct APIMatchDetection : public FunctionPass {
         std::string calledFuncName;
         Value* firstArgu = nullptr;
         Value* realArguVal = nullptr;
-        for (Function::iterator BBItr = F.begin(), EndBB = F.end(); BBItr != EndBB; BBItr++) {
-            for (BasicBlock::iterator IRItr = (*BBItr).begin(), EndIR = (*BBItr).end(); IRItr != EndIR; IRItr++) {
-                if (isa<CallInst>(&(*IRItr))) {
-                    callInstVect.push_back(&(*IRItr));
-                }
-                // if (callInstPtr = dyn_cast<CallInst> (IRItr)) {
-                    // 1. identify the callee's function name
-                    // 2. get the callee's first argu
-                    // calledFunc = callInstPtr->getCalledFunction();
-                    // calledFuncName = calledFunc->getName().str();
-                    // if (calledFuncName == "cudaMalloc") {
-                        // 1. first check the called function whether exists in the records.
-                        //    and the token is the first argument value
-                        // firstArgu = dyn_cast<ConstantInt>(calledFunc->arg_begin());
-                        // 2. Try to find out the according bitcast raw variable behind first argu through use
-                        // firstArgu->uses();
-                        // errs() << "The first argu content is: " << *firstArgu << "\n";
-                        // for (auto tmpU : firstArgu->users()) {
-                            // if (Instruction* tmpI = dyn_cast<Instruction>(tmpU)) {
-                            //     errs() << "The user of the first argu: " << *tmpI << "\n";
+        // this pass module is prepared for host codes detection
+        if (F.getParent()->getTargetTriple().compare("x86_64-unknown-linux-gnu") == 0) {
+            for (Function::iterator BBItr = F.begin(), EndBB = F.end(); BBItr != EndBB; BBItr++) {
+                for (BasicBlock::iterator IRItr = (*BBItr).begin(), EndIR = (*BBItr).end(); IRItr != EndIR; IRItr++) {
+                    if (isa<CallInst>(&(*IRItr))) {
+                        callInstVect.push_back(&(*IRItr));
+                    }
+                    // if (callInstPtr = dyn_cast<CallInst> (IRItr)) {
+                        // 1. identify the callee's function name
+                        // 2. get the callee's first argu
+                        // calledFunc = callInstPtr->getCalledFunction();
+                        // calledFuncName = calledFunc->getName().str();
+                        // if (calledFuncName == "cudaMalloc") {
+                            // 1. first check the called function whether exists in the records.
+                            //    and the token is the first argument value
+                            // firstArgu = dyn_cast<ConstantInt>(calledFunc->arg_begin());
+                            // 2. Try to find out the according bitcast raw variable behind first argu through use
+                            // firstArgu->uses();
+                            // errs() << "The first argu content is: " << *firstArgu << "\n";
+                            // for (auto tmpU : firstArgu->users()) {
+                                // if (Instruction* tmpI = dyn_cast<Instruction>(tmpU)) {
+                                //     errs() << "The user of the first argu: " << *tmpI << "\n";
+                                // }
                             // }
-                        // }
-                        // realArguVal = 
-                    // } else if (calledFuncName == "cudaFree") {
+                            // realArguVal = 
+                        // } else if (calledFuncName == "cudaFree") {
 
+                        // }
                     // }
-                // }
+                }
             }
+            printCallInstVector();
         }
         return false;
     }
