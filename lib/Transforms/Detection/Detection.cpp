@@ -343,6 +343,6 @@ char Detection::ID = 0;
 static RegisterPass<Detection> DT1("detection", "GPU kernel malware detection Pass",
                              false /* Only looks at CFG */,
                              false /* Analysis Pass */);
-static llvm::RegisterStandardPasses Y2(llvm::PassManagerBuilder::EP_EarlyAsPossible,
-                                      [](const llvm::PassManagerBuilder &Builder,
-                                      llvm::legacy::PassManagerBase &PM) { PM.add(new Detection()); });
+// static llvm::RegisterStandardPasses DY2(llvm::PassManagerBuilder::EP_EarlyAsPossible,
+//                                       [](const llvm::PassManagerBuilder &Builder,
+//                                       llvm::legacy::PassManagerBase &PM) { PM.add(new Detection()); });
