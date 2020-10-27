@@ -39,7 +39,7 @@ struct APIMatchDetection : public FunctionPass {
     
     virtual bool runOnFunction(Function &F) {
         // this pass module is prepared for host codes detection
-        if (F.getParent()->getTargetTriple().compare("x86_64-unknown-linux-gnu") == 0) {
+        if ((F.getParent())->getTargetTriple().compare("x86_64-unknown-linux-gnu") == 0) {
             // unsigned opcode = 0;
             // CallInst* callInstPtr = nullptr;
             // Function* calledFunc = nullptr;
