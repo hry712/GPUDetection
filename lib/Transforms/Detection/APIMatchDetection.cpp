@@ -65,7 +65,7 @@ struct APIMatchDetection : public FunctionPass {
                     // } else if (calledFuncName == "cudaFree") {
 
                     // }
-                }
+                // }
             }
         }
         return false;
