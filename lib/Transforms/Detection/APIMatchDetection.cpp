@@ -50,7 +50,14 @@ struct APIMatchDetection : public FunctionPass {
             for (Function::iterator BBItr = F.begin(), EndBB = F.end(); BBItr != EndBB; BBItr++) {
                 for (BasicBlock::iterator IRItr = (*BBItr).begin(), EndIR = (*BBItr).end(); IRItr != EndIR; IRItr++) {
                     if (isa<CallInst>(&(*IRItr))) {
-                        callInstVect.push_back(&(*IRItr));
+                        CallInst* callInst = dyn_cast<CallInst>(&(*IRItr));
+                        Function* calledFunc = callInst->getCalledFunction();
+                        std::string calledFuncName = calledFunc->getName();
+                        if (calledFuncName=="cudaMalloc" || 
+                            calledFuncName=="cudaFree" ||
+                            calledFuncName=="cudaDeviceReset") {
+                            callInstVect.push_back(&(*IRItr));
+                        }
                     }
                     // if (callInstPtr = dyn_cast<CallInst> (IRItr)) {
                         // 1. identify the callee's function name
