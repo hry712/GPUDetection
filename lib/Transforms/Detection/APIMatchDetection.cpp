@@ -37,6 +37,7 @@ struct APIMatchDetection : public FunctionPass {
                 errs()<< *inst << "\n";
         }
         callInstVect.clear();
+        errs()<< "Finish printing.\n";
     }
     
     virtual bool runOnFunction(Function &F) {
