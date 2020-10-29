@@ -50,6 +50,7 @@ struct APIMatchDetection : public FunctionPass {
                     errs()<< "Inst: " << (*IRItr) << "\n";
                     // if (isa<CallInst>(&(*IRItr))) {
                     if (callInst = dyn_cast<CallInst>(&(*IRItr))) {
+                        errs()<< "Find a CallInst: " << *callInst << "\n";
                         Function* calledFunc = callInst->getCalledFunction();
                         std::string calledFuncName = calledFunc->getName();
                         errs()<< "Called function name: " << calledFuncName << "\n";
