@@ -49,6 +49,7 @@ struct APIMatchDetection : public FunctionPass {
             // std::string calledFuncName;
             // Value* firstArgu = nullptr;
             // Value* realArguVal = nullptr;
+            errs()<< "Enter the host function: " << F.getName() << "\n";
             for (Function::iterator BBItr = F.begin(), EndBB = F.end(); BBItr != EndBB; BBItr++) {
                 for (BasicBlock::iterator IRItr = (*BBItr).begin(), EndIR = (*BBItr).end(); IRItr != EndIR; IRItr++) {
                     if (isa<CallInst>(&(*IRItr))) {
