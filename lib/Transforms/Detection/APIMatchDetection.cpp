@@ -44,11 +44,12 @@ struct APIMatchDetection : public FunctionPass {
         // this pass module is prepared for host codes detection
         if ((F.getParent())->getTargetTriple().compare("x86_64-unknown-linux-gnu") == 0) {
             errs()<< "Enter the host function: " << F.getName() << "\n";
+            CallInst* callInst = nullptr;
             for (Function::iterator BBItr = F.begin(), EndBB = F.end(); BBItr != EndBB; BBItr++) {
                 for (BasicBlock::iterator IRItr = (*BBItr).begin(), EndIR = (*BBItr).end(); IRItr != EndIR; IRItr++) {
                     errs()<< "Inst: " << (*IRItr) << "\n";
-                    if (isa<CallInst>(&(*IRItr))) {
-                        CallInst* callInst = dyn_cast<CallInst>(&(*IRItr));
+                    // if (isa<CallInst>(&(*IRItr))) {
+                    if (callInst = dyn_cast<CallInst>(&(*IRItr))) {
                         Function* calledFunc = callInst->getCalledFunction();
                         std::string calledFuncName = calledFunc->getName();
                         errs()<< "Called function name: " << calledFuncName << "\n";
