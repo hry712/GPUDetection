@@ -51,6 +51,7 @@ struct APIMatchDetection : public FunctionPass {
                         CallInst* callInst = dyn_cast<CallInst>(&(*IRItr));
                         Function* calledFunc = callInst->getCalledFunction();
                         std::string calledFuncName = calledFunc->getName();
+                        errs()<< "Called function name: " << calledFuncName << "\n";
                         if (calledFuncName=="cudaMalloc" || 
                             calledFuncName=="cudaFree" ||
                             calledFuncName=="cudaDeviceReset") {
