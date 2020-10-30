@@ -45,20 +45,24 @@ struct APIMatchDetection : public FunctionPass {
         if ((F.getParent())->getTargetTriple().compare("x86_64-unknown-linux-gnu") == 0) {
             errs()<< "Enter the host function: " << F.getName() << "\n";
             CallInst* callInst = nullptr;
+            Function* calledFunc = nullptr;
             for (Function::iterator BBItr = F.begin(), EndBB = F.end(); BBItr != EndBB; BBItr++) {
                 for (BasicBlock::iterator IRItr = (*BBItr).begin(), EndIR = (*BBItr).end(); IRItr != EndIR; IRItr++) {
                     errs()<< "Inst: " << (*IRItr) << "\n";
                     // if (isa<CallInst>(&(*IRItr))) {
                     if (callInst = dyn_cast<CallInst>(&(*IRItr))) {
                         errs()<< "Find a CallInst: " << *callInst << "\n";
-                        Function* calledFunc = callInst->getCalledFunction();
-                        std::string calledFuncName = calledFunc->getName();
-                        errs()<< "Called function name: " << calledFuncName << "\n";
-                        if (calledFuncName=="cudaMalloc" || 
-                            calledFuncName=="cudaFree" ||
-                            calledFuncName=="cudaDeviceReset") {
-                            callInstVect.push_back(&(*IRItr));
+                        calledFunc = callInst->getCalledFunction();
+                        if (calledFunc != nullptr) {
+                            std::string calledFuncName = calledFunc->getName();
+                            errs()<< "Called function name: " << calledFuncName << "\n";
+                            if (calledFuncName=="cudaMalloc" || 
+                                calledFuncName=="cudaFree" ||
+                                calledFuncName=="cudaDeviceReset") {
+                                callInstVect.push_back(&(*IRItr));
+                            }
                         }
+                        
                     }
                     // if (callInstPtr = dyn_cast<CallInst> (IRItr)) {
                         // 1. identify the callee's function name
