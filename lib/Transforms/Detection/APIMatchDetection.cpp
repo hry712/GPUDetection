@@ -11,6 +11,7 @@
 #include "llvm/Pass.h"
 
 #include <vector>
+#include <map>
 
 using namespace llvm;
 using namespace std;
@@ -22,6 +23,7 @@ struct APIMatchDetection : public FunctionPass {
 
     Value* rawPtrVar = nullptr;
     std::vector<Value*> callInstVect;
+    std::map<Value*, std::string> records;
 
     Value* getRawVarValue(Function &F, Value* FirstArgu) {
         if (BitCastInst* bitcastInst = dyn_cast<BitCastInst>(FirstArgu)) {
@@ -37,7 +39,77 @@ struct APIMatchDetection : public FunctionPass {
                 errs()<< *inst << "\n";
         }
         callInstVect.clear();
-        errs()<< "Finish printing.\n";
+        errs()<< "Finish printing.\n\n";
+    }
+
+    Value* getCudaMallocRetVar(CallInst* Inst) {
+        BasicBlock* curBB = Inst->getParent();
+        User::op_iterator argItr = Inst->arg_begin();
+        Value* firstArgVar = &(*argItr);
+        if (isa<BitCastInst>(firstArgVar)) {
+            if (firstArgVar != nullptr) {
+                /// parsing the current BB to find out the bitcast inst
+                BasicBlock::const_iterator instItr = curBB->begin();
+                BasicBlock::const_iterator End = curBB->end();
+                BitCastInst* tmp = nullptr;
+                while (&(*instItr) != Inst) {
+                    if (tmp = dyn_cast<BitCastInst>(&(*instItr))) {
+                        if (tmp == firstArgVar) {
+                            Value* firstOpd = tmp->getOperand(0);
+                            if (firstOpd != nullptr)
+                                return firstOpd;
+                            else
+                                return nullptr;
+                        }
+                    }
+                    ++instItr;
+                }
+            } else {
+                return nullptr;
+            }
+        } else {
+            return firstArgVar;
+        }
+    }
+
+    Value* getCudaFreeArguVar(CallInst* Inst) {
+        User::op_iterator argItr = Inst->arg_begin();
+        Value* firstArgVar = &(*argItr);
+        if (firstArgVar != nullptr)
+            return firstArgVar;
+        else
+            return nullptr;
+    }
+
+    /// This method returns the CallInst's first argu var or ret recording var to 
+    /// withdraw the key content for records hashmap.
+    Value* getRealMemVar(CallInst* Inst) {
+
+    }
+
+    void apiMatchDetecting(std::vector<Value*>::const_iterator InstItr, std::vector<Value*>::const_iterator End) {
+        int flag = 0;
+        CallInst* tmp = nullptr;
+        Function* calledFunc = nullptr;
+        Value* tmpArguVar = nullptr;
+        Value* lastArguVar = nullptr;
+        std::string funcName;
+        while (InstItr != End) {
+            tmp = dyn_cast<CallInst>(&(*InstItr));
+            calledFunc = tmp->getCalledFunction();
+            funcName = calledFunc->getName();
+            if (flag == 0) {
+                if (funcName == "cudaMalloc") {
+                    tmpArguVar = calledFunc->
+                }
+                flag = 1;
+            } else if (flag == 1) {
+                if (funcName == "cudaFree") {
+
+                }
+            }
+            ++InstItr;
+        }
     }
     
     virtual bool runOnFunction(Function &F) {
@@ -46,15 +118,16 @@ struct APIMatchDetection : public FunctionPass {
             errs()<< "Enter the host function: " << F.getName() << "\n";
             CallInst* callInst = nullptr;
             Function* calledFunc = nullptr;
+            std::string calledFuncName;
             for (Function::iterator BBItr = F.begin(), EndBB = F.end(); BBItr != EndBB; BBItr++) {
                 for (BasicBlock::iterator IRItr = (*BBItr).begin(), EndIR = (*BBItr).end(); IRItr != EndIR; IRItr++) {
-                    errs()<< "Inst: " << (*IRItr) << "\n";
+                    // errs()<< "Inst: " << (*IRItr) << "\n";
                     // if (isa<CallInst>(&(*IRItr))) {
                     if (callInst = dyn_cast<CallInst>(&(*IRItr))) {
                         errs()<< "Find a CallInst: " << *callInst << "\n";
                         calledFunc = callInst->getCalledFunction();
                         if (calledFunc != nullptr) {
-                            std::string calledFuncName = calledFunc->getName();
+                            calledFuncName = calledFunc->getName();
                             errs()<< "Called function name: " << calledFuncName << "\n";
                             if (calledFuncName=="cudaMalloc" || 
                                 calledFuncName=="cudaFree" ||
@@ -88,10 +161,29 @@ struct APIMatchDetection : public FunctionPass {
                     // }
                 }
             }
+            //TO-DO: realize the method to detect the matching API calling inst
+            // 1. cudaDeviceReset detection.
+            for (std::vector<Value*>::const_iterator iter=callInstVect.cbegin(); iter != callInstVect.end(); iter++) {
+                callInst = dyn_cast<CallInst>(iter);
+                calledFunc = callInst->getCalledFunction();
+                calledFuncName = calledFunc->getName();
+                if (calledFuncName == "cudaDeviceReset") {  // match the cudaDeviceReset() calling
+                    while (iter != callInstVect.end()) {    // to filter the reset part
+
+                    }
+                }
+            }
+            // 2. malloc-free matching detection.
+
             printCallInstVector();
         }
         return false;
     }
+
+    // virtual bool doFinalization() {
+
+    //     return false;
+    // }
 };
 }
 
