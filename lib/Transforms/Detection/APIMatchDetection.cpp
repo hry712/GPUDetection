@@ -12,6 +12,7 @@
 
 #include <vector>
 #include <map>
+#include <string>
 
 using namespace llvm;
 using namespace std;
@@ -22,7 +23,7 @@ struct APIMatchDetection : public FunctionPass {
     APIMatchDetection() : FunctionPass(ID) {}
 
     Value* rawPtrVar = nullptr;
-    std::vector<Value*> callInstVect;
+    std::vector<CallInst*> callInstVect;
     std::map<Value*, std::string> records;
 
     Value* getRawVarValue(Function &F, Value* FirstArgu) {
@@ -39,76 +40,85 @@ struct APIMatchDetection : public FunctionPass {
                 errs()<< *inst << "\n";
         }
         callInstVect.clear();
+        records.clear();
         errs()<< "Finish printing.\n\n";
     }
 
-    Value* getCudaMallocRetVar(CallInst* Inst) {
+    Value* getCudaMallocArguVar(CallInst* Inst) {
         BasicBlock* curBB = Inst->getParent();
-        User::op_iterator argItr = Inst->arg_begin();
-        Value* firstArgVar = &(*argItr);
-        if (isa<BitCastInst>(firstArgVar)) {
-            if (firstArgVar != nullptr) {
+        Context* curContext = curBB->getParent()->getParent()->getContext();
+        Value* arg0 = Inst->getArgOperand(0);
+        BitCastInst* bcInst = nullptr;
+        // PointerType* i8_ptr = PointerType::getInt8PtrTy(curContext);
+        // PointerType* i8_pptr = PointerType::get(i8_ptr, 0);
+
+        if (arg0 != nullptr) {
+            if (bcInst = dyn_cast<BitCastInst>(arg0)) {
                 /// parsing the current BB to find out the bitcast inst
-                BasicBlock::const_iterator instItr = curBB->begin();
+                BasicBlock::iterator instItr = curBB->begin();
                 BasicBlock::const_iterator End = curBB->end();
-                BitCastInst* tmp = nullptr;
-                while (&(*instItr) != Inst) {
-                    if (tmp = dyn_cast<BitCastInst>(&(*instItr))) {
-                        if (tmp == firstArgVar) {
-                            Value* firstOpd = tmp->getOperand(0);
-                            if (firstOpd != nullptr)
-                                return firstOpd;
-                            else
-                                return nullptr;
-                        }
+                while (instItr != End) {
+                    if ((&(*instItr)) == bcInst) { // find the target bitcast inst here
+                        // withdraw the target argument of bitcast
+                        return bcInst->getOperand(0);
                     }
                     ++instItr;
                 }
-            } else {
-                return nullptr;
             }
-        } else {
-            return firstArgVar;
         }
+        return nullptr;
     }
 
     Value* getCudaFreeArguVar(CallInst* Inst) {
-        User::op_iterator argItr = Inst->arg_begin();
-        Value* firstArgVar = &(*argItr);
-        if (firstArgVar != nullptr)
-            return firstArgVar;
-        else
-            return nullptr;
+        Value* arg0 = Inst->getArgOperand(0);
+        return arg0;
     }
 
     /// This method returns the CallInst's first argu var or ret recording var to 
     /// withdraw the key content for records hashmap.
     Value* getRealMemVar(CallInst* Inst) {
-
+        Function* calledFunc = Inst->getCalledFunction();
+        std::string funcName = calledFunc->getName();
+        if (funcName == "cudaMalloc") {
+            return getCudaMallocArguVar(Inst);
+        } else if (funcName == "cudaFree") {
+            return getCudaFreeArguVar(Inst);
+        } else {
+            errs()<< "In the getRealMemVar() method, we met a new function named "
+                    << funcName << " .\n";
+            return nullptr;
+        }
     }
 
-    void apiMatchDetecting(std::vector<Value*>::const_iterator InstItr, std::vector<Value*>::const_iterator End) {
+    void apiMatchDetecting(void) {
         int flag = 0;
-        CallInst* tmp = nullptr;
+        CallInst* callInst = nullptr;
         Function* calledFunc = nullptr;
-        Value* tmpArguVar = nullptr;
+        Value* arguVar = nullptr;
         Value* lastArguVar = nullptr;
         std::string funcName;
-        while (InstItr != End) {
-            tmp = dyn_cast<CallInst>(&(*InstItr));
-            calledFunc = tmp->getCalledFunction();
+        std::vector<CallInst*>::iterator itr = callInstVect.begin();
+        std::vector<CallInst*>::iterator End = callInstVect.end();
+        while (itr != End) {
+            callInst = *itr;
+            calledFunc = callInst->getCalledFunction();
             funcName = calledFunc->getName();
-            if (flag == 0) {
-                if (funcName == "cudaMalloc") {
-                    tmpArguVar = calledFunc->
-                }
-                flag = 1;
-            } else if (flag == 1) {
-                if (funcName == "cudaFree") {
+            arguVar = getRealMemVar(callInst);
+            if (arguVar != nullptr) {
+                // TO-DO: accomplish the rest part of the designing 
+                if (records.find(arguVar) == "cudaMalloc") {
+                    
+                } else if (records.find(arguVar) == "cudaFree") {
 
+                } else if (records.find(arguVar) == records.end()) {
+
+                } else {
+                    errs()<< "Unknown error occured in the apiMatchDetecting() method...\n";
                 }
+            } else {
+                errs()<< "The CallInst contains invalid argument: " << *callInst << "\n";
             }
-            ++InstItr;
+            ++itr;
         }
     }
     
@@ -132,7 +142,7 @@ struct APIMatchDetection : public FunctionPass {
                             if (calledFuncName=="cudaMalloc" || 
                                 calledFuncName=="cudaFree" ||
                                 calledFuncName=="cudaDeviceReset") {
-                                callInstVect.push_back(&(*IRItr));
+                                callInstVect.push_back(callInst);
                             }
                         }
                         
@@ -179,11 +189,6 @@ struct APIMatchDetection : public FunctionPass {
         }
         return false;
     }
-
-    // virtual bool doFinalization() {
-
-    //     return false;
-    // }
 };
 }
 
