@@ -140,29 +140,32 @@ struct APIMatchDetection : public FunctionPass {
             arguVar = getRealMemVar(callInst);
             if (arguVar != nullptr) {
                 // TO-DO: accomplish the rest part of the designing 
-                if (records.find(arguVar) == "cudaMalloc") {
-                    if (funcName == "cudaMalloc") {
-                        errs()<< "Successive cudaMalloc() calling, be cautious!!!\n";
-                    } else if (funcName == "cudaFree") {
-                        records.erase(arguVar);
-                        errs()<< "Found a malloc-free pair, and this record is removed.\n";
+                std::map<Value*, std::string>::iterator arguMapItr = records.find(arguVar);
+                if (arguMapItr != records.end()) {
+                    if (arguMapItr->second == "cudaMalloc") {
+                        if (funcName == "cudaMalloc") {
+                            errs()<< "Successive cudaMalloc() calling, be cautious!!!\n";
+                        } else if (funcName == "cudaFree") {
+                            records.erase(arguVar);
+                            errs()<< "Found a malloc-free pair, and this record is removed.\n";
+                        }
+                    } else if (arguMapItr->second == "cudaFree") {
+                        if (funcName == "cudaMalloc") {
+                            records[arguVar] = "cudaMalloc";
+                            errs()<< "Start a new matching circle with cudaMalloc().\n";
+                        } else if (funcName == "cudaFree") {
+                            errs()<< "Repeat calling the cudaFree() API.\n";
+                        }
+                    } else if (arguMapItr->second == records.end()) {
+                        if (funcName == "cudaMalloc") {
+                            records.insert(make_pair(arguVar, funcName));
+                            errs()<< "Added a new record of cudaMalloc() into the map.\n";
+                        } else if (funcName == "cudaFree") {
+                            errs()<< "Warning, the code try to free an unallocated variable with cudaFree().\n";
+                        }
+                    } else {
+                        errs()<< "Unknown error occured in the apiMatchDetecting() method...\n";
                     }
-                } else if (records.find(arguVar) == "cudaFree") {
-                    if (funcName == "cudaMalloc") {
-                        records[arguVar] = "cudaMalloc";
-                        errs()<< "Start a new matching circle with cudaMalloc().\n";
-                    } else if (funcName == "cudaFree") {
-                        errs()<< "Repeat calling the cudaFree() API.\n";
-                    }
-                } else if (records.find(arguVar) == records.end()) {
-                    if (funcName == "cudaMalloc") {
-                        records.insert(make_pair(arguVar, funcName));
-                        errs()<< "Added a new record of cudaMalloc() into the map.\n";
-                    } else if (funcName == "cudaFree") {
-                        errs()<< "Warning, the code try to free an unallocated variable with cudaFree().\n";
-                    }
-                } else {
-                    errs()<< "Unknown error occured in the apiMatchDetecting() method...\n";
                 }
             } else {
                 errs()<< "The CallInst contains invalid argument: " << *callInst << "\n";
