@@ -90,17 +90,51 @@ struct APIMatchDetection : public FunctionPass {
         }
     }
 
-    void apiMatchDetecting(void) {
-        int flag = 0;
+    void cudaDeviceResetDetecting(void) {
+        if (!callInstVect.empty()) {
+            std::vector<CallInst*>::iterator callInstItr = callInstVect.begin();
+            std::vector<CallInst*>::iterator endItr = callInstVect.end();
+            std::vector<CallInst*>::iterator idxItr;
+            CallInst* callInst = nullptr;
+            Function* calledFunc = nullptr;
+            std::string funcName;
+            CallInst* idxCallInst = nullptr;
+            std::string idxFuncName;
+            while (callInstItr != endItr) {
+                callInst = *callInstItr;
+                funcName = callInst->getCalledFunction()->getName();
+                if (funcName == "cudaDeviceReset") {
+                    // start to find the interloop before the next cudaDeviceReset calling.
+                    idxItr = (callInstItr+1);
+                    while (idxItr != endItr) {
+                        idxCallInst = *idxItr;
+                        if (idxCallInst->getCalledFunction()->getName() == "cudaDeviceReset")
+                            break;
+                        ++idxItr;
+                    }
+                    // start to call the api matching detection method.
+                    if (idxItr != endItr) {
+                        apiMatchDetecting(callInstItr, idxItr);
+                        callInstItr = idxItr;
+                    } else {
+                        apiMatchDetecting(callInstItr+1, endItr);
+                    }
+                }
+                ++callInstItr;
+            }
+        } else {
+            errs()<< "The member callInstVect is empty!\n";
+        }
+    }
+
+    void apiMatchDetecting(std::vector<CallInst*>::iterator beginItr, std::vector<CallInst*>::iterator endItr) {
         CallInst* callInst = nullptr;
         Function* calledFunc = nullptr;
         Value* arguVar = nullptr;
         Value* lastArguVar = nullptr;
         std::string funcName;
-        std::vector<CallInst*>::iterator itr = callInstVect.begin();
-        std::vector<CallInst*>::iterator End = callInstVect.end();
-        while (itr != End) {
-            callInst = *itr;
+        while (beginItr != End) {
+            callInst = *beginItr;
             calledFunc = callInst->getCalledFunction();
             funcName = calledFunc->getName();
             arguVar = getRealMemVar(callInst);
@@ -133,7 +167,7 @@ struct APIMatchDetection : public FunctionPass {
             } else {
                 errs()<< "The CallInst contains invalid argument: " << *callInst << "\n";
             }
-            ++itr;
+            ++beginItr;
         }
     }
     
@@ -162,28 +196,6 @@ struct APIMatchDetection : public FunctionPass {
                         }
                         
                     }
-                    // if (callInstPtr = dyn_cast<CallInst> (IRItr)) {
-                        // 1. identify the callee's function name
-                        // 2. get the callee's first argu
-                        // calledFunc = callInstPtr->getCalledFunction();
-                        // calledFuncName = calledFunc->getName().str();
-                        // if (calledFuncName == "cudaMalloc") {
-                            // 1. first check the called function whether exists in the records.
-                            //    and the token is the first argument value
-                            // firstArgu = dyn_cast<ConstantInt>(calledFunc->arg_begin());
-                            // 2. Try to find out the according bitcast raw variable behind first argu through use
-                            // firstArgu->uses();
-                            // errs() << "The first argu content is: " << *firstArgu << "\n";
-                            // for (auto tmpU : firstArgu->users()) {
-                                // if (Instruction* tmpI = dyn_cast<Instruction>(tmpU)) {
-                                //     errs() << "The user of the first argu: " << *tmpI << "\n";
-                                // }
-                            // }
-                            // realArguVal = 
-                        // } else if (calledFuncName == "cudaFree") {
-
-                        // }
-                    // }
                 }
             }
             //TO-DO: realize the method to detect the matching API calling inst
@@ -199,7 +211,7 @@ struct APIMatchDetection : public FunctionPass {
                 }
             }
             // 2. malloc-free matching detection.
-
+            
             printCallInstVector();
         }
         return false;
