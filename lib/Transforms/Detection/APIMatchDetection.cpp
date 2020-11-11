@@ -189,11 +189,11 @@ struct APIMatchDetection : public FunctionPass {
             //TO-DO: realize the method to detect the matching API calling inst
             // 1. cudaDeviceReset detection.
             for (std::vector<Value*>::const_iterator iter=callInstVect.cbegin(); iter != callInstVect.end(); iter++) {
-                callInst = dyn_cast<CallInst>(iter);
+                callInst = dyn_cast<CallInst>(*iter);
                 calledFunc = callInst->getCalledFunction();
                 calledFuncName = calledFunc->getName();
                 if (calledFuncName == "cudaDeviceReset") {  // match the cudaDeviceReset() calling
-                    while (iter != callInstVect.end()) {    // to filter the reset part
+                    while (iter != callInstVect.cend()) {    // to filter the reset part
 
                     }
                 }
