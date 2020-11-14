@@ -91,7 +91,7 @@ struct APIMatchDetection : public FunctionPass {
         }
     }
 
-    void cudaDeviceResetDetecting(void) {
+    bool cudaDeviceResetDetecting(void) {
         if (!callInstVect.empty()) {
             std::vector<CallInst*>::iterator callInstItr = callInstVect.begin();
             std::vector<CallInst*>::iterator endItr = callInstVect.end();
@@ -115,9 +115,13 @@ struct APIMatchDetection : public FunctionPass {
                     }
                     // start to call the api matching detection method.
                     if (idxItr != endItr) {
-                        apiMatchDetecting(callInstItr, idxItr);
+                        errs()<< "Find one more cudaDeviceReset() calling in the CallInst vector.\n";
+                        errs()<< "Start the API matching detection process...\n";
+                        apiMatchDetecting(callInstItr+1, idxItr);
                         callInstItr = idxItr;
                     } else {
+                        errs()<< "In the cudaDeviceReset detection, we reach the end of the CallInst vector.\n";
+                        errs()<< "Check the rest part of the CallInst vector with API matching method...\n";
                         apiMatchDetecting(callInstItr+1, endItr);
                     }
                 }
@@ -125,10 +129,11 @@ struct APIMatchDetection : public FunctionPass {
             }
         } else {
             errs()<< "The member callInstVect is empty!\n";
+            return false;
         }
     }
 
-    void apiMatchDetecting(std::vector<CallInst*>::iterator beginItr, std::vector<CallInst*>::iterator endItr) {
+    bool apiMatchDetecting(std::vector<CallInst*>::iterator beginItr, std::vector<CallInst*>::iterator endItr) {
         CallInst* callInst = nullptr;
         Function* calledFunc = nullptr;
         Value* arguVar = nullptr;
@@ -145,7 +150,8 @@ struct APIMatchDetection : public FunctionPass {
                 if (arguMapItr != records.end()) {
                     if (arguMapItr->second == "cudaMalloc") {
                         if (funcName == "cudaMalloc") {
-                            errs()<< "Successive cudaMalloc() calling, be cautious!!!\n";
+                            errs()<< "Successive cudaMalloc() calling, WARNING!!!\n";
+                            return false;
                         } else if (funcName == "cudaFree") {
                             records.erase(arguVar);
                             errs()<< "Found a malloc-free pair, and this record is removed.\n";
@@ -155,24 +161,30 @@ struct APIMatchDetection : public FunctionPass {
                             records[arguVar] = "cudaMalloc";
                             errs()<< "Start a new matching circle with cudaMalloc().\n";
                         } else if (funcName == "cudaFree") {
-                            errs()<< "Repeat calling the cudaFree() API.\n";
+                            errs()<< "Repeat calling the cudaFree() API, WARNING!!!\n";
+                            return false;
                         }
                     } else if (arguMapItr == records.end()) {
-                        if (funcName == "cudaMalloc") {
-                            records.insert(make_pair(arguVar, funcName));
-                            errs()<< "Added a new record of cudaMalloc() into the map.\n";
-                        } else if (funcName == "cudaFree") {
-                            errs()<< "Warning, the code try to free an unallocated variable with cudaFree().\n";
-                        }
+                        
                     } else {
                         errs()<< "Unknown error occured in the apiMatchDetecting() method...\n";
+                    }
+                } else {
+                    if (funcName == "cudaMalloc") {
+                        records.insert(make_pair(arguVar, funcName));
+                        errs()<< "Added a new record of cudaMalloc() into the map.\n";
+                    } else if (funcName == "cudaFree") {
+                        errs()<< "Warning, the code try to free an unallocated variable with cudaFree().\n";
+                        return false;
                     }
                 }
             } else {
                 errs()<< "The CallInst contains invalid argument: " << *callInst << "\n";
+                return false;
             }
             ++beginItr;
         }
+        return true;
     }
     
     virtual bool runOnFunction(Function &F) {
@@ -204,16 +216,7 @@ struct APIMatchDetection : public FunctionPass {
             }
             //TO-DO: realize the method to detect the matching API calling inst
             // 1. cudaDeviceReset detection.
-            for (std::vector<CallInst*>::iterator iter=callInstVect.begin(); iter != callInstVect.end(); iter++) {
-                callInst = *iter;
-                calledFunc = callInst->getCalledFunction();
-                calledFuncName = calledFunc->getName();
-                if (calledFuncName == "cudaDeviceReset") {  // match the cudaDeviceReset() calling
-                    while (iter != callInstVect.end()) {    // to filter the reset part
-
-                    }
-                }
-            }
+            cudaDeviceResetDetecting();
             // 2. malloc-free matching detection.
             
             printCallInstVector();
