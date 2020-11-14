@@ -105,6 +105,7 @@ struct APIMatchDetection : public FunctionPass {
                 callInst = *callInstItr;
                 funcName = callInst->getCalledFunction()->getName();
                 if (funcName == "cudaDeviceReset") {
+                    errs()<< "Find the cudaDeviceReset() calling in the codes.\n";
                     // start to find the interloop before the next cudaDeviceReset calling.
                     idxItr = (callInstItr+1);
                     while (idxItr != endItr) {
@@ -137,7 +138,6 @@ struct APIMatchDetection : public FunctionPass {
         CallInst* callInst = nullptr;
         Function* calledFunc = nullptr;
         Value* arguVar = nullptr;
-        Value* lastArguVar = nullptr;
         std::string funcName;
         while (beginItr != endItr) {
             callInst = *beginItr;
@@ -216,7 +216,11 @@ struct APIMatchDetection : public FunctionPass {
             }
             //TO-DO: realize the method to detect the matching API calling inst
             // 1. cudaDeviceReset detection.
-            cudaDeviceResetDetecting();
+            if (cudaDeviceResetDetecting()) {
+                errs()<< "Cuda Device Reset Detection Passed.\n";
+            } else {
+                errs()<< "Cuda Device Reset Detection failed.\n";
+            }
             // 2. malloc-free matching detection.
             
             printCallInstVector();
