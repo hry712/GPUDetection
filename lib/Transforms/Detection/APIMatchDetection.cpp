@@ -6,6 +6,7 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Use.h"
 #include "llvm/IR/LegacyPassManager.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Pass.h"
@@ -46,7 +47,7 @@ struct APIMatchDetection : public FunctionPass {
 
     Value* getCudaMallocArguVar(CallInst* Inst) {
         BasicBlock* curBB = Inst->getParent();
-        Context* curContext = curBB->getParent()->getParent()->getContext();
+        LLVMContext* curContext = curBB->getParent()->getParent()->getContext();
         Value* arg0 = Inst->getArgOperand(0);
         BitCastInst* bcInst = nullptr;
         // PointerType* i8_ptr = PointerType::getInt8PtrTy(curContext);
@@ -133,7 +134,7 @@ struct APIMatchDetection : public FunctionPass {
         Value* arguVar = nullptr;
         Value* lastArguVar = nullptr;
         std::string funcName;
-        while (beginItr != End) {
+        while (beginItr != endItr) {
             callInst = *beginItr;
             calledFunc = callInst->getCalledFunction();
             funcName = calledFunc->getName();
@@ -156,7 +157,7 @@ struct APIMatchDetection : public FunctionPass {
                         } else if (funcName == "cudaFree") {
                             errs()<< "Repeat calling the cudaFree() API.\n";
                         }
-                    } else if (arguMapItr->second == records.end()) {
+                    } else if (arguMapItr == records.end()) {
                         if (funcName == "cudaMalloc") {
                             records.insert(make_pair(arguVar, funcName));
                             errs()<< "Added a new record of cudaMalloc() into the map.\n";
