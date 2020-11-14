@@ -141,6 +141,7 @@ struct APIMatchDetection : public FunctionPass {
             errs()<< "The Pass Module APIMatchDetection member callInstVect is empty!\n";
             return -1;
         }
+        return 0;
     }
 
     bool apiMatchDetecting(std::vector<CallInst*>::iterator beginItr, std::vector<CallInst*>::iterator endItr) {
