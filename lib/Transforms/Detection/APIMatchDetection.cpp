@@ -54,7 +54,7 @@ struct APIMatchDetection : public FunctionPass {
         // PointerType* i8_pptr = PointerType::get(i8_ptr, 0);
 
         if (arg0 != nullptr) {
-            if (bcInst = dyn_cast<BitCastInst>(arg0)) {
+            if ((bcInst = dyn_cast<BitCastInst>(arg0)) != nullptr) {
                 /// parsing the current BB to find out the bitcast inst
                 BasicBlock::iterator instItr = curBB->begin();
                 BasicBlock::const_iterator End = curBB->end();
@@ -98,7 +98,6 @@ struct APIMatchDetection : public FunctionPass {
             std::vector<CallInst*>::iterator endItr = callInstVect.end();
             std::vector<CallInst*>::iterator idxItr;
             CallInst* callInst = nullptr;
-            Function* calledFunc = nullptr;
             std::string funcName;
             CallInst* idxCallInst = nullptr;
             std::string idxFuncName;
@@ -204,7 +203,7 @@ struct APIMatchDetection : public FunctionPass {
         std::string calledFuncName;
         for (Function::iterator BBItr = F.begin(), EndBB = F.end(); BBItr != EndBB; BBItr++) {
             for (BasicBlock::iterator IRItr = (*BBItr).begin(), EndIR = (*BBItr).end(); IRItr != EndIR; IRItr++) {
-                if (callInst = dyn_cast<CallInst>(&(*IRItr))) {
+                if ((callInst = dyn_cast<CallInst>(&(*IRItr))) != nullptr) {
                     // errs()<< "Find a CallInst: " << *callInst << "\n";
                     calledFunc = callInst->getCalledFunction();
                     if (calledFunc != nullptr) {
