@@ -47,7 +47,7 @@ struct APIMatchDetection : public FunctionPass {
 
     Value* getCudaMallocArguVar(CallInst* Inst) {
         BasicBlock* curBB = Inst->getParent();
-        LLVMContext* curContext = curBB->getParent()->getParent()->getContext();
+        // LLVMContext curContext = curBB->getParent()->getParent()->getContext();
         Value* arg0 = Inst->getArgOperand(0);
         BitCastInst* bcInst = nullptr;
         // PointerType* i8_ptr = PointerType::getInt8PtrTy(curContext);
