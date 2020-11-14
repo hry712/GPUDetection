@@ -230,15 +230,21 @@ struct APIMatchDetection : public FunctionPass {
             switch (cudaDeviceResetDetecting())
             {
             case -1:
+                errs()<< "=====------------------ Detection Report -------------------=====\n";
                 errs()<< "cudaDeviceReset() detection has FINISHED.\n";
                 errs()<< "No CallInst exists in the src codes....STATUS -- Safe.\n";
+                errs()<< "=====----------------------- End ---------------------------=====\n\n";
                 break;
             case 0:
+                errs()<< "=====------------------ Detection Report -------------------=====\n";
                 errs()<< "WARNING: mismatch happened after the cudaDeviceReset() calling instruction.\n";
+                errs()<< "=====----------------------- End ---------------------------=====\n\n";
                 break;
             case 1:
+                errs()<< "=====------------------ Detection Report -------------------=====\n";
                 errs()<< "cudaDeviceReset() detection has FINISHED.\n";
                 errs()<< "The CallInsts seem working well under current detecting rules...STATUS -- Safe.\n";
+                errs()<< "=====----------------------- End ---------------------------=====\n\n";
                 break;
             default:
                 break;
