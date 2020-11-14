@@ -198,51 +198,55 @@ struct APIMatchDetection : public FunctionPass {
         return true;
     }
     
+    int InitCallInstVector(Function &F) {
+        CallInst* callInst = nullptr;
+        Function* calledFunc = nullptr;
+        std::string calledFuncName;
+        for (Function::iterator BBItr = F.begin(), EndBB = F.end(); BBItr != EndBB; BBItr++) {
+            for (BasicBlock::iterator IRItr = (*BBItr).begin(), EndIR = (*BBItr).end(); IRItr != EndIR; IRItr++) {
+                if (callInst = dyn_cast<CallInst>(&(*IRItr))) {
+                    errs()<< "Find a CallInst: " << *callInst << "\n";
+                    calledFunc = callInst->getCalledFunction();
+                    if (calledFunc != nullptr) {
+                        calledFuncName = calledFunc->getName();
+                        errs()<< "Called function name: " << calledFuncName << "\n";
+                        if (calledFuncName=="cudaMalloc" || 
+                            calledFuncName=="cudaFree" ||
+                            calledFuncName=="cudaDeviceReset") {
+                            callInstVect.push_back(callInst);
+                        }
+                    }
+                }
+            }
+        }
+        if (callInstVect.empty())
+            return 0;
+        else
+            return 1;
+    }
     virtual bool runOnFunction(Function &F) {
         // this pass module is prepared for host codes detection
         if ((F.getParent())->getTargetTriple().compare("x86_64-unknown-linux-gnu") == 0) {
             errs()<< "Enter the host function: " << F.getName() << "\n";
-            CallInst* callInst = nullptr;
-            Function* calledFunc = nullptr;
-            std::string calledFuncName;
-            for (Function::iterator BBItr = F.begin(), EndBB = F.end(); BBItr != EndBB; BBItr++) {
-                for (BasicBlock::iterator IRItr = (*BBItr).begin(), EndIR = (*BBItr).end(); IRItr != EndIR; IRItr++) {
-                    // errs()<< "Inst: " << (*IRItr) << "\n";
-                    // if (isa<CallInst>(&(*IRItr))) {
-                    if (callInst = dyn_cast<CallInst>(&(*IRItr))) {
-                        errs()<< "Find a CallInst: " << *callInst << "\n";
-                        calledFunc = callInst->getCalledFunction();
-                        if (calledFunc != nullptr) {
-                            calledFuncName = calledFunc->getName();
-                            errs()<< "Called function name: " << calledFuncName << "\n";
-                            if (calledFuncName=="cudaMalloc" || 
-                                calledFuncName=="cudaFree" ||
-                                calledFuncName=="cudaDeviceReset") {
-                                callInstVect.push_back(callInst);
-                            }
-                        }
-                        
-                    }
-                }
-            }
-            //TO-DO: realize the method to detect the matching API calling inst
+            // Initialize the class member: callInstVect
+            InitCallInstVector(F);
             // 1. cudaDeviceReset detection.
             switch (cudaDeviceResetDetecting())
             {
             case -1:
                 errs()<< "=====------------------ Detection Report -------------------=====\n";
-                errs()<< "cudaDeviceReset() detection has FINISHED.\n";
+                // errs()<< "cudaDeviceReset() detection has FINISHED.\n";
                 errs()<< "No CallInst exists in the src codes....STATUS -- Safe.\n";
                 errs()<< "=====----------------------- End ---------------------------=====\n\n";
                 break;
             case 0:
                 errs()<< "=====------------------ Detection Report -------------------=====\n";
-                errs()<< "WARNING: mismatch happened after the cudaDeviceReset() calling instruction.\n";
+                errs()<< "WARNING: mismatch happened after the cudaDeviceReset() calling instruction...STATUS -- Unsafe\n";
                 errs()<< "=====----------------------- End ---------------------------=====\n\n";
                 break;
             case 1:
                 errs()<< "=====------------------ Detection Report -------------------=====\n";
-                errs()<< "cudaDeviceReset() detection has FINISHED.\n";
+                // errs()<< "cudaDeviceReset() detection has FINISHED.\n";
                 errs()<< "The CallInsts seem working well under current detecting rules...STATUS -- Safe.\n";
                 errs()<< "=====----------------------- End ---------------------------=====\n\n";
                 break;
@@ -250,7 +254,17 @@ struct APIMatchDetection : public FunctionPass {
                 break;
             }
             // 2. malloc-free matching detection.
-            
+            errs()<< "Start the API match detecting on the whole code area.\n";
+            if (apiMatchDetecting(callInstVect.begin(), callInstVect.end())) {
+                errs()<< "=====------------------ Detection Report -------------------=====\n";
+                // errs()<< "API match detection has FINISHED.\n";
+                errs()<< "The CallInsts seem working well under current detecting rules...STATUS -- Safe.\n";
+                errs()<< "=====----------------------- End ---------------------------=====\n\n";
+            } else {
+                errs()<< "=====------------------ Detection Report -------------------=====\n";
+                errs()<< "WARNING: mismatch happened in the current function...STATUS -- Unsafe\n";
+                errs()<< "=====----------------------- End ---------------------------=====\n\n";
+            }
             printCallInstVector();
         }
         return false;
