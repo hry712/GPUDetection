@@ -205,11 +205,11 @@ struct APIMatchDetection : public FunctionPass {
         for (Function::iterator BBItr = F.begin(), EndBB = F.end(); BBItr != EndBB; BBItr++) {
             for (BasicBlock::iterator IRItr = (*BBItr).begin(), EndIR = (*BBItr).end(); IRItr != EndIR; IRItr++) {
                 if (callInst = dyn_cast<CallInst>(&(*IRItr))) {
-                    errs()<< "Find a CallInst: " << *callInst << "\n";
+                    // errs()<< "Find a CallInst: " << *callInst << "\n";
                     calledFunc = callInst->getCalledFunction();
                     if (calledFunc != nullptr) {
                         calledFuncName = calledFunc->getName();
-                        errs()<< "Called function name: " << calledFuncName << "\n";
+                        // errs()<< "Called function name: " << calledFuncName << "\n";
                         if (calledFuncName=="cudaMalloc" || 
                             calledFuncName=="cudaFree" ||
                             calledFuncName=="cudaDeviceReset") {
