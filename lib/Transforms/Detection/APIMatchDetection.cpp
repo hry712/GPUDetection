@@ -91,7 +91,8 @@ struct APIMatchDetection : public FunctionPass {
         }
     }
 
-    bool cudaDeviceResetDetecting(void) {
+    int cudaDeviceResetDetecting(void) {
+        errs()<< "Start the cudaDeviceReset() detecting...\n";
         if (!callInstVect.empty()) {
             std::vector<CallInst*>::iterator callInstItr = callInstVect.begin();
             std::vector<CallInst*>::iterator endItr = callInstVect.end();
@@ -118,19 +119,28 @@ struct APIMatchDetection : public FunctionPass {
                     if (idxItr != endItr) {
                         errs()<< "Find one more cudaDeviceReset() calling in the CallInst vector.\n";
                         errs()<< "Start the API matching detection process...\n";
-                        apiMatchDetecting(callInstItr+1, idxItr);
-                        callInstItr = idxItr;
+                        if (apiMatchDetecting(callInstItr+1, idxItr))
+                            callInstItr = idxItr;
+                        else {
+                            errs()<< "WARNING, the CallInsts after cudaDeviceReset() calling mismatched!\n";
+                            return 0;
+                        }
                     } else {
                         errs()<< "In the cudaDeviceReset detection, we reach the end of the CallInst vector.\n";
                         errs()<< "Check the rest part of the CallInst vector with API matching method...\n";
-                        apiMatchDetecting(callInstItr+1, endItr);
+                        if (apiMatchDetecting(callInstItr+1, endItr))
+                            return 1;
+                        else {
+                            errs()<< "WARNING, the CallInsts after cudaDeviceReset() calling mismatched!\n";
+                            return 0;
+                        }
                     }
                 }
                 ++callInstItr;
             }
         } else {
-            errs()<< "The member callInstVect is empty!\n";
-            return false;
+            errs()<< "The Pass Module APIMatchDetection member callInstVect is empty!\n";
+            return -1;
         }
     }
 
@@ -139,6 +149,7 @@ struct APIMatchDetection : public FunctionPass {
         Function* calledFunc = nullptr;
         Value* arguVar = nullptr;
         std::string funcName;
+        records.clear();
         while (beginItr != endItr) {
             callInst = *beginItr;
             calledFunc = callInst->getCalledFunction();
@@ -216,10 +227,21 @@ struct APIMatchDetection : public FunctionPass {
             }
             //TO-DO: realize the method to detect the matching API calling inst
             // 1. cudaDeviceReset detection.
-            if (cudaDeviceResetDetecting()) {
-                errs()<< "Cuda Device Reset Detection Passed.\n";
-            } else {
-                errs()<< "Cuda Device Reset Detection failed.\n";
+            switch (cudaDeviceResetDetecting())
+            {
+            case -1:
+                errs()<< "cudaDeviceReset() detection has FINISHED.\n";
+                errs()<< "No CallInst exists in the src codes....STATUS -- Safe.\n";
+                break;
+            case 0:
+                errs()<< "WARNING: mismatch happened after the cudaDeviceReset() calling instruction.\n";
+                break;
+            case 1:
+                errs()<< "cudaDeviceReset() detection has FINISHED.\n";
+                errs()<< "The CallInsts seem working well under current detecting rules...STATUS -- Safe.\n";
+                break;
+            default:
+                break;
             }
             // 2. malloc-free matching detection.
             
