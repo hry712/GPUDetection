@@ -52,7 +52,7 @@ struct APIMatchDetection : public FunctionPass {
         BitCastInst* bcInst = nullptr;
         // PointerType* i8_ptr = PointerType::getInt8PtrTy(curContext);
         // PointerType* i8_pptr = PointerType::get(i8_ptr, 0);
-
+        Inst->getpre
         if (arg0 != nullptr) {
             if ((bcInst = dyn_cast<BitCastInst>(arg0)) != nullptr) {
                 /// parsing the current BB to find out the bitcast inst
@@ -72,7 +72,33 @@ struct APIMatchDetection : public FunctionPass {
 
     Value* getCudaFreeArguVar(CallInst* Inst) {
         Value* arg0 = Inst->getArgOperand(0);
-        return arg0;
+        // return arg0;
+
+    }
+
+    Value* getCudaMallocHostArguVar(CallInst* Inst) {
+        BasicBlock* curBB = Inst->getParent();
+        // LLVMContext curContext = curBB->getParent()->getParent()->getContext();
+        Value* arg0 = Inst->getArgOperand(0);
+        BitCastInst* bcInst = nullptr;
+        // PointerType* i8_ptr = PointerType::getInt8PtrTy(curContext);
+        // PointerType* i8_pptr = PointerType::get(i8_ptr, 0);
+
+        if (arg0 != nullptr) {
+            if ((bcInst = dyn_cast<BitCastInst>(arg0)) != nullptr) {
+                /// parsing the current BB to find out the bitcast inst
+                BasicBlock::iterator instItr = curBB->begin();
+                BasicBlock::const_iterator End = curBB->end();
+                while (instItr != End) {
+                    if ((&(*instItr)) == bcInst) { // find the target bitcast inst here
+                        // withdraw the target argument of bitcast
+                        return bcInst->getOperand(0);
+                    }
+                    ++instItr;
+                }
+            }
+        }
+        return nullptr;
     }
 
     /// This method returns the CallInst's first argu var or ret recording var to 
@@ -84,6 +110,8 @@ struct APIMatchDetection : public FunctionPass {
             return getCudaMallocArguVar(Inst);
         } else if (funcName == "cudaFree") {
             return getCudaFreeArguVar(Inst);
+        } else if (funcName == "cudaMalloc") {
+
         } else {
             errs()<< "In the getRealMemVar() method, we met a new function named "
                     << funcName << " .\n";
@@ -253,7 +281,7 @@ struct APIMatchDetection : public FunctionPass {
             // Initialize the class member: callInstVect
             InitCallInstVector(F);
             // 1. cudaDeviceReset detection.
-            errs()<< "=====------------------ cudaDeviceResetDetecting Detection Report -------------------=====\n";
+            errs()<< "=====------- cudaDeviceResetDetecting Detection Report -------=====\n";
             switch (cudaDeviceResetDetecting())
             {
             case -1:
@@ -271,7 +299,7 @@ struct APIMatchDetection : public FunctionPass {
             errs()<< "=====----------------------- End ---------------------------=====\n\n";
             // 2. malloc-free matching detection.
             errs()<< "Start the API match detecting on the whole code area.\n";
-            errs()<< "=====------------------API match Detection Report -------------------=====\n";
+            errs()<< "=====--------------API match Detection Report --------------=====\n";
             if (apiMatchDetecting(callInstVect.begin(), callInstVect.end())) {
                 errs()<< "The CallInsts seem working well under current detecting rules...STATUS -- Safe.\n";
             } else {
