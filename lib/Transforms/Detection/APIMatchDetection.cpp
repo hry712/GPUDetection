@@ -175,8 +175,22 @@ struct APIMatchDetection : public FunctionPass {
                             errs()<< "Repeat calling the cudaFree() API, WARNING!!!\n";
                             return false;
                         }
-                    } else if (arguMapItr == records.end()) {
-                        
+                    } else if (arguMapItr->second == "cudaMallocHost") {
+                        if (funcName == "cudaMallocHost") {
+                            errs()<< "Successive cudaMallocHost() calling, WARNING!!!\n";
+                            return false;
+                        } else if (funcName == "cudaFreeHost") {
+                            records.erase(arguVar);
+                            errs()<< "Found a malloc-free pair, and this record is removed.\n";
+                        }
+                    } else if (arguMapItr->second == "cudaFreeHost") {
+                        if (funcName == "cudaMallocHost") {
+                            records[arguVar] = "cudaMallocHost";
+                            errs()<< "Start a new matching circle with cudaMallocHost().\n";
+                        } else if (funcName == "cudaFreeHost") {
+                            errs()<< "Repeat calling the cudaFreeHost() API, WARNING!!!\n";
+                            return false;
+                        }
                     } else {
                         errs()<< "Unknown error occured in the apiMatchDetecting() method...\n";
                     }
@@ -212,6 +226,8 @@ struct APIMatchDetection : public FunctionPass {
                         // errs()<< "Called function name: " << calledFuncName << "\n";
                         if (calledFuncName=="cudaMalloc" || 
                             calledFuncName=="cudaFree" ||
+                            calledFuncName=="cudaMallocHost" ||
+                            calledFuncName=="cudaFreeHost" ||
                             calledFuncName=="cudaDeviceReset") {
                             callInstVect.push_back(callInst);
                         }
