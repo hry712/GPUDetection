@@ -52,7 +52,6 @@ struct APIMatchDetection : public FunctionPass {
         BitCastInst* bcInst = nullptr;
         // PointerType* i8_ptr = PointerType::getInt8PtrTy(curContext);
         // PointerType* i8_pptr = PointerType::get(i8_ptr, 0);
-        Inst->getpre
         if (arg0 != nullptr) {
             if ((bcInst = dyn_cast<BitCastInst>(arg0)) != nullptr) {
                 /// parsing the current BB to find out the bitcast inst
@@ -71,9 +70,38 @@ struct APIMatchDetection : public FunctionPass {
     }
 
     Value* getCudaFreeArguVar(CallInst* Inst) {
+        BasicBlock* curBB = Inst->getParent();
         Value* arg0 = Inst->getArgOperand(0);
-        // return arg0;
+        BitCastInst* bcInst = nullptr;
+        LoadInst* ldInst = nullptr;
+        if (arg0 != nullptr) {
+            if ((bcInst = dyn_cast<BitCastInst>(arg0)) != nullptr) {
+                BasicBlock::iterator instItr = curBB->begin();
+                BasicBlock::const_iterator End = curBB->end();
+                while (instItr != End) {
+                    if ((&(*instItr)) == bcInst) { // find the target bitcast inst here
+                        // withdraw the target argument of bitcast
+                        // return bcInst->getOperand(0);
+                        Value* valVar = bcInst->getOperand(0);
+                        // start to find the target LoadInst for the value variable
+                        if ((ldInst = dyn_cast<LoadInst>(valVar)) != nullptr) {
 
+                        }
+                    }
+                    ++instItr;
+                }
+            }
+        }
+        return nullptr;
+    }
+
+    Value* findTargetLoadInst(BasicBlock* BB, LoadInst* targetInst) {
+        BasicBlock::iterator instItr = curBB->begin();
+        BasicBlock::const_iterator End = curBB->end();
+        while (instItr != End) {
+            //TO-DO: complete the rest part of the while loop to detect the LoadInst
+            ++instItr;
+        }
     }
 
     Value* getCudaMallocHostArguVar(CallInst* Inst) {
