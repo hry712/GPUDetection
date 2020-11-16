@@ -253,40 +253,31 @@ struct APIMatchDetection : public FunctionPass {
             // Initialize the class member: callInstVect
             InitCallInstVector(F);
             // 1. cudaDeviceReset detection.
+            errs()<< "=====------------------ cudaDeviceResetDetecting Detection Report -------------------=====\n";
             switch (cudaDeviceResetDetecting())
             {
             case -1:
-                errs()<< "=====------------------ Detection Report -------------------=====\n";
-                // errs()<< "cudaDeviceReset() detection has FINISHED.\n";
                 errs()<< "No CallInst exists in the src codes....STATUS -- Safe.\n";
-                errs()<< "=====----------------------- End ---------------------------=====\n\n";
                 break;
             case 0:
-                errs()<< "=====------------------ Detection Report -------------------=====\n";
                 errs()<< "WARNING: mismatch happened after the cudaDeviceReset() calling instruction...STATUS -- Unsafe\n";
-                errs()<< "=====----------------------- End ---------------------------=====\n\n";
                 break;
             case 1:
-                errs()<< "=====------------------ Detection Report -------------------=====\n";
-                // errs()<< "cudaDeviceReset() detection has FINISHED.\n";
                 errs()<< "The CallInsts seem working well under current detecting rules...STATUS -- Safe.\n";
-                errs()<< "=====----------------------- End ---------------------------=====\n\n";
                 break;
             default:
                 break;
             }
+            errs()<< "=====----------------------- End ---------------------------=====\n\n";
             // 2. malloc-free matching detection.
             errs()<< "Start the API match detecting on the whole code area.\n";
+            errs()<< "=====------------------API match Detection Report -------------------=====\n";
             if (apiMatchDetecting(callInstVect.begin(), callInstVect.end())) {
-                errs()<< "=====------------------ Detection Report -------------------=====\n";
-                // errs()<< "API match detection has FINISHED.\n";
                 errs()<< "The CallInsts seem working well under current detecting rules...STATUS -- Safe.\n";
-                errs()<< "=====----------------------- End ---------------------------=====\n\n";
             } else {
-                errs()<< "=====------------------ Detection Report -------------------=====\n";
                 errs()<< "WARNING: mismatch happened in the current function...STATUS -- Unsafe\n";
-                errs()<< "=====----------------------- End ---------------------------=====\n\n";
             }
+            errs()<< "=====----------------------- End ---------------------------=====\n\n";
             printCallInstVector();
         }
         return false;
