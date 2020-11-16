@@ -201,6 +201,12 @@ struct APIMatchDetection : public FunctionPass {
                     } else if (funcName == "cudaFree") {
                         errs()<< "Warning, the code try to free an unallocated variable with cudaFree().\n";
                         return false;
+                    } else if (funcName == "cudaMallocHost") {
+                        records.insert(make_pair(arguVar, funcName));
+                        errs()<< "Added a new record of cudaMallocHost() into the map.\n";
+                    } else if (funcName == "cudaFreeHost") {
+                        errs()<< "Warning, the code try to free an unallocated variable with cudaFreeHost().\n";
+                        return false;
                     }
                 }
             } else {
