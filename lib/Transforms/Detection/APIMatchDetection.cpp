@@ -95,15 +95,6 @@ struct APIMatchDetection : public FunctionPass {
         return nullptr;
     }
 
-    Value* findTargetLoadInst(BasicBlock* BB, LoadInst* targetInst) {
-        BasicBlock::iterator instItr = curBB->begin();
-        BasicBlock::const_iterator End = curBB->end();
-        while (instItr != End) {
-            //TO-DO: complete the rest part of the while loop to detect the LoadInst
-            ++instItr;
-        }
-    }
-
     Value* getCudaMallocHostArguVar(CallInst* Inst) {
         BasicBlock* curBB = Inst->getParent();
         // LLVMContext curContext = curBB->getParent()->getParent()->getContext();
