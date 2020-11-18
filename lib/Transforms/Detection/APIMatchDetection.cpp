@@ -85,7 +85,7 @@ struct APIMatchDetection : public FunctionPass {
                         Value* valVar = bcInst->getOperand(0);
                         // start to find the target LoadInst for the value variable
                         if ((ldInst = dyn_cast<LoadInst>(valVar)) != nullptr) {
-
+                            return ldInst->getOperand(0);
                         }
                     }
                     ++instItr;
@@ -129,6 +129,31 @@ struct APIMatchDetection : public FunctionPass {
         return nullptr;
     }
 
+    Value* getCudaFreeHostArguVar(CallInst* Inst) {
+        BasicBlock* curBB = Inst->getParent();
+        Value* arg0 = Inst->getArgOperand(0);
+        BitCastInst* bcInst = nullptr;
+        LoadInst* ldInst = nullptr;
+        if (arg0 != nullptr) {
+            if ((bcInst = dyn_cast<BitCastInst>(arg0)) != nullptr) {
+                BasicBlock::iterator instItr = curBB->begin();
+                BasicBlock::const_iterator End = curBB->end();
+                while (instItr != End) {
+                    if ((&(*instItr)) == bcInst) { // find the target bitcast inst here
+                        // withdraw the target argument of bitcast
+                        // return bcInst->getOperand(0);
+                        Value* valVar = bcInst->getOperand(0);
+                        // start to find the target LoadInst for the value variable
+                        if ((ldInst = dyn_cast<LoadInst>(valVar)) != nullptr) {
+                            return ldInst->getOperand(0);
+                        }
+                    }
+                    ++instItr;
+                }
+            }
+        }
+        return nullptr;
+    }
     /// This method returns the CallInst's first argu var or ret recording var to 
     /// withdraw the key content for records hashmap.
     Value* getRealMemVar(CallInst* Inst) {
@@ -138,8 +163,10 @@ struct APIMatchDetection : public FunctionPass {
             return getCudaMallocArguVar(Inst);
         } else if (funcName == "cudaFree") {
             return getCudaFreeArguVar(Inst);
-        } else if (funcName == "cudaMalloc") {
-
+        } else if (funcName == "cudaMallocHost") {
+            return getCudaMallocHostArguVar(Inst);
+        } else if (funcName == "cudaFreeHost") {
+            return getCudaFreeHostArguVar(Inst);
         } else {
             errs()<< "In the getRealMemVar() method, we met a new function named "
                     << funcName << " .\n";
