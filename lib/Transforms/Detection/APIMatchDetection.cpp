@@ -166,7 +166,6 @@ struct APIMatchDetection : public FunctionPass {
     }
 
     int cudaDeviceResetDetecting(void) {
-        errs()<< "Start the cudaDeviceReset() detecting...\n";
         if (!callInstVect.empty()) {
             std::vector<CallInst*>::iterator callInstItr = callInstVect.begin();
             std::vector<CallInst*>::iterator endItr = callInstVect.end();
@@ -325,6 +324,7 @@ struct APIMatchDetection : public FunctionPass {
         else
             return 1;
     }
+    
     virtual bool runOnFunction(Function &F) {
         // this pass module is prepared for host codes detection
         if ((F.getParent())->getTargetTriple().compare("x86_64-unknown-linux-gnu") == 0) {
@@ -332,6 +332,7 @@ struct APIMatchDetection : public FunctionPass {
             // Initialize the class member: callInstVect
             InitCallInstVector(F);
             // 1. cudaDeviceReset detection.
+            errs()<< "Start the cudaDeviceReset() detecting...\n";
             errs()<< "=====------- cudaDeviceResetDetecting Detection Report -------=====\n";
             switch (cudaDeviceResetDetecting())
             {
