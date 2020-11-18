@@ -228,6 +228,11 @@ struct APIMatchDetection : public FunctionPass {
             callInst = *beginItr;
             calledFunc = callInst->getCalledFunction();
             funcName = calledFunc->getName();
+            if (funcName == "cudaDeviceReset") {
+                ++beginItr;
+                continue;
+            }
+
             arguVar = getRealMemVar(callInst);
             if (arguVar != nullptr) {
                 // TO-DO: accomplish the rest part of the designing 
