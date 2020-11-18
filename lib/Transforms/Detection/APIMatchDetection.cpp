@@ -293,13 +293,17 @@ struct APIMatchDetection : public FunctionPass {
             }
             ++beginItr;
         }
-        return true;
+        if (records.empty())
+            return true;
+        else
+            return false;
     }
     
     int InitCallInstVector(Function &F) {
         CallInst* callInst = nullptr;
         Function* calledFunc = nullptr;
         std::string calledFuncName;
+        callInstVect.clear();
         for (Function::iterator BBItr = F.begin(), EndBB = F.end(); BBItr != EndBB; BBItr++) {
             for (BasicBlock::iterator IRItr = (*BBItr).begin(), EndIR = (*BBItr).end(); IRItr != EndIR; IRItr++) {
                 if ((callInst = dyn_cast<CallInst>(&(*IRItr))) != nullptr) {
@@ -324,7 +328,7 @@ struct APIMatchDetection : public FunctionPass {
         else
             return 1;
     }
-    
+
     virtual bool runOnFunction(Function &F) {
         // this pass module is prepared for host codes detection
         if ((F.getParent())->getTargetTriple().compare("x86_64-unknown-linux-gnu") == 0) {
