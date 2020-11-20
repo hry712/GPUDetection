@@ -317,6 +317,6 @@ char APIMatchDetection::ID = 0;
 static RegisterPass<APIMatchDetection> APIMD("APIMatchDetection", 
                                             "The GPU Memory util API matching detection pass module.", 
                                             false, false);
-static llvm::RegisterStandardPasses APIMDY2(PassManagerBuilder::EP_EarlyAsPossible,
-                                      [](const PassManagerBuilder &Builder,
-                                      legacy::PassManagerBase &PM) { PM.add(new APIMatchDetection()); });
+// static llvm::RegisterStandardPasses APIMDY2(PassManagerBuilder::EP_EarlyAsPossible,
+//                                       [](const PassManagerBuilder &Builder,
+//                                       legacy::PassManagerBase &PM) { PM.add(new APIMatchDetection()); });
