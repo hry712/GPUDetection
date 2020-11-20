@@ -52,7 +52,6 @@ struct APIMatchDetection : public FunctionPass {
         BitCastInst* bcInst = nullptr;
         // PointerType* i8_ptr = PointerType::getInt8PtrTy(curContext);
         // PointerType* i8_pptr = PointerType::get(i8_ptr, 0);
-        Inst->getpre
         if (arg0 != nullptr) {
             if ((bcInst = dyn_cast<BitCastInst>(arg0)) != nullptr) {
                 /// parsing the current BB to find out the bitcast inst
@@ -71,9 +70,29 @@ struct APIMatchDetection : public FunctionPass {
     }
 
     Value* getCudaFreeArguVar(CallInst* Inst) {
+        BasicBlock* curBB = Inst->getParent();
         Value* arg0 = Inst->getArgOperand(0);
-        // return arg0;
-
+        BitCastInst* bcInst = nullptr;
+        LoadInst* ldInst = nullptr;
+        if (arg0 != nullptr) {
+            if ((bcInst = dyn_cast<BitCastInst>(arg0)) != nullptr) {
+                BasicBlock::iterator instItr = curBB->begin();
+                BasicBlock::const_iterator End = curBB->end();
+                while (instItr != End) {
+                    if ((&(*instItr)) == bcInst) { // find the target bitcast inst here
+                        // withdraw the target argument of bitcast
+                        // return bcInst->getOperand(0);
+                        Value* valVar = bcInst->getOperand(0);
+                        // start to find the target LoadInst for the value variable
+                        if ((ldInst = dyn_cast<LoadInst>(valVar)) != nullptr) {
+                            return ldInst->getOperand(0);
+                        }
+                    }
+                    ++instItr;
+                }
+            }
+        }
+        return nullptr;
     }
 
     Value* getCudaMallocHostArguVar(CallInst* Inst) {
@@ -101,6 +120,31 @@ struct APIMatchDetection : public FunctionPass {
         return nullptr;
     }
 
+    Value* getCudaFreeHostArguVar(CallInst* Inst) {
+        BasicBlock* curBB = Inst->getParent();
+        Value* arg0 = Inst->getArgOperand(0);
+        BitCastInst* bcInst = nullptr;
+        LoadInst* ldInst = nullptr;
+        if (arg0 != nullptr) {
+            if ((bcInst = dyn_cast<BitCastInst>(arg0)) != nullptr) {
+                BasicBlock::iterator instItr = curBB->begin();
+                BasicBlock::const_iterator End = curBB->end();
+                while (instItr != End) {
+                    if ((&(*instItr)) == bcInst) { // find the target bitcast inst here
+                        // withdraw the target argument of bitcast
+                        // return bcInst->getOperand(0);
+                        Value* valVar = bcInst->getOperand(0);
+                        // start to find the target LoadInst for the value variable
+                        if ((ldInst = dyn_cast<LoadInst>(valVar)) != nullptr) {
+                            return ldInst->getOperand(0);
+                        }
+                    }
+                    ++instItr;
+                }
+            }
+        }
+        return nullptr;
+    }
     /// This method returns the CallInst's first argu var or ret recording var to 
     /// withdraw the key content for records hashmap.
     Value* getRealMemVar(CallInst* Inst) {
@@ -110,8 +154,10 @@ struct APIMatchDetection : public FunctionPass {
             return getCudaMallocArguVar(Inst);
         } else if (funcName == "cudaFree") {
             return getCudaFreeArguVar(Inst);
-        } else if (funcName == "cudaMalloc") {
-
+        } else if (funcName == "cudaMallocHost") {
+            return getCudaMallocHostArguVar(Inst);
+        } else if (funcName == "cudaFreeHost") {
+            return getCudaFreeHostArguVar(Inst);
         } else {
             errs()<< "In the getRealMemVar() method, we met a new function named "
                     << funcName << " .\n";
@@ -120,7 +166,6 @@ struct APIMatchDetection : public FunctionPass {
     }
 
     int cudaDeviceResetDetecting(void) {
-        errs()<< "Start the cudaDeviceReset() detecting...\n";
         if (!callInstVect.empty()) {
             std::vector<CallInst*>::iterator callInstItr = callInstVect.begin();
             std::vector<CallInst*>::iterator endItr = callInstVect.end();
@@ -182,6 +227,11 @@ struct APIMatchDetection : public FunctionPass {
             callInst = *beginItr;
             calledFunc = callInst->getCalledFunction();
             funcName = calledFunc->getName();
+            if (funcName == "cudaDeviceReset") {
+                ++beginItr;
+                continue;
+            }
+
             arguVar = getRealMemVar(callInst);
             if (arguVar != nullptr) {
                 // TO-DO: accomplish the rest part of the designing 
@@ -243,13 +293,17 @@ struct APIMatchDetection : public FunctionPass {
             }
             ++beginItr;
         }
-        return true;
+        if (records.empty())
+            return true;
+        else
+            return false;
     }
     
     int InitCallInstVector(Function &F) {
         CallInst* callInst = nullptr;
         Function* calledFunc = nullptr;
         std::string calledFuncName;
+        callInstVect.clear();
         for (Function::iterator BBItr = F.begin(), EndBB = F.end(); BBItr != EndBB; BBItr++) {
             for (BasicBlock::iterator IRItr = (*BBItr).begin(), EndIR = (*BBItr).end(); IRItr != EndIR; IRItr++) {
                 if ((callInst = dyn_cast<CallInst>(&(*IRItr))) != nullptr) {
@@ -274,6 +328,7 @@ struct APIMatchDetection : public FunctionPass {
         else
             return 1;
     }
+
     virtual bool runOnFunction(Function &F) {
         // this pass module is prepared for host codes detection
         if ((F.getParent())->getTargetTriple().compare("x86_64-unknown-linux-gnu") == 0) {
@@ -281,6 +336,7 @@ struct APIMatchDetection : public FunctionPass {
             // Initialize the class member: callInstVect
             InitCallInstVector(F);
             // 1. cudaDeviceReset detection.
+            errs()<< "Start the cudaDeviceReset() detecting...\n";
             errs()<< "=====------- cudaDeviceResetDetecting Detection Report -------=====\n";
             switch (cudaDeviceResetDetecting())
             {
