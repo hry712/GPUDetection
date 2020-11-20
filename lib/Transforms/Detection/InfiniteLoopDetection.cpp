@@ -11,7 +11,7 @@ using namespace llvm;
 namespace {
 struct InfiniteLoopDetection : public FunctionPass {
     static char ID;
-    Detection() : FunctionPass(ID) {}
+    InfiniteLoopDetection() : FunctionPass(ID) {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
         AU.setPreservesCFG();
