@@ -33,7 +33,7 @@ struct InfiniteLoopDetection : public FunctionPass {
                     }
                 } else {
                     errs()<< "The LoopT* vector contains nothing for the LoopInfo obj:\n";
-                    LoopInfo.print(errs());
+                    LI.print(errs());
                 }
             }
         }
