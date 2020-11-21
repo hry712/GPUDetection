@@ -19,7 +19,7 @@ struct InfiniteLoopDetection : public FunctionPass {
     }
 
     virtual bool runOnFunction(Function &F) {
-        LoopT* LT = nullptr;
+        LoopInfo* LT = nullptr;
         PHINode* indctVar = nullptr;
         if ((F.getParent())->getTargetTriple().compare("nvptx64-nvidia-cuda") == 0) {
             LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
