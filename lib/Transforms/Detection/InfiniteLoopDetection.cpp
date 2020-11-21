@@ -22,20 +22,24 @@ struct InfiniteLoopDetection : public FunctionPass {
         Loop* LP = nullptr;
         PHINode* indctVar = nullptr;
         if ((F.getParent())->getTargetTriple().compare("nvptx64-nvidia-cuda") == 0) {
-            errs()<< "Find a GPU kernel in the src codes...\n";
+            errs()<< "Now, this pass is dealing with a GPU kernel module...\n";
             LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-            errs()<< "Start analyzing the LoopInfo obj...\n";
-            for (LoopInfo::iterator i=LI.begin(), e=LI.end(); i!=e; i++) {
-                if ((LP=(*i)) != nullptr) {
-                    errs()<< "Start detecting the loop: " << *LP << "\n";
-                    if ((indctVar=LP->getCanonicalInductionVariable()) != nullptr) {
-                        errs()<< "Loop " << *LP << " contains an induction variable " << *indctVar << "\n";
+            if (LI.empty()) {
+                errs()<< "No Loop Structure exists in the function: " << F.getName() << "\n";
+            } else {
+                errs()<< "Start analyzing the LoopInfo obj in the Function: " << F.getName() << "\n";
+                for (LoopInfo::iterator i=LI.begin(), e=LI.end(); i!=e; i++) {
+                    if ((LP=(*i)) != nullptr) {
+                        errs()<< "Start detecting the loop: " << *LP << "\n";
+                        if ((indctVar=LP->getCanonicalInductionVariable()) != nullptr) {
+                            errs()<< "Loop " << *LP << " contains an induction variable " << *indctVar << "\n";
+                        } else {
+                            errs()<< "WARNING: Loop " << *LP << "does not have an induction variable--Maybe it's an infinite loop.\n";
+                        }
                     } else {
-                        errs()<< "WARNING: Loop " << *LP << "does not have an induction variable--Maybe it's an infinite loop.\n";
+                        errs()<< "The LoopT* vector contains nothing for the LoopInfo obj:\n";
+                        LI.print(errs());
                     }
-                } else {
-                    errs()<< "The LoopT* vector contains nothing for the LoopInfo obj:\n";
-                    LI.print(errs());
                 }
             }
         }
