@@ -19,17 +19,17 @@ struct InfiniteLoopDetection : public FunctionPass {
     }
 
     virtual bool runOnFunction(Function &F) {
-        LoopInfo* LT = nullptr;
+        Loop* LP = nullptr;
         PHINode* indctVar = nullptr;
         if ((F.getParent())->getTargetTriple().compare("nvptx64-nvidia-cuda") == 0) {
             LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
             for (LoopInfo::iterator i=LI.begin(), e=LI.end(); i!=e; i++) {
-                if ((LT=(*i)) != nullptr) {
-                    errs()<< "Start detecting the loop: " << *LT << "\n";
-                    if ((indctVar=LT->getInductionVariable()) != nullptr) {
-                        errs()<< "Loop " << *LT << " contains an induction variable " << *indctVar << "\n";
+                if ((LP=(*i)) != nullptr) {
+                    errs()<< "Start detecting the loop: " << *LP << "\n";
+                    if ((indctVar=LP->getInductionVariable()) != nullptr) {
+                        errs()<< "Loop " << *LP << " contains an induction variable " << *indctVar << "\n";
                     } else {
-                        errs()<< "WARNING: Loop " << *LT << "does not have an induction variable--Maybe it's an infinite loop.\n";
+                        errs()<< "WARNING: Loop " << *LP << "does not have an induction variable--Maybe it's an infinite loop.\n";
                     }
                 } else {
                     errs()<< "The LoopT* vector contains nothing for the LoopInfo obj:\n";
