@@ -28,7 +28,9 @@ struct InfiniteLoopDetection : public FunctionPass {
                 errs()<< "No Loop Structure exists in the function: " << F.getName() << "\n\n";
             } else {
                 errs()<< "Start analyzing the LoopInfo obj in the Function: " << F.getName() << "\n";
-                errs()<< "LoopInfo obj content: " << LI << "\n";
+                errs()<< "LoopInfo obj content:\n";
+                LI.print(errs());
+                errs()<< "\n";
                 for (LoopInfo::iterator i=LI.begin(), e=LI.end(); i!=e; i++) {
                     if ((LP=(*i)) != nullptr) {
                         errs()<< "Start detecting the loop: " << *LP << "\n";
