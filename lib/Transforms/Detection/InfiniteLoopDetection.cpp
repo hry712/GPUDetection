@@ -26,14 +26,14 @@ struct InfiniteLoopDetection : public FunctionPass {
             for (LoopInfo::iterator i=LI.begin(), e=LI.end(); i!=e; i++) {
                 if ((LP=(*i)) != nullptr) {
                     errs()<< "Start detecting the loop: " << *LP << "\n";
-                    if ((indctVar=LP->getInductionVariable()) != nullptr) {
+                    if ((indctVar=LP->getCanonicalInductionVariable()) != nullptr) {
                         errs()<< "Loop " << *LP << " contains an induction variable " << *indctVar << "\n";
                     } else {
                         errs()<< "WARNING: Loop " << *LP << "does not have an induction variable--Maybe it's an infinite loop.\n";
                     }
                 } else {
                     errs()<< "The LoopT* vector contains nothing for the LoopInfo obj:\n";
-                    LoopInfo.print();
+                    LoopInfo.print(errs());
                 }
             }
         }
