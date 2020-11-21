@@ -32,7 +32,8 @@ struct InfiniteLoopDetection : public FunctionPass {
                         errs()<< "WARNING: Loop " << *LT << "does not have an induction variable--Maybe it's an infinite loop.\n";
                     }
                 } else {
-                    errs()<< "The LoopT* vector contains nothing for the LoopInfo obj: " << LI << "\n";
+                    errs()<< "The LoopT* vector contains nothing for the LoopInfo obj:\n";
+                    LoopInfo.print();
                 }
             }
         }
