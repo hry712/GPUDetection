@@ -25,22 +25,24 @@ struct InfiniteLoopDetection : public FunctionPass {
             errs()<< "Now, this pass is dealing with a GPU kernel module...\n";
             LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
             if (LI.empty()) {
-                errs()<< "No Loop Structure exists in the function: " << F.getName() << "\n";
+                errs()<< "No Loop Structure exists in the function: " << F.getName() << "\n\n";
             } else {
                 errs()<< "Start analyzing the LoopInfo obj in the Function: " << F.getName() << "\n";
+                errs()<< "LoopInfo obj content: " << LI << "\n";
                 for (LoopInfo::iterator i=LI.begin(), e=LI.end(); i!=e; i++) {
                     if ((LP=(*i)) != nullptr) {
                         errs()<< "Start detecting the loop: " << *LP << "\n";
                         if ((indctVar=LP->getCanonicalInductionVariable()) != nullptr) {
-                            errs()<< "Loop " << *LP << " contains an induction variable " << *indctVar << "\n";
+                            errs()<< "CAUTION:\n" << *LP << " contains an induction variable " << *indctVar << "\n";
                         } else {
-                            errs()<< "WARNING: Loop " << *LP << "does not have an induction variable--Maybe it's an infinite loop.\n";
+                            errs()<< "WARNING:\n" << *LP << "does not have an induction variable--Maybe it's an infinite loop.\n";
                         }
                     } else {
                         errs()<< "The LoopT* vector contains nothing for the LoopInfo obj:\n";
                         LI.print(errs());
                     }
                 }
+                errs()<< "\n";
             }
         }
         return false;
