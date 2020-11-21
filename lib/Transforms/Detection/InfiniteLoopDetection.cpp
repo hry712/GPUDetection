@@ -22,7 +22,9 @@ struct InfiniteLoopDetection : public FunctionPass {
         Loop* LP = nullptr;
         PHINode* indctVar = nullptr;
         if ((F.getParent())->getTargetTriple().compare("nvptx64-nvidia-cuda") == 0) {
+            errs()<< "Find a GPU kernel in the src codes...\n";
             LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
+            errs()<< "Start analyzing the LoopInfo obj...\n";
             for (LoopInfo::iterator i=LI.begin(), e=LI.end(); i!=e; i++) {
                 if ((LP=(*i)) != nullptr) {
                     errs()<< "Start detecting the loop: " << *LP << "\n";
