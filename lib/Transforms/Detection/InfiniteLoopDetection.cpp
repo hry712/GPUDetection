@@ -5,6 +5,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
+#include <map>
+#include <tuple>
 
 using namespace llvm;
 
@@ -16,6 +18,7 @@ struct InfiniteLoopDetection : public FunctionPass {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
         AU.setPreservesCFG();
         AU.addRequired<LoopInfoWrapperPass>();
+        AU.addRequired<TargetLibraryInfoWrapperPass>();
     }
 
     virtual bool runOnFunction(Function &F) {
@@ -31,19 +34,32 @@ struct InfiniteLoopDetection : public FunctionPass {
                 errs()<< "LoopInfo obj content:\n";
                 LI.print(errs());
                 errs()<< "\n";
-                for (LoopInfo::iterator i=LI.begin(), e=LI.end(); i!=e; i++) {
-                    if ((LP=(*i)) != nullptr) {
-                        errs()<< "Start detecting the loop: " << *LP << "\n";
-                        if ((indctVar=LP->getCanonicalInductionVariable()) != nullptr) {
-                            errs()<< "CAUTION:\n" << *LP << " contains an induction variable " << *indctVar << "\n";
-                        } else {
-                            errs()<< "WARNING:\n" << *LP << "does not have an induction variable--Maybe it's an infinite loop.\n";
-                        }
-                    } else {
-                        errs()<< "The LoopT* vector contains nothing for the LoopInfo obj:\n";
-                        LI.print(errs());
-                    }
+                std::map<Value*, std::tuple<Value*, int, int> > IndVarMap;
+                BasicBlock* bbPreheader = nullptr;
+                BasicBlock* bbHeader = nullptr;
+                BasicBlock* bbBody = nullptr;
+                PHINode* phiNode = nullptr;
+                for (auto* lp : LI) {
+                    IndVarMap.clear();
+                    bbPreheader = lp->getLoopPreheader();
+                    bbHeader = lp->getHeader();
+                    for (auto& inst : *bbHeader)
+                        if ((phiNode=dyn_cast<PHINode>(&inst)) != nullptr)
+                            IndVarMap[&inst] = make_tuple(&inst, 1, 0);
                 }
+                // for (LoopInfo::iterator i=LI.begin(), e=LI.end(); i!=e; i++) {
+                //     if ((LP=(*i)) != nullptr) {
+                //         errs()<< "Start detecting the loop: " << *LP << "\n";
+                //         if ((indctVar=LP->getCanonicalInductionVariable()) != nullptr) {
+                //             errs()<< "CAUTION:\n" << *LP << " contains an induction variable " << *indctVar << "\n";
+                //         } else {
+                //             errs()<< "WARNING:\n" << *LP << "does not have an induction variable--Maybe it's an infinite loop.\n";
+                //         }
+                //     } else {
+                //         errs()<< "The LoopT* vector contains nothing for the LoopInfo obj:\n";
+                //         LI.print(errs());
+                //     }
+                // }
                 errs()<< "\n";
             }
         }
