@@ -35,10 +35,14 @@ struct InfiniteLoopDetection : public FunctionPass {
                 LI.print(errs());
                 errs()<< "\n";
                 std::map<Value*, std::tuple<Value*, int, int> > IndVarMap;
+                std::map<Value*, std::tuple<Value*, int, int> > tmpMap;
                 BasicBlock* bbPreheader = nullptr;
                 BasicBlock* bbHeader = nullptr;
                 BasicBlock* bbBody = nullptr;
                 PHINode* phiNode = nullptr;
+                BinaryOperator* binOptr = nullptr;
+                Value* lhs = nullptr;
+                Value* rhs = nullptr;
                 for (auto* lp : LI) {
                     IndVarMap.clear();
                     bbPreheader = lp->getLoopPreheader();
@@ -46,6 +50,21 @@ struct InfiniteLoopDetection : public FunctionPass {
                     for (auto& inst : *bbHeader)
                         if ((phiNode=dyn_cast<PHINode>(&inst)) != nullptr)
                             IndVarMap[&inst] = make_tuple(&inst, 1, 0);
+                }
+                auto loopBBs = lp->getBlocks();
+                while (true) {
+                    tmpMap.clear();
+                    tmpMap = IndVarMap;
+                    for (auto bb: loopBBs) {
+                        for (auto &ii : *B) {
+                            if ((binOptr=dyn_cast<BinaryOperator>(&ii)) != nullptr) {
+                                lhs = binOptr->getOperand(0);
+                                rhs = binOptr->getOperand(1);
+                                // TO-DO: 1. check the terminator inst of the phi node BB
+                                // 2. check the opnd pattern of BR inst
+                            }
+                        }
+                    }
                 }
                 // for (LoopInfo::iterator i=LI.begin(), e=LI.end(); i!=e; i++) {
                 //     if ((LP=(*i)) != nullptr) {
