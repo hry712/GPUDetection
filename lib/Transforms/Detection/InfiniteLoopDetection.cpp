@@ -21,6 +21,89 @@ struct InfiniteLoopDetection : public FunctionPass {
         AU.addRequired<TargetLibraryInfoWrapperPass>();
     }
 
+    int getLoopType(Loop* LP) {
+        // for(){...}, while(){...}
+        
+        // do{...} while()
+
+        return 0;
+    }
+
+    // TO-DO: complete this method
+    Value* getIndVarFromHS(Value* lhs, Value* rhs) {
+        // check which one is the variable and another one is a constant value
+        if () {
+
+        }
+        return nullptr;
+    }
+
+    Value* getForOrWhileInductionVar(Loop* LP) {
+        BasicBlock* headerBB = LP->getHeader();
+        BasicBlock* latchBB = LP->getLoopLatch();
+        BasicBlock* exitBB = LP->getExitBlock();
+        if (headerBB == exitBB) {
+            Instruction* termInst = headerBB->getTerminator();
+            BranchInst* brInst = nullptr;
+            
+            if ((brInst=dyn_cast<BranchInst>(termInst)) != nullptr) {
+                Value* cond = brInst->getCondition();
+                if (cond != nullptr) {
+                    unsigned opcode = cond->getOpcode();
+                    Value* lhs = nullptr;
+                    Value* rhs = nullptr;
+                    if (opcode == Instruction::ICMP) {
+                        ICmpInst* icmpInst = dyn_cast<ICmpInst>(cond);
+                        lhs = icmpInst->getOperand(0);
+                        rhs = icmpInst->getOperand(1);
+                        return getIndVarFromHS(lhs, rhs);
+                    } else if (opcode == Instruction::FCMP) {
+                        FCmpInst* fcmpInst = dyn_cast<FCmpInst>(cond);
+                        lhs = icmpInst->getOperand(0);
+                        rhs = icmpInst->getOperand(1);
+                        return getIndVarFromHS(lhs, rhs);
+                    } else if () { // TO-DO: check if the cond part is a constant value
+                        errs()<< "WARNING: the condition part of BR inst is a constant value and shouldn't be handled in getForOrWhileInductionVar() method.\n";
+                        return nullptr;
+                    }
+                } else {
+                    errs()<< "The BR inst does not have a valid condition part in the header BB.\n";
+                    return nullptr;
+                }
+            }
+        } else {
+            errs()<< "In function getForOrWhileInductionVar(), the header BB does not match the exit BB.\n";
+            errs()<< "Maybe the getLoopTye() method returned a wrong value for the current Loop.\n";
+        }
+        return nullptr;
+    }
+
+    Value* getDoWhileInductionVar(Loop* LP) {
+        return nullptr;
+    }
+
+    Value* getInductionVarFrom(Loop* LP, int Type) {
+        if (Type == 0) {
+
+        } else if (Type == 1) {
+
+        }
+        return nullptr;
+    }
+
+    bool isAffected(Loop* LP, Value* IndVar) {
+        return false;
+    }
+
+    int checkInductionVarLimit(Loop* LP) {
+        
+        return 0;
+    }
+
+    int checkBrCondConst(Loop* LP) {
+        return 0;
+    }
+
     virtual bool runOnFunction(Function &F) {
         Loop* LP = nullptr;
         PHINode* indctVar = nullptr;
