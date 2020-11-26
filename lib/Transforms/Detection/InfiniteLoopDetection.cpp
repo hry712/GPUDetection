@@ -138,17 +138,53 @@ struct InfiniteLoopDetection : public FunctionPass {
         return nullptr;
     }
 
-    bool isAffected(Loop* LP, Value* IndVar) {
-        return false;
-    }
-
     int checkInductionVarLimit(Loop* LP) {
         
         return 0;
     }
 
-    int checkBrCondConst(Loop* LP) {
-        return 0;
+    Instruction* getBasicArithmeticInst(Instruction* Inst) {
+        if (Inst != nullptr) {
+            if (Inst->isBinaryOp()) {
+                unsigned opcode = i->getOpcode();
+                // Binary Int Opcode
+                if () {
+
+                }
+
+                // Binary Float Opcode
+                if () {
+                    
+                }
+            } else {
+                return nullptr;
+            }
+        }
+        errs()<< "WARNING: In getBasicArithInst() method, the argu Inst is tested with NULL value.\n";
+        return nullptr;
+    }
+
+    bool isChangedByLP(Loop* LP, Value* IndVar) {
+        if (IndVar != nullptr) {
+            std::vector<BasicBlock*> BBs = LP->getBlocksVector();
+            std::vector<BasicBlock*>::iterator bbItr = BBs.begin();
+            std::vector<BasicBlock*>::iterator endItr = BBs.end();
+            BasicBlock::iterator iiItr;
+            BasicBlock::iterator ieItr;
+            BasicBlock* bb = nullptr;
+            while (bbItr != endItr) {
+                bb = *bbItr;
+                iiItr = bb->begin();
+                ieItr = bb->end();
+                while (iiItr != ieItr) {
+
+                    ++iiItr;
+                }
+                ++bbItr;
+            }
+        }
+        errs()<< "WARNING: In isChangedByLP() method, the argu IndVar is NULL.\n";
+        return false;
     }
 
     virtual bool runOnFunction(Function &F) {
@@ -164,24 +200,33 @@ struct InfiniteLoopDetection : public FunctionPass {
                 errs()<< "LoopInfo obj content:\n";
                 LI.print(errs());
                 errs()<< "\n";
-                std::map<Value*, std::tuple<Value*, int, int> > IndVarMap;
-                std::map<Value*, std::tuple<Value*, int, int> > tmpMap;
-                BasicBlock* bbPreheader = nullptr;
-                BasicBlock* bbHeader = nullptr;
-                BasicBlock* bbBody = nullptr;
-                PHINode* phiNode = nullptr;
-                BinaryOperator* binOptr = nullptr;
-                Value* lhs = nullptr;
-                Value* rhs = nullptr;
                 for (auto* lp : LI) {
-                    IndVarMap.clear();
-                    bbPreheader = lp->getLoopPreheader();
-                    bbHeader = lp->getHeader();
-                    for (auto& inst : *bbHeader)
-                        if ((phiNode=dyn_cast<PHINode>(&inst)) != nullptr)
-                            IndVarMap[&inst] = make_tuple(&inst, 1, 0);
+                    int lpTy = getLoopType(lp);
+                    Value* lpIndVar = getInductionVarFrom(lp. lpTy);
+                    if (lpIndVar != nullptr) {
+
+                    } else {
+                        errs()<< "WARNING: Fail to fetch the induction variable from the current Loop.\n";
+                    }
                 }
-                auto loopBBs = lp->getBlocks();
+                // std::map<Value*, std::tuple<Value*, int, int> > IndVarMap;
+                // std::map<Value*, std::tuple<Value*, int, int> > tmpMap;
+                // BasicBlock* bbPreheader = nullptr;
+                // BasicBlock* bbHeader = nullptr;
+                // BasicBlock* bbBody = nullptr;
+                // PHINode* phiNode = nullptr;
+                // BinaryOperator* binOptr = nullptr;
+                // Value* lhs = nullptr;
+                // Value* rhs = nullptr;
+                // for (auto* lp : LI) {
+                //     IndVarMap.clear();
+                //     bbPreheader = lp->getLoopPreheader();
+                //     bbHeader = lp->getHeader();
+                //     for (auto& inst : *bbHeader)
+                //         if ((phiNode=dyn_cast<PHINode>(&inst)) != nullptr)
+                //             IndVarMap[&inst] = make_tuple(&inst, 1, 0);
+                // }
+                // auto loopBBs = lp->getBlocks();
                 // while (true) {
                 //     tmpMap.clear();
                 //     tmpMap = IndVarMap;
