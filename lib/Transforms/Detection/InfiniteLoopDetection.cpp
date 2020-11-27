@@ -48,8 +48,8 @@ struct InfiniteLoopDetection : public FunctionPass {
         ConstantFP* constFpVar = nullptr;
         IndVarLimit = nullptr;
         // check the left operand first
-        if ((constIntVar=dyn_cast<ConstantInt>(lhs) != nullptr) ||
-            (constFpVar=dyn_cast<ConstantFP>(lhs) != nullptr)) {
+        if ((constIntVar=dyn_cast<ConstantInt>(lhs)) != nullptr ||
+            (constFpVar=dyn_cast<ConstantFP>(lhs)) != nullptr) {
             if ((auto* CI=dyn_cast<ConstantInt>(rhs)) == nullptr ) {
                 IndVarLimit = lhs;
                 return rhs;
