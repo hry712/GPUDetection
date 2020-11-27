@@ -55,8 +55,8 @@ struct InfiniteLoopDetection : public FunctionPass {
                 return rhs;
             }
             errs()<< "WARNING: In method getIndVarFromHS(), both operands are judged as constant value.\n";
-        } else if ((constIntVar=dyn_cast<ConstantInt>)(rhs) != nullptr ||
-            (constFpVar=dyn_cast<ConstantFP>)(rhs) != nullptr) {
+        } else if ((constIntVar=dyn_cast<ConstantInt>(rhs)) != nullptr ||
+            (constFpVar=dyn_cast<ConstantFP>(rhs)) != nullptr) {
             if ((constIntVar=dyn_cast<ConstantInt>(lhs)) == nullptr ) {
                 IndVarLimit = rhs;
                 return lhs;
