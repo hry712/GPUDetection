@@ -143,29 +143,45 @@ struct InfiniteLoopDetection : public FunctionPass {
         return 0;
     }
 
-    Instruction* getBasicArithmeticInst(Instruction* Inst) {
+    bool checkBasicArithmetic(Instruction* Inst, Value* IndVar) {
+        Value* lhs = nullptr;
+        Value* rhs = nullptr;
         if (Inst != nullptr) {
             if (Inst->isBinaryOp()) {
-                unsigned opcode = i->getOpcode();
+                unsigned opcode = Inst->getOpcode();
                 // Binary Int Opcode
-                if () {
-
+                // check if the operands contains the IndVar and a constant value
+                if (opcode == Instruction::Add ||
+                    opcode == Instruction::Sub ||
+                    opcode == Instruction::Mul ||
+                    opcode == Instruction::UDiv ||
+                    opcode == Instruction::SDiv) {
+                    lhs = Inst->getOperand(0);
+                    rhs = Inst->getOperand(1);
+                    if (auto* ) {
+                        
+                    }
                 }
 
                 // Binary Float Opcode
-                if () {
-                    
+                if (opcode == Instruction::FAdd ||
+                    opcode == Instruction::FSub ||
+                    opcode == Instruction::FMul ||
+                    opcode == Instruction::FDiv) {
+                    lhs = Inst->getOperand(0);
+                    rhs = Inst->getOperand(1);
+                    errs()<< "In checkBasicArithmetic() method, the target "
                 }
             } else {
-                return nullptr;
+                return false;
             }
         }
-        errs()<< "WARNING: In getBasicArithInst() method, the argu Inst is tested with NULL value.\n";
-        return nullptr;
+        errs()<< "WARNING: In checkBasicArithmetic() method, the argu Inst is tested with NULL value.\n";
+        return false;
     }
 
     bool isChangedByLP(Loop* LP, Value* IndVar) {
-        if (IndVar != nullptr) {
+        if (LP != nullptr && IndVar != nullptr) {
             std::vector<BasicBlock*> BBs = LP->getBlocksVector();
             std::vector<BasicBlock*>::iterator bbItr = BBs.begin();
             std::vector<BasicBlock*>::iterator endItr = BBs.end();
@@ -177,13 +193,14 @@ struct InfiniteLoopDetection : public FunctionPass {
                 iiItr = bb->begin();
                 ieItr = bb->end();
                 while (iiItr != ieItr) {
-
+                    if (checkBasicArithmetic(*iiItr, IndVar))
+                        return true;
                     ++iiItr;
                 }
                 ++bbItr;
             }
         }
-        errs()<< "WARNING: In isChangedByLP() method, the argu IndVar is NULL.\n";
+        errs()<< "WARNING: In isChangedByLP() method, the NULL value exists in the argus.\n";
         return false;
     }
 
@@ -204,7 +221,10 @@ struct InfiniteLoopDetection : public FunctionPass {
                     int lpTy = getLoopType(lp);
                     Value* lpIndVar = getInductionVarFrom(lp. lpTy);
                     if (lpIndVar != nullptr) {
+                        if (isChangedByLP(lp, lpIndVar)) {
+                            //TO-DO: Print out the safety detection report
 
+                        }
                     } else {
                         errs()<< "WARNING: Fail to fetch the induction variable from the current Loop.\n";
                     }
