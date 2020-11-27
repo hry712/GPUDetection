@@ -138,14 +138,13 @@ struct InfiniteLoopDetection : public FunctionPass {
         return nullptr;
     }
 
-    int checkInductionVarLimit(Loop* LP) {
-        
-        return 0;
-    }
-
+    // If the IndVar is used in the arithmetic instruction, this method will deem that
+    // the loop has setted a valid IndVar to reach an end.
     bool checkBasicArithmetic(Instruction* Inst, Value* IndVar) {
         Value* lhs = nullptr;
         Value* rhs = nullptr;
+        ConstantInt* stepIntLen = nullptr;
+        ConstantFP* stepFPLen = nullptr;
         if (Inst != nullptr) {
             if (Inst->isBinaryOp()) {
                 unsigned opcode = Inst->getOpcode();
@@ -158,11 +157,13 @@ struct InfiniteLoopDetection : public FunctionPass {
                     opcode == Instruction::SDiv) {
                     lhs = Inst->getOperand(0);
                     rhs = Inst->getOperand(1);
-                    if (auto* ) {
-                        
+                    if (lhs==IndVar && (stepIntLen=dyn_cast<ConstantInt>(rhs)!=nullptr)) {
+                        return true;
+                    }
+                    if (rhs==IndVar && (stepIntLen=dyn_cast<ConstantInt>(lhs)!=nullptr)) {
+                        return true;
                     }
                 }
-
                 // Binary Float Opcode
                 if (opcode == Instruction::FAdd ||
                     opcode == Instruction::FSub ||
@@ -170,7 +171,13 @@ struct InfiniteLoopDetection : public FunctionPass {
                     opcode == Instruction::FDiv) {
                     lhs = Inst->getOperand(0);
                     rhs = Inst->getOperand(1);
-                    errs()<< "In checkBasicArithmetic() method, the target "
+                    // errs()<< "In checkBasicArithmetic() method, the target "
+                    if (lhs==IndVar && (stepFPLen=dyn_cast<ConstantFP>(rhs)!=nullptr)) {
+                        return true;
+                    }
+                    if (rhs==IndVar && (stepFPLen=dyn_cast<ConstantFP>(lhs)!=nullptr)) {
+                        return true;
+                    }
                 }
             } else {
                 return false;
@@ -221,59 +228,19 @@ struct InfiniteLoopDetection : public FunctionPass {
                     int lpTy = getLoopType(lp);
                     Value* lpIndVar = getInductionVarFrom(lp. lpTy);
                     if (lpIndVar != nullptr) {
+                        errs()<< "Found induction variable in the loop: " << *lpIndVar << "\n";
+                        errs()<< "=====-----------Infinite Loop Check Report-----------=====\n";
                         if (isChangedByLP(lp, lpIndVar)) {
                             //TO-DO: Print out the safety detection report
-
+                            errs()<< "Under current checking strategies, this loop is considered as a finite type ----- SAFE\n";
+                        } else {
+                            errs()<< "Under current checking strategies, this loop is considered as an infinite type ----- UNSAFE\n";
                         }
+                        errs()<< "=====-----------------------End----------------------=====\n";
                     } else {
                         errs()<< "WARNING: Fail to fetch the induction variable from the current Loop.\n";
                     }
                 }
-                // std::map<Value*, std::tuple<Value*, int, int> > IndVarMap;
-                // std::map<Value*, std::tuple<Value*, int, int> > tmpMap;
-                // BasicBlock* bbPreheader = nullptr;
-                // BasicBlock* bbHeader = nullptr;
-                // BasicBlock* bbBody = nullptr;
-                // PHINode* phiNode = nullptr;
-                // BinaryOperator* binOptr = nullptr;
-                // Value* lhs = nullptr;
-                // Value* rhs = nullptr;
-                // for (auto* lp : LI) {
-                //     IndVarMap.clear();
-                //     bbPreheader = lp->getLoopPreheader();
-                //     bbHeader = lp->getHeader();
-                //     for (auto& inst : *bbHeader)
-                //         if ((phiNode=dyn_cast<PHINode>(&inst)) != nullptr)
-                //             IndVarMap[&inst] = make_tuple(&inst, 1, 0);
-                // }
-                // auto loopBBs = lp->getBlocks();
-                // while (true) {
-                //     tmpMap.clear();
-                //     tmpMap = IndVarMap;
-                //     for (auto bb: loopBBs) {
-                //         for (auto &ii : *B) {
-                //             if ((binOptr=dyn_cast<BinaryOperator>(&ii)) != nullptr) {
-                //                 lhs = binOptr->getOperand(0);
-                //                 rhs = binOptr->getOperand(1);
-                //                 // TO-DO: 1. check the terminator inst of the phi node BB
-                //                 // 2. check the opnd pattern of BR inst
-                //             }
-                //         }
-                //     }
-                // }
-                // for (LoopInfo::iterator i=LI.begin(), e=LI.end(); i!=e; i++) {
-                //     if ((LP=(*i)) != nullptr) {
-                //         errs()<< "Start detecting the loop: " << *LP << "\n";
-                //         if ((indctVar=LP->getCanonicalInductionVariable()) != nullptr) {
-                //             errs()<< "CAUTION:\n" << *LP << " contains an induction variable " << *indctVar << "\n";
-                //         } else {
-                //             errs()<< "WARNING:\n" << *LP << "does not have an induction variable--Maybe it's an infinite loop.\n";
-                //         }
-                //     } else {
-                //         errs()<< "The LoopT* vector contains nothing for the LoopInfo obj:\n";
-                //         LI.print(errs());
-                //     }
-                // }
                 errs()<< "\n";
             }
         }
