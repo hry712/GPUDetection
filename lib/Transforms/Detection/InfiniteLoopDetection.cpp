@@ -109,7 +109,10 @@ struct InfiniteLoopDetection : public FunctionPass {
             Instruction* termInst = headerBB->getTerminator();
             BranchInst* brInst = nullptr;
             if ((brInst=dyn_cast<BranchInst>(termInst)) != nullptr) {
+                errs()<<"DEBUG INFO: Enter the getCondVarFromBrInst() method...\n";
                 return getCondVarFromBrInst(brInst);
+            } else {
+                errs()<<"DEBUG INFO: In getForOrWhileInductionVar() method, fail to get a valid BR inst in the condition part.\n";
             }
         } else {
             errs()<< "WARNING: In function getForOrWhileInductionVar(), the header BB does not match the exit BB.\n";
@@ -139,8 +142,10 @@ struct InfiniteLoopDetection : public FunctionPass {
     Value* getInductionVarFrom(Loop* LP, int Type) {
         errs()<<"DEBUG INFO: Enter the getInductionVarFrom() method...\n";
         if (Type == 0) {
+            errs()<<"DEBUG INFO: Enter the getForOrWhileInductionVar() method...\n";
             return getForOrWhileInductionVar(LP);
         } else if (Type == 1) {
+            errs()<<"DEBUG INFO: Enter the getDoWhileInductionVar() method...\n";
             return getDoWhileInductionVar(LP);
         }
         errs()<< "WARNING: In getInductionVarFrom() method, an unknown loop type is given in the argus.\n";
