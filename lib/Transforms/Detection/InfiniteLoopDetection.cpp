@@ -69,22 +69,23 @@ struct InfiniteLoopDetection : public FunctionPass {
     }
 
     Value* getCondVarFromBrInst(BranchInst* BR) {
-        Value* cond = brInst->getCondition();
-        if (cond != nullptr) {
-            unsigned opcode = cond->getOpcode();
+        Value* cond = BR->getCondition();
+        Instruction* condInst = nullptr;
+        if ((condInst=dyn_cast<Instruction>(cond)) != nullptr) {
+            unsigned opcode = condInst->getOpcode();
             Value* lhs = nullptr;
             Value* rhs = nullptr;
             if (opcode == Instruction::ICMP) {
-                ICmpInst* icmpInst = dyn_cast<ICmpInst>(cond);
+                ICmpInst* icmpInst = dyn_cast<ICmpInst>(condInst);
                 lhs = icmpInst->getOperand(0);
                 rhs = icmpInst->getOperand(1);
                 return getIndVarFromHS(lhs, rhs);
             } else if (opcode == Instruction::FCMP) {
-                FCmpInst* fcmpInst = dyn_cast<FCmpInst>(cond);
+                FCmpInst* fcmpInst = dyn_cast<FCmpInst>(condInst);
                 lhs = icmpInst->getOperand(0);
                 rhs = icmpInst->getOperand(1);
                 return getIndVarFromHS(lhs, rhs);
-            } else if ((auto* CI=dyn_cast<ConstantInt>(cond)) != nullptr) { // TO-DO: check if the cond part is a constant value
+            } else if ((auto* CI=dyn_cast<ConstantInt>(condInst)) != nullptr) { // TO-DO: check if the cond part is a constant value
                 errs()<< "WARNING: In getCondVarFromBrInst() method, the condition part of BR inst is a constant value and shouldn't be handled in getForOrWhileInductionVar() method.\n";
                 return nullptr;
             }
