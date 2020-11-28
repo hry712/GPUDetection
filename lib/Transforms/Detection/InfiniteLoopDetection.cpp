@@ -117,7 +117,7 @@ struct InfiniteLoopDetection : public FunctionPass {
 
     Value* getDoWhileInductionVar(Loop* LP) {
         BasicBlock* headerBB = LP->getHeader();
-        // BasicBlock* latchBB = LP->getLoopLatch();
+        BasicBlock* latchBB = LP->getLoopLatch();
         BasicBlock* exitBB = LP->getExitBlock();
         if (latchBB == exitBB) {
             Instruction* termInst = latchBB->getTerminator();
@@ -173,10 +173,10 @@ struct InfiniteLoopDetection : public FunctionPass {
                     lhs = Inst->getOperand(0);
                     rhs = Inst->getOperand(1);
                     // errs()<< "In checkBasicArithmetic() method, the target "
-                    if ((lhs==IndVar) && ((stepFPLen=dyn_cast<ConstantFP>(rhs)!=nullptr))) {
+                    if (lhs==IndVar && (stepFPLen=dyn_cast<ConstantFP>(rhs))!=nullptr) {
                         return true;
                     }
-                    if ((rhs==IndVar) && ((stepFPLen=dyn_cast<ConstantFP>(lhs)!=nullptr))) {
+                    if (rhs==IndVar && (stepFPLen=dyn_cast<ConstantFP>(lhs))!=nullptr) {
                         return true;
                     }
                 }
