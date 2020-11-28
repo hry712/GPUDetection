@@ -82,7 +82,7 @@ struct InfiniteLoopDetection : public FunctionPass {
                 lhs = icmpInst->getOperand(0);
                 rhs = icmpInst->getOperand(1);
                 return getIndVarFromHS(lhs, rhs);
-            } else if (opcode == Instruction::Fcmp) {
+            } else if (opcode == Instruction::FCmp) {
                 FCmpInst* fcmpInst = dyn_cast<FCmpInst>(condInst);
                 lhs = fcmpInst->getOperand(0);
                 rhs = fcmpInst->getOperand(1);
@@ -100,7 +100,7 @@ struct InfiniteLoopDetection : public FunctionPass {
 
     Value* getForOrWhileInductionVar(Loop* LP) {
         BasicBlock* headerBB = LP->getHeader();
-        BasicBlock* latchBB = LP->getLoopLatch();
+        // BasicBlock* latchBB = LP->getLoopLatch();
         BasicBlock* exitBB = LP->getExitBlock();
         if (headerBB == exitBB) {
             Instruction* termInst = headerBB->getTerminator();
@@ -117,7 +117,7 @@ struct InfiniteLoopDetection : public FunctionPass {
 
     Value* getDoWhileInductionVar(Loop* LP) {
         BasicBlock* headerBB = LP->getHeader();
-        BasicBlock* latchBB = LP->getLoopLatch();
+        // BasicBlock* latchBB = LP->getLoopLatch();
         BasicBlock* exitBB = LP->getExitBlock();
         if (latchBB == exitBB) {
             Instruction* termInst = latchBB->getTerminator();
@@ -166,19 +166,17 @@ struct InfiniteLoopDetection : public FunctionPass {
                     if (rhs==IndVar && (stepIntLen=dyn_cast<ConstantInt>(lhs))!=nullptr) {
                         return true;
                     }
-                }
-                // Binary Float Opcode
-                if (opcode == Instruction::FAdd ||
+                } else if (opcode == Instruction::FAdd ||
                     opcode == Instruction::FSub ||
                     opcode == Instruction::FMul ||
-                    opcode == Instruction::FDiv) {
+                    opcode == Instruction::FDiv) { // Binary Float Opcode
                     lhs = Inst->getOperand(0);
                     rhs = Inst->getOperand(1);
                     // errs()<< "In checkBasicArithmetic() method, the target "
-                    if (lhs==IndVar && ((stepFPLen=dyn_cast<ConstantFP>(rhs)!=nullptr))) {
+                    if ((lhs==IndVar) && ((stepFPLen=dyn_cast<ConstantFP>(rhs)!=nullptr))) {
                         return true;
                     }
-                    if (rhs==IndVar && ((stepFPLen=dyn_cast<ConstantFP>(lhs)!=nullptr))) {
+                    if ((rhs==IndVar) && ((stepFPLen=dyn_cast<ConstantFP>(lhs)!=nullptr))) {
                         return true;
                     }
                 }
