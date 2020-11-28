@@ -1,5 +1,7 @@
 #include "llvm/Pass.h"
+#include "llvm/IR/Type.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/Support/raw_ostream.h"
@@ -75,17 +77,17 @@ struct InfiniteLoopDetection : public FunctionPass {
             unsigned opcode = condInst->getOpcode();
             Value* lhs = nullptr;
             Value* rhs = nullptr;
-            if (opcode == Instruction::ICMP) {
+            if (opcode == Instruction::Icmp) {
                 ICmpInst* icmpInst = dyn_cast<ICmpInst>(condInst);
                 lhs = icmpInst->getOperand(0);
                 rhs = icmpInst->getOperand(1);
                 return getIndVarFromHS(lhs, rhs);
-            } else if (opcode == Instruction::FCMP) {
+            } else if (opcode == Instruction::Fcmp) {
                 FCmpInst* fcmpInst = dyn_cast<FCmpInst>(condInst);
-                lhs = icmpInst->getOperand(0);
-                rhs = icmpInst->getOperand(1);
+                lhs = fcmpInst->getOperand(0);
+                rhs = fcmpInst->getOperand(1);
                 return getIndVarFromHS(lhs, rhs);
-            } else if ((auto* CI=dyn_cast<ConstantInt>(condInst)) != nullptr) { // TO-DO: check if the cond part is a constant value
+            } else if ((condInst=dyn_cast<ConstantInt>(condInst)) != nullptr) { // TO-DO: check if the cond part is a constant value
                 errs()<< "WARNING: In getCondVarFromBrInst() method, the condition part of BR inst is a constant value and shouldn't be handled in getForOrWhileInductionVar() method.\n";
                 return nullptr;
             }
@@ -94,7 +96,6 @@ struct InfiniteLoopDetection : public FunctionPass {
             return nullptr;
         }
         return nullptr;
-        
     }
 
     Value* getForOrWhileInductionVar(Loop* LP) {
@@ -159,10 +160,10 @@ struct InfiniteLoopDetection : public FunctionPass {
                     opcode == Instruction::SDiv) {
                     lhs = Inst->getOperand(0);
                     rhs = Inst->getOperand(1);
-                    if (lhs==IndVar && (stepIntLen=dyn_cast<ConstantInt>(rhs)!=nullptr)) {
+                    if (lhs==IndVar && (stepIntLen=dyn_cast<ConstantInt>(rhs))!=nullptr) {
                         return true;
                     }
-                    if (rhs==IndVar && (stepIntLen=dyn_cast<ConstantInt>(lhs)!=nullptr)) {
+                    if (rhs==IndVar && (stepIntLen=dyn_cast<ConstantInt>(lhs))!=nullptr) {
                         return true;
                     }
                 }
@@ -202,7 +203,7 @@ struct InfiniteLoopDetection : public FunctionPass {
                 iiItr = bb->begin();
                 ieItr = bb->end();
                 while (iiItr != ieItr) {
-                    if (checkBasicArithmetic(*iiItr, IndVar))
+                    if (checkBasicArithmetic(&(*iiItr), IndVar))
                         return true;
                     ++iiItr;
                 }
@@ -214,8 +215,8 @@ struct InfiniteLoopDetection : public FunctionPass {
     }
 
     virtual bool runOnFunction(Function &F) {
-        Loop* LP = nullptr;
-        PHINode* indctVar = nullptr;
+        // Loop* LP = nullptr;
+        // PHINode* indctVar = nullptr;
         if ((F.getParent())->getTargetTriple().compare("nvptx64-nvidia-cuda") == 0) {
             errs()<< "Now, this pass is dealing with a GPU kernel module...\n";
             LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
@@ -228,7 +229,7 @@ struct InfiniteLoopDetection : public FunctionPass {
                 errs()<< "\n";
                 for (auto* lp : LI) {
                     int lpTy = getLoopType(lp);
-                    Value* lpIndVar = getInductionVarFrom(lp. lpTy);
+                    Value* lpIndVar = getInductionVarFrom(lp, lpTy);
                     if (lpIndVar != nullptr) {
                         errs()<< "Found induction variable in the loop: " << *lpIndVar << "\n";
                         errs()<< "=====-----------Infinite Loop Check Report-----------=====\n";
