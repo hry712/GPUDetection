@@ -44,6 +44,7 @@ struct InfiniteLoopDetection : public FunctionPass {
     }
 
     Value* getIndVarFromHS(Value* lhs, Value* rhs) {
+        errs()<<"DEBUG INFO: Enter the getIndVarFromHS() method...\n";
         // check which one is the variable and another one is a constant value
         // Supposing that one of the operands is of constant type
         ConstantInt* constIntVar = nullptr;
@@ -71,6 +72,7 @@ struct InfiniteLoopDetection : public FunctionPass {
     }
 
     Value* getCondVarFromBrInst(BranchInst* BR) {
+        errs()<<"DEBUG INFO: Enter the getCondVarFromBrInst() method...\n";
         Value* cond = BR->getCondition();
         Instruction* condInst = nullptr;
         if ((condInst=dyn_cast<Instruction>(cond)) != nullptr) {
@@ -99,6 +101,7 @@ struct InfiniteLoopDetection : public FunctionPass {
     }
 
     Value* getForOrWhileInductionVar(Loop* LP) {
+        errs()<<"DEBUG INFO: Enter the getForOrWhileInductionVar() method...\n";
         BasicBlock* headerBB = LP->getHeader();
         // BasicBlock* latchBB = LP->getLoopLatch();
         BasicBlock* exitBB = LP->getExitBlock();
@@ -116,6 +119,7 @@ struct InfiniteLoopDetection : public FunctionPass {
     }
 
     Value* getDoWhileInductionVar(Loop* LP) {
+        errs()<<"DEBUG INFO: Enter the getDoWhileInductionVar() method...\n";
         BasicBlock* headerBB = LP->getHeader();
         BasicBlock* latchBB = LP->getLoopLatch();
         BasicBlock* exitBB = LP->getExitBlock();
@@ -133,11 +137,13 @@ struct InfiniteLoopDetection : public FunctionPass {
     }
 
     Value* getInductionVarFrom(Loop* LP, int Type) {
+        errs()<<"DEBUG INFO: Enter the getInductionVarFrom() method...\n";
         if (Type == 0) {
             return getForOrWhileInductionVar(LP);
         } else if (Type == 1) {
             return getDoWhileInductionVar(LP);
         }
+        errs()<< "WARNING: In getInductionVarFrom() method, an unknown loop type is given in the argus.\n";
         return nullptr;
     }
 
