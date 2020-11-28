@@ -18,7 +18,7 @@ struct InfiniteLoopDetection : public FunctionPass {
     static char ID;
     InfiniteLoopDetection() : FunctionPass(ID) {}
 
-    Value* IndVarLimit = nullptr;
+    int IndVarLimit = 0;
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
         AU.setPreservesCFG();
@@ -27,6 +27,7 @@ struct InfiniteLoopDetection : public FunctionPass {
     }
 
     int getLoopType(Loop* LP) {
+        errs()<<"DEBUG INFO: Enter the getLoopType() method...\n";
         BasicBlock* headerBB = LP->getHeader();
         BasicBlock* exitBB = LP->getExitBlock();
         BasicBlock* latchBB = LP->getLoopLatch();
@@ -43,14 +44,63 @@ struct InfiniteLoopDetection : public FunctionPass {
         return -1;
     }
 
+    int getValueFromConstInt(ConstantInt* CI) {
+        if (CI->getBitWidth() <= 32) {
+            return CI->getSExtValue();
+        }
+        return -10086;
+    }
+
+    float getValueFromConstFP(ConstantFP* CF) {
+        return -1.0086;
+    }
+
     Value* getIndVarFromHS(Value* lhs, Value* rhs) {
         errs()<<"DEBUG INFO: Enter the getIndVarFromHS() method...\n";
         // check which one is the variable and another one is a constant value
         // Supposing that one of the operands is of constant type
         ConstantInt* constIntVar = nullptr;
         ConstantFP* constFpVar = nullptr;
-        IndVarLimit = nullptr;
         // check the left operand first
+        // Binary Int Opnd
+        if ((constIntVar=dyn_cast<ConstantInt>(lhs)) != nullptr) {         // suppose the left opnd is a constant value
+                IndVarLimit = getValueFromConstInt(constIntVar);
+            if ((constIntVar=dyn_cast<ConstantInt>(rhs)) != nullptr) {
+                IndVarLimit = -10010;   // the special value with nullptr return value denote that condition part may be a constant value
+                return nullptr;
+            } else if (rhs->isIntegerTy()) {
+                return rhs;
+            }
+        } else if ((constIntVar=dyn_cast<ConstantInt>(rhs)) != nullptr) { // suppose the right opnd is a constant value
+            IndVarLimit = getValueFromConstInt(constIntVar);
+            if ((constIntVar=dyn_cast<ConstantInt>(lhs)) != nullptr) {
+                IndVarLimit = -10010;
+                return nullptr;
+            } else if (lhs->isIntegerTy()) {
+                IndVarLimit = rhs;
+                return lhs;
+            }
+        }
+        // Binary Float Opnd
+        if ((constFpVar=dyn_cast<ConstantFP>(lhs)) != nullptr) {         // suppose the left opnd is a constant float value
+            IndVarLimit = getValueFromConstInt(constIntVar);
+            if ((constIntVar=dyn_cast<ConstantInt>(rhs)) != nullptr) {
+                IndVarLimit = -10010;   // the special value with nullptr return value denote that condition part may be a constant value
+                return nullptr;
+            } else if (rhs->isIntegerTy()) {
+                return rhs;
+            }
+        } else if ((constIntVar=dyn_cast<ConstantInt>(rhs)) != nullptr) { // suppose the right opnd is a constant value
+            IndVarLimit = getValueFromConstInt(constIntVar);
+            if ((constIntVar=dyn_cast<ConstantInt>(lhs)) != nullptr) {
+                IndVarLimit = -10010;
+                return nullptr;
+            } else if (lhs->isIntegerTy()) {
+                IndVarLimit = rhs;
+                return lhs;
+            }
+        }
+        ///
         if ((constIntVar=dyn_cast<ConstantInt>(lhs)) != nullptr ||
             (constFpVar=dyn_cast<ConstantFP>(lhs)) != nullptr) {
             if ((constIntVar=dyn_cast<ConstantInt>(rhs)) == nullptr ) {
@@ -155,6 +205,7 @@ struct InfiniteLoopDetection : public FunctionPass {
     // If the IndVar is used in the arithmetic instruction, this method will deem that
     // the loop has setted a valid IndVar to reach an end.
     bool checkBasicArithmetic(Instruction* Inst, Value* IndVar) {
+        errs()<<"DEBUG INFO: Enter the checkBasicArithmetic() method...\n";
         Value* lhs = nullptr;
         Value* rhs = nullptr;
         ConstantInt* stepIntLen = nullptr;
