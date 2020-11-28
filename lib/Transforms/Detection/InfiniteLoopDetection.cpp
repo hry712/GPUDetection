@@ -77,7 +77,7 @@ struct InfiniteLoopDetection : public FunctionPass {
             unsigned opcode = condInst->getOpcode();
             Value* lhs = nullptr;
             Value* rhs = nullptr;
-            if (opcode == Instruction::Icmp) {
+            if (opcode == Instruction::ICmp) {
                 ICmpInst* icmpInst = dyn_cast<ICmpInst>(condInst);
                 lhs = icmpInst->getOperand(0);
                 rhs = icmpInst->getOperand(1);
@@ -87,7 +87,7 @@ struct InfiniteLoopDetection : public FunctionPass {
                 lhs = fcmpInst->getOperand(0);
                 rhs = fcmpInst->getOperand(1);
                 return getIndVarFromHS(lhs, rhs);
-            } else if ((condInst=dyn_cast<ConstantInt>(condInst)) != nullptr) { // TO-DO: check if the cond part is a constant value
+            } else if ((cond=dyn_cast<ConstantInt>(cond)) != nullptr) { // TO-DO: check if the cond part is a constant value
                 errs()<< "WARNING: In getCondVarFromBrInst() method, the condition part of BR inst is a constant value and shouldn't be handled in getForOrWhileInductionVar() method.\n";
                 return nullptr;
             }
@@ -175,10 +175,10 @@ struct InfiniteLoopDetection : public FunctionPass {
                     lhs = Inst->getOperand(0);
                     rhs = Inst->getOperand(1);
                     // errs()<< "In checkBasicArithmetic() method, the target "
-                    if (lhs==IndVar && (stepFPLen=dyn_cast<ConstantFP>(rhs)!=nullptr)) {
+                    if (lhs==IndVar && ((stepFPLen=dyn_cast<ConstantFP>(rhs)!=nullptr))) {
                         return true;
                     }
-                    if (rhs==IndVar && (stepFPLen=dyn_cast<ConstantFP>(lhs)!=nullptr)) {
+                    if (rhs==IndVar && ((stepFPLen=dyn_cast<ConstantFP>(lhs)!=nullptr))) {
                         return true;
                     }
                 }
