@@ -31,7 +31,8 @@ struct InfiniteLoopDetection : public FunctionPass {
     int getLoopType(Loop* LP) {
         errs()<<"DEBUG INFO: Enter the getLoopType() method...\n";
         BasicBlock* headerBB = LP->getHeader();
-        BasicBlock* exitBB = LP->getExitBlock();
+        BasicBlock* exitBB = LP->getExitingBlock();
+        // std::vector<BasicBlock*> exitBBs = LP->getExitBlocks();
         BasicBlock* latchBB = LP->getLoopLatch();
         // for(){...}, while(){...}
         if (headerBB == exitBB) {
