@@ -117,7 +117,9 @@ struct InfiniteLoopDetection : public FunctionPass {
     Value* getCondVarFromBrInst(BranchInst* BR) {
         errs()<<"DEBUG INFO: Enter the getCondVarFromBrInst() method...\n";
         Value* cond = BR->getCondition();
+        Value* loadedCondVar = nullptr;
         Instruction* condInst = nullptr;
+        Instruction* loadInst = nullptr;
         if ((condInst=dyn_cast<Instruction>(cond)) != nullptr) {
             unsigned opcode = condInst->getOpcode();
             Value* lhs = nullptr;
@@ -126,12 +128,22 @@ struct InfiniteLoopDetection : public FunctionPass {
                 ICmpInst* icmpInst = dyn_cast<ICmpInst>(condInst);
                 lhs = icmpInst->getOperand(0);
                 rhs = icmpInst->getOperand(1);
-                return getIndVarFromHS(lhs, rhs);
+                loadedCondVar = getIndVarFromHS(lhs, rhs);
+                if (loadedCondVar != nullptr) {
+                    if ((loadInst=dyn_cast<LoadInst>(loadedCondVar)) != nullptr) {
+                        return loadInst->getOperand(0);
+                    }
+                }
             } else if (opcode == Instruction::FCmp) {
                 FCmpInst* fcmpInst = dyn_cast<FCmpInst>(condInst);
                 lhs = fcmpInst->getOperand(0);
                 rhs = fcmpInst->getOperand(1);
-                return getIndVarFromHS(lhs, rhs);
+                loadedCondVar = getIndVarFromHS(lhs, rhs);
+                if (loadedCondVar != nullptr) {
+                    if ((loadInst=dyn_cast<LoadInst>(loadedCondVar)) != nullptr) {
+                        return loadInst->getOperand(0);
+                    }
+                }
             } else if ((cond=dyn_cast<ConstantInt>(cond)) != nullptr) { // TO-DO: check if the cond part is a constant value
                 errs()<< "WARNING: In getCondVarFromBrInst() method, the condition part of BR inst is a constant value and shouldn't be handled in getForOrWhileInductionVar() method.\n";
                 return nullptr;
