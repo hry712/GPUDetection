@@ -4,6 +4,7 @@
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LegacyPassManager.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
@@ -19,6 +20,7 @@ struct InfiniteLoopDetection : public FunctionPass {
     InfiniteLoopDetection() : FunctionPass(ID) {}
 
     int IndVarLimit = 0;
+    Function* curFunc;
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
         AU.setPreservesCFG();
@@ -51,16 +53,14 @@ struct InfiniteLoopDetection : public FunctionPass {
         return -10086;
     }
 
-    // float getValueFromConstFP(ConstantFP* CF) {
-    //     return -1.0086;
-    // }
-
+    // check which one is the variable and another one is a constant value
+    // Supposing that one of the operands is of constant type
     Value* getIndVarFromHS(Value* lhs, Value* rhs) {
         errs()<<"DEBUG INFO: Enter the getIndVarFromHS() method...\n";
-        // check which one is the variable and another one is a constant value
-        // Supposing that one of the operands is of constant type
         ConstantInt* constIntVar = nullptr;
         ConstantFP* constFpVar = nullptr;
+        IntegerType* i32 = IntegerType::get(curFunc->getParent()->getContext(), 32);
+        IntegerType* i64 = IntegerType::get(curFunc->getParent()->getContext(), 64);
         // check the left operand first
         // Binary Int Opnd
         if ((constIntVar=dyn_cast<ConstantInt>(lhs)) != nullptr) {         // suppose the left opnd is a constant value
@@ -68,7 +68,7 @@ struct InfiniteLoopDetection : public FunctionPass {
             if ((constIntVar=dyn_cast<ConstantInt>(rhs)) != nullptr) {
                 IndVarLimit = -10010;   // the special value with nullptr return value denote that condition part may be a constant value
                 return nullptr;
-            } else if (rhs->isIntegerTy()) {
+            } else if (rhs->getType()==i32 || rhs->getType()==i64) {
                 return rhs;
             }
         } else if ((constIntVar=dyn_cast<ConstantInt>(rhs)) != nullptr) { // suppose the right opnd is a constant value
@@ -76,8 +76,7 @@ struct InfiniteLoopDetection : public FunctionPass {
             if ((constIntVar=dyn_cast<ConstantInt>(lhs)) != nullptr) {
                 IndVarLimit = -10011;   // Give the member IndVarLimit a special int value to indicate the detecting result
                 return nullptr;
-            } else if (lhs->isIntegerTy()) {
-                IndVarLimit = rhs;
+            } else if (lhs->getType()==i32 || lhs->getType()==i64) {
                 return lhs;
             }
         }
@@ -264,6 +263,7 @@ struct InfiniteLoopDetection : public FunctionPass {
         // PHINode* indctVar = nullptr;
         if ((F.getParent())->getTargetTriple().compare("nvptx64-nvidia-cuda") == 0) {
             errs()<< "Now, this pass is dealing with a GPU kernel module...\n";
+            curFunc = &F;
             LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
             if (LI.empty()) {
                 errs()<< "No Loop Structure exists in the function: " << F.getName() << "\n\n";
