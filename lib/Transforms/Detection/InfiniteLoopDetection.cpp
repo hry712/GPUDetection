@@ -43,6 +43,11 @@ struct InfiniteLoopDetection : public FunctionPass {
             errs()<< "In getLoopType() method, we judge current LoopObj is do...while type.\n";
             return 1;
         }
+        errs()<<"DEBUG INFO: In getLoopType() method, the header, latch, exiting BBs do not match the detection strategies.\n";
+        errs()<<"DEBUG INFO: In getLoopType() method, print the processed Loop obj info as following...\n" << *LP << "\n";
+        errs()<<"DEBUG INFO: In getLoopType() method, print the header as following...\n" << *headerBB << "\n";
+        errs()<<"DEBUG INFO: In getLoopType() method, print the latch as following...\n" << *latchBB << "\n";
+        errs()<<"DEBUG INFO: In getLoopType() method, print the exiting as following...\n" << *exitBB << "\n";
         return -1;
     }
 
