@@ -147,7 +147,7 @@ struct InfiniteLoopDetection : public FunctionPass {
         errs()<<"DEBUG INFO: Enter the getForOrWhileInductionVar() method...\n";
         BasicBlock* headerBB = LP->getHeader();
         // BasicBlock* latchBB = LP->getLoopLatch();
-        BasicBlock* exitBB = LP->getExitBlock();
+        BasicBlock* exitBB = LP->getExitingBlock();
         if (headerBB == exitBB) {
             Instruction* termInst = headerBB->getTerminator();
             BranchInst* brInst = nullptr;
