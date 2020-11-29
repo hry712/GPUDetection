@@ -90,7 +90,7 @@ struct InfiniteLoopDetection : public FunctionPass {
                 // IndVarLimit = -10010; 
                 errs()<< "WARNING: In method getIndVarFromHS(), both operands are judged as constant int values.\n";
                 return nullptr;
-            } else if ((rhs->getType()==flt || rhs->getType()==dbl) {
+            } else if (rhs->getType()==flt || rhs->getType()==dbl) {
                 return rhs;
             }
         } else if ((constIntVar=dyn_cast<ConstantInt>(rhs)) != nullptr) { // suppose the right opnd is a constant value
