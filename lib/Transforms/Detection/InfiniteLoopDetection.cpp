@@ -51,9 +51,9 @@ struct InfiniteLoopDetection : public FunctionPass {
         return -10086;
     }
 
-    float getValueFromConstFP(ConstantFP* CF) {
-        return -1.0086;
-    }
+    // float getValueFromConstFP(ConstantFP* CF) {
+    //     return -1.0086;
+    // }
 
     Value* getIndVarFromHS(Value* lhs, Value* rhs) {
         errs()<<"DEBUG INFO: Enter the getIndVarFromHS() method...\n";
@@ -74,7 +74,7 @@ struct InfiniteLoopDetection : public FunctionPass {
         } else if ((constIntVar=dyn_cast<ConstantInt>(rhs)) != nullptr) { // suppose the right opnd is a constant value
             IndVarLimit = getValueFromConstInt(constIntVar);
             if ((constIntVar=dyn_cast<ConstantInt>(lhs)) != nullptr) {
-                IndVarLimit = -10010;
+                IndVarLimit = -10011;   // Give the member IndVarLimit a special int value to indicate the detecting result
                 return nullptr;
             } else if (lhs->isIntegerTy()) {
                 IndVarLimit = rhs;
@@ -83,41 +83,26 @@ struct InfiniteLoopDetection : public FunctionPass {
         }
         // Binary Float Opnd
         if ((constFpVar=dyn_cast<ConstantFP>(lhs)) != nullptr) {         // suppose the left opnd is a constant float value
-            IndVarLimit = getValueFromConstInt(constIntVar);
+            // IndVarLimit = getValueFromConstInt(constIntVar);
             if ((constIntVar=dyn_cast<ConstantInt>(rhs)) != nullptr) {
-                IndVarLimit = -10010;   // the special value with nullptr return value denote that condition part may be a constant value
+                // IndVarLimit = -10010; 
+                errs()<< "WARNING: In method getIndVarFromHS(), both operands are judged as constant int values.\n";
                 return nullptr;
             } else if (rhs->isIntegerTy()) {
                 return rhs;
             }
         } else if ((constIntVar=dyn_cast<ConstantInt>(rhs)) != nullptr) { // suppose the right opnd is a constant value
-            IndVarLimit = getValueFromConstInt(constIntVar);
+            // IndVarLimit = getValueFromConstInt(constIntVar);
             if ((constIntVar=dyn_cast<ConstantInt>(lhs)) != nullptr) {
-                IndVarLimit = -10010;
+                // IndVarLimit = -10010;
+                errs()<< "WARNING: In method getIndVarFromHS(), both operands are judged as constant int values.\n";
                 return nullptr;
             } else if (lhs->isIntegerTy()) {
-                IndVarLimit = rhs;
+                // IndVarLimit = rhs;
                 return lhs;
             }
         }
-        ///
-        if ((constIntVar=dyn_cast<ConstantInt>(lhs)) != nullptr ||
-            (constFpVar=dyn_cast<ConstantFP>(lhs)) != nullptr) {
-            if ((constIntVar=dyn_cast<ConstantInt>(rhs)) == nullptr ) {
-                IndVarLimit = lhs;
-                return rhs;
-            }
-            errs()<< "WARNING: In method getIndVarFromHS(), both operands are judged as constant value.\n";
-        } else if ((constIntVar=dyn_cast<ConstantInt>(rhs)) != nullptr ||
-            (constFpVar=dyn_cast<ConstantFP>(rhs)) != nullptr) {
-            if ((constIntVar=dyn_cast<ConstantInt>(lhs)) == nullptr ) {
-                IndVarLimit = rhs;
-                return lhs;
-            }
-            errs()<< "WARNING: In method getIndVarFromHS(), both operands are judged as constant value.\n";
-        } else {
-            errs()<< "WARNING: both operands in the BR condition area are variables, whick is hard to detect the induction variable.\n";
-        }
+        errs()<< "WARNING: both operands in the BR condition area are variables, whick is hard to detect the induction variable.\n";
         return nullptr;
     }
 
