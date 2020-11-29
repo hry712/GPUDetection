@@ -61,6 +61,9 @@ struct InfiniteLoopDetection : public FunctionPass {
         ConstantFP* constFpVar = nullptr;
         IntegerType* i32 = IntegerType::get(curFunc->getParent()->getContext(), 32);
         IntegerType* i64 = IntegerType::get(curFunc->getParent()->getContext(), 64);
+        Type* flt =  Type::getFloatTy(curFunc->getParent()->getContext());
+        Type* dbl =  Type::getDoubleTy(curFunc->getParent()->getContext());
+        
         // check the left operand first
         // Binary Int Opnd
         if ((constIntVar=dyn_cast<ConstantInt>(lhs)) != nullptr) {         // suppose the left opnd is a constant value
@@ -87,7 +90,7 @@ struct InfiniteLoopDetection : public FunctionPass {
                 // IndVarLimit = -10010; 
                 errs()<< "WARNING: In method getIndVarFromHS(), both operands are judged as constant int values.\n";
                 return nullptr;
-            } else if (rhs->isIntegerTy()) {
+            } else if ((rhs->getType()==flt || rhs->getType()==dbl) {
                 return rhs;
             }
         } else if ((constIntVar=dyn_cast<ConstantInt>(rhs)) != nullptr) { // suppose the right opnd is a constant value
@@ -96,7 +99,7 @@ struct InfiniteLoopDetection : public FunctionPass {
                 // IndVarLimit = -10010;
                 errs()<< "WARNING: In method getIndVarFromHS(), both operands are judged as constant int values.\n";
                 return nullptr;
-            } else if (lhs->isIntegerTy()) {
+            } else if (lhs->getType()==flt || lhs->getType()==dbl) {
                 // IndVarLimit = rhs;
                 return lhs;
             }
