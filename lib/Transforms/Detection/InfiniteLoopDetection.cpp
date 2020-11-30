@@ -207,49 +207,96 @@ struct InfiniteLoopDetection : public FunctionPass {
         return nullptr;
     }
 
+    bool checkPatternLAS(Instruction* Inst, Value* IndVar) {
+        if (Inst != nullptr && IndVar != nullptr) {
+            Instruction* firstNextInst = Inst->getNextNonDebugInstruction();
+            Instruction* secondNextInst = firstNextInst->getNextNonDebugInstruction();
+            if (firstNextInst->isBinaryOp() && secondNextInst->isBinaryOp()) {
+                unsigned firstOpcode = firstNextInst->getOpcode();
+                unsigned secondOpcode = secondNextInst->getOpcode();
+                Value* lhs = nullptr;
+                Value* rhs = nullptr;
+                if (firstOpcode == Instruction::Add ||
+                    firstOpcode == Instruction::Sub ||
+                    firstOpcode == Instruction::Mul ||
+                    firstOpcode == Instruction::UDiv ||
+                    firstOpcode == Instruction::SDiv) {
+                    lhs = firstNextInst->getOperand(0);
+                    rhs = firstNextInst->getOperand(1);
+                    if (getIndVarFromHS(lhs, rhs) == IndVar) {
+                        if (secondOpcode == Instruction::Store) {
+                            lhs = secondNextInst->getOperand(0);
+                            rhs = secondNextInst->getOperand(1);
+                            if (lhs==firstNextInst && rhs==IndVar)
+                                return true;
+                            errs()<< "DEBUG INFO: In checkPatternLAS() method, the operand values' list of the StoreInst does not match the 2 insts before.\n";
+                        }
+                        errs()<< "DEBUG INFO: In checkPatternLAS() method, the StoreInst mismatched at the secondNextInst.\n";
+                    }
+                    errs()<< "DEBUG INFO: In checkPatternLAS() method, no IndVar is found in the firstNextInst operand list.\n";
+                }
+            } else {
+                errs()<< "DEBUG INFO: In checkPatternLAS() method, the next inst of LoadInst is not a proper one.\n";
+                return false;
+            }
+        } else {
+            errs()<< "DEBUG INFO: In checkPatternLAS() method, a NULL ptr is passed into the argu list!\n";
+        }
+        return false;
+    }
+
     // If the IndVar is used in the arithmetic instruction, this method will deem that
     // the loop has setted a valid IndVar to reach an end.
     bool checkBasicArithmetic(Instruction* Inst, Value* IndVar) {
         errs()<<"DEBUG INFO: Enter the checkBasicArithmetic() method...\n";
-        Value* lhs = nullptr;
-        Value* rhs = nullptr;
+        
         ConstantInt* stepIntLen = nullptr;
         ConstantFP* stepFPLen = nullptr;
         if (Inst != nullptr) {
-            if (Inst->isBinaryOp()) {
+            if (Inst->isUnaryOp) {
                 unsigned opcode = Inst->getOpcode();
-                // Binary Int Opcode
-                // check if the operands contains the IndVar and a constant value
-                if (opcode == Instruction::Add ||
-                    opcode == Instruction::Sub ||
-                    opcode == Instruction::Mul ||
-                    opcode == Instruction::UDiv ||
-                    opcode == Instruction::SDiv) {
-                    lhs = Inst->getOperand(0);
-                    rhs = Inst->getOperand(1);
-                    if (lhs==IndVar && (stepIntLen=dyn_cast<ConstantInt>(rhs))!=nullptr) {
-                        return true;
-                    }
-                    if (rhs==IndVar && (stepIntLen=dyn_cast<ConstantInt>(lhs))!=nullptr) {
-                        return true;
-                    }
-                } else if (opcode == Instruction::FAdd ||
-                    opcode == Instruction::FSub ||
-                    opcode == Instruction::FMul ||
-                    opcode == Instruction::FDiv) { // Binary Float Opcode
-                    lhs = Inst->getOperand(0);
-                    rhs = Inst->getOperand(1);
-                    // errs()<< "In checkBasicArithmetic() method, the target "
-                    if (lhs==IndVar && (stepFPLen=dyn_cast<ConstantFP>(rhs))!=nullptr) {
-                        return true;
-                    }
-                    if (rhs==IndVar && (stepFPLen=dyn_cast<ConstantFP>(lhs))!=nullptr) {
+                if (opcode == Instruction::Load) {
+                    // Start to check the pattern
+                    if (checkPatternLAS(Inst, IndVar)) {
                         return true;
                     }
                 }
-            } else {
-                return false;
             }
+            // Deprecated -- Old desgin
+            // if (Inst->isBinaryOp()) {
+            //     unsigned opcode = Inst->getOpcode();
+            //     // Binary Int Opcode
+            //     // check if the operands contains the IndVar and a constant value
+            // if (opcode == Instruction::Add ||
+            //     opcode == Instruction::Sub ||
+            //     opcode == Instruction::Mul ||
+            //     opcode == Instruction::UDiv ||
+            //     opcode == Instruction::SDiv) {
+                // lhs = Inst->getOperand(0);
+                // rhs = Inst->getOperand(1);
+            //         if (lhs==IndVar && (stepIntLen=dyn_cast<ConstantInt>(rhs))!=nullptr) {
+            //             return true;
+            //         }
+            //         if (rhs==IndVar && (stepIntLen=dyn_cast<ConstantInt>(lhs))!=nullptr) {
+            //             return true;
+            //         }
+            //     } else if (opcode == Instruction::FAdd ||
+            //         opcode == Instruction::FSub ||
+            //         opcode == Instruction::FMul ||
+            //         opcode == Instruction::FDiv) { // Binary Float Opcode
+            //         lhs = Inst->getOperand(0);
+            //         rhs = Inst->getOperand(1);
+            //         // errs()<< "In checkBasicArithmetic() method, the target "
+            //         if (lhs==IndVar && (stepFPLen=dyn_cast<ConstantFP>(rhs))!=nullptr) {
+            //             return true;
+            //         }
+            //         if (rhs==IndVar && (stepFPLen=dyn_cast<ConstantFP>(lhs))!=nullptr) {
+            //             return true;
+            //         }
+            //     }
+            // } else {
+            //     return false;
+            // }
         }
         errs()<< "WARNING: In checkBasicArithmetic() method, the argu Inst is tested with NULL value.\n";
         return false;
