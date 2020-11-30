@@ -178,7 +178,6 @@ struct InfiniteLoopDetection : public FunctionPass {
 
     Value* getDoWhileInductionVar(Loop* LP) {
         errs()<<"DEBUG INFO: Enter the getDoWhileInductionVar() method...\n";
-        BasicBlock* headerBB = LP->getHeader();
         BasicBlock* latchBB = LP->getLoopLatch();
         BasicBlock* exitBB = LP->getExitBlock();
         if (latchBB == exitBB) {
@@ -253,7 +252,7 @@ struct InfiniteLoopDetection : public FunctionPass {
         ConstantInt* stepIntLen = nullptr;
         ConstantFP* stepFPLen = nullptr;
         if (Inst != nullptr) {
-            if (Inst->isUnaryOp) {
+            if (Inst->isUnaryOp()) {
                 unsigned opcode = Inst->getOpcode();
                 if (opcode == Instruction::Load) {
                     // Start to check the pattern
