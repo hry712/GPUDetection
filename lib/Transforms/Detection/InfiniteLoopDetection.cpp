@@ -69,6 +69,7 @@ struct InfiniteLoopDetection : public FunctionPass {
         IntegerType* i64 = IntegerType::get(curFunc->getParent()->getContext(), 64);
         Type* flt =  Type::getFloatTy(curFunc->getParent()->getContext());
         Type* dbl =  Type::getDoubleTy(curFunc->getParent()->getContext());
+        Instruction* loadInst = nullptr;
         
         // check the left operand first
         // Binary Int Opnd
@@ -78,7 +79,13 @@ struct InfiniteLoopDetection : public FunctionPass {
                 IndVarLimit = -10010;   // the special value with nullptr return value denote that condition part may be a constant value
                 return nullptr;
             } else if (rhs->getType()==i32 || rhs->getType()==i64) {
-                return rhs;
+                //TO-DO: check the Inst Type -- LoadInst
+                if ((loadInst=dyn_cast<LoadInst>(rhs)) != nullptr)
+                    return loadInst->getOperand(0);
+                else {
+                    errs()<< "DEBUG INFO: In getIndVarFromHS() method, the potential IndVar inst is not Load.\n";
+                    return nullptr;
+                }
             }
         } else if ((constIntVar=dyn_cast<ConstantInt>(rhs)) != nullptr) { // suppose the right opnd is a constant value
             IndVarLimit = getValueFromConstInt(constIntVar);
@@ -86,7 +93,13 @@ struct InfiniteLoopDetection : public FunctionPass {
                 IndVarLimit = -10011;   // Give the member IndVarLimit a special int value to indicate the detecting result
                 return nullptr;
             } else if (lhs->getType()==i32 || lhs->getType()==i64) {
-                return lhs;
+                //TO-DO: check the Inst Type -- LoadInst
+                if ((loadInst=dyn_cast<LoadInst>(lhs)) != nullptr)
+                    return loadInst->getOperand(0);
+                else {
+                    errs()<< "DEBUG INFO: In getIndVarFromHS() method, the potential IndVar inst is not Load.\n";
+                    return nullptr;
+                }
             }
         }
         // Binary Float Opnd
@@ -117,7 +130,6 @@ struct InfiniteLoopDetection : public FunctionPass {
     Value* getCondVarFromBrInst(BranchInst* BR) {
         errs()<<"DEBUG INFO: Enter the getCondVarFromBrInst() method...\n";
         Value* cond = BR->getCondition();
-        Value* loadedCondVar = nullptr;
         Instruction* condInst = nullptr;
         Instruction* loadInst = nullptr;
         if ((condInst=dyn_cast<Instruction>(cond)) != nullptr) {
@@ -128,22 +140,12 @@ struct InfiniteLoopDetection : public FunctionPass {
                 ICmpInst* icmpInst = dyn_cast<ICmpInst>(condInst);
                 lhs = icmpInst->getOperand(0);
                 rhs = icmpInst->getOperand(1);
-                loadedCondVar = getIndVarFromHS(lhs, rhs);
-                if (loadedCondVar != nullptr) {
-                    if ((loadInst=dyn_cast<LoadInst>(loadedCondVar)) != nullptr) {
-                        return loadInst->getOperand(0);
-                    }
-                }
+                return getIndVarFromHS(lhs, rhs);
             } else if (opcode == Instruction::FCmp) {
                 FCmpInst* fcmpInst = dyn_cast<FCmpInst>(condInst);
                 lhs = fcmpInst->getOperand(0);
                 rhs = fcmpInst->getOperand(1);
-                loadedCondVar = getIndVarFromHS(lhs, rhs);
-                if (loadedCondVar != nullptr) {
-                    if ((loadInst=dyn_cast<LoadInst>(loadedCondVar)) != nullptr) {
-                        return loadInst->getOperand(0);
-                    }
-                }
+                return getIndVarFromHS(lhs, rhs);
             } else if ((cond=dyn_cast<ConstantInt>(cond)) != nullptr) { // TO-DO: check if the cond part is a constant value
                 errs()<< "WARNING: In getCondVarFromBrInst() method, the condition part of BR inst is a constant value and shouldn't be handled in getForOrWhileInductionVar() method.\n";
                 return nullptr;
@@ -208,6 +210,7 @@ struct InfiniteLoopDetection : public FunctionPass {
 
     unsigned getValidArithOpCode(Instruction* Inst, Value** Lhs, Value** Rhs) {
         unsigned opcode = Inst->getOpcode();
+        
         if (Inst == nullptr) {
             errs()<< "DEBUG INDO: In isValidArithOp() method, the InstPtr is NULL!\n";
             *Lhs = nullptr;
