@@ -69,7 +69,7 @@ struct InfiniteLoopDetection : public FunctionPass {
         IntegerType* i64 = IntegerType::get(curFunc->getParent()->getContext(), 64);
         Type* flt =  Type::getFloatTy(curFunc->getParent()->getContext());
         Type* dbl =  Type::getDoubleTy(curFunc->getParent()->getContext());
-        Instruction* loadInst = nullptr;
+        Instruction* tmpInst = nullptr;
         
         // check the left operand first
         // Binary Int Opnd
@@ -80,10 +80,12 @@ struct InfiniteLoopDetection : public FunctionPass {
                 return nullptr;
             } else if (rhs->getType()==i32 || rhs->getType()==i64) {
                 //TO-DO: check the Inst Type -- LoadInst
-                if ((loadInst=dyn_cast<LoadInst>(rhs)) != nullptr)
-                    return loadInst->getOperand(0);
+                if ((tmpInst=dyn_cast<LoadInst>(rhs)) != nullptr)
+                    return tmpInst->getOperand(0);
+                else if ((tmpInst=dyn_cast<AllocaInst>(rhs)) != nullptr)
+                    return tmpInst;
                 else {
-                    errs()<< "DEBUG INFO: In getIndVarFromHS() method, the potential IndVar inst is not Load.\n";
+                    errs()<< "DEBUG INFO: In getIndVarFromHS() method, the potential IndVar inst is not Load or Alloca.\n";
                     return nullptr;
                 }
             }
@@ -94,10 +96,12 @@ struct InfiniteLoopDetection : public FunctionPass {
                 return nullptr;
             } else if (lhs->getType()==i32 || lhs->getType()==i64) {
                 //TO-DO: check the Inst Type -- LoadInst
-                if ((loadInst=dyn_cast<LoadInst>(lhs)) != nullptr)
-                    return loadInst->getOperand(0);
+                if ((tmpInst=dyn_cast<LoadInst>(lhs)) != nullptr)
+                    return tmpInst->getOperand(0);
+                else if ((tmpInst=dyn_cast<AllocaInst>(lhs)) != nullptr)
+                    return tmpInst;
                 else {
-                    errs()<< "DEBUG INFO: In getIndVarFromHS() method, the potential IndVar inst is not Load.\n";
+                    errs()<< "DEBUG INFO: In getIndVarFromHS() method, the potential IndVar inst is not Load or Alloca.\n";
                     return nullptr;
                 }
             }
@@ -222,7 +226,7 @@ struct InfiniteLoopDetection : public FunctionPass {
             opcode == Instruction::Mul ||
             opcode == Instruction::UDiv ||
             opcode == Instruction::SDiv) {
-            (*Lhs) = Inst->getOperand(0)->getOperand(0);
+            (*Lhs) = Inst->getOperand(0);
             (*Rhs) = Inst->getOperand(1);
             return opcode;
         } else {
