@@ -219,8 +219,8 @@ struct InfiniteLoopDetection : public FunctionPass {
             opcode == Instruction::Mul ||
             opcode == Instruction::UDiv ||
             opcode == Instruction::SDiv) {
-            Lhs = Inst->getOperand(0);
-            Rhs = Inst->getOperand(1);
+            (*Lhs) = *(Inst->getOperand(0));
+            (*Rhs) = *(Inst->getOperand(1));
             return opcode;
         } else {
             errs()<< "DEBUG INDO: In getValidArithOpCode() method, an unknown inst type is passed into argu list.\n";
