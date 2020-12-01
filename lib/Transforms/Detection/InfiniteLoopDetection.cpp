@@ -219,7 +219,7 @@ struct InfiniteLoopDetection : public FunctionPass {
             opcode == Instruction::Mul ||
             opcode == Instruction::UDiv ||
             opcode == Instruction::SDiv) {
-            (*Lhs) = Inst->getOperand(0);
+            (*Lhs) = Inst->getOperand(0)->getOperand(0);
             (*Rhs) = Inst->getOperand(1);
             return opcode;
         } else {
