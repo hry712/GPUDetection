@@ -313,6 +313,7 @@ struct InfiniteLoopDetection : public FunctionPass {
                 bb = *bbItr;
                 iiItr = bb->begin();
                 ieItr = bb->end();
+                errs()<< "DEBUG INFO: In isChangedByLP() method, we are processing the BB as fllowing...\n" << *bb << "\n";
                 while (iiItr != ieItr) {
                     if (checkBasicArithmetic(&(*iiItr), IndVar))
                         return true;
