@@ -251,17 +251,12 @@ struct InfiniteLoopDetection : public FunctionPass {
         ConstantInt* stepIntLen = nullptr;
         ConstantFP* stepFPLen = nullptr;
         if (Inst!=nullptr && IndVar!=nullptr) {
-            if (Inst->isBinaryOp()) {
-                unsigned opcode = Inst->getOpcode();
-                if (opcode == Instruction::Load) {
-                    // Start to check the pattern
-                    if (checkPatternLAS(Inst, IndVar)) {
-                        return true;
-                    }
+            unsigned opcode = Inst->getOpcode();
+            if (opcode == Instruction::Load) {
+                // Start to check the pattern
+                if (checkPatternLAS(Inst, IndVar)) {
+                    return true;
                 }
-            } else {
-                errs()<< "WARNING: In checkBasicArithmetic() method, the BinaryOp LoadInst is supposed to be matched firest.\n";
-                return false;
             }
         }
         errs()<< "WARNING: In checkBasicArithmetic() method, the argu Inst is tested with NULL value.\n";
