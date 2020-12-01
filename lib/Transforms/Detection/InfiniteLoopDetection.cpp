@@ -206,37 +206,50 @@ struct InfiniteLoopDetection : public FunctionPass {
         return nullptr;
     }
 
+    unsigned getValidArithOpCode(Instruction* Inst, Value* Lhs, Value* Rhs) {
+        unsigned opcode = Inst->getOpcode();
+        if (Inst == nullptr) {
+            errs()<< "DEBUG INDO: In isValidArithOp() method, the InstPtr is NULL!\n";
+            Lhs = nullptr;
+            Rhs = nullptr;
+            return 10086;
+        }
+        if (opcode == Instruction::Add ||
+            opcode == Instruction::Sub ||
+            opcode == Instruction::Mul ||
+            opcode == Instruction::UDiv ||
+            opcode == Instruction::SDiv) {
+            Lhs = Inst->getOperand(0);
+            Rhs = Inst->getOperand(1);
+            return opcode;
+        } else {
+            errs()<< "DEBUG INDO: In getValidArithOpCode() method, an unknown inst type is passed into argu list.\n";
+            Lhs = nullptr;
+            Rhs = nullptr;
+        }
+        return 10086;
+    }
+
     bool checkPatternLAS(Instruction* Inst, Value* IndVar) {
         if (Inst != nullptr && IndVar != nullptr) {
             Instruction* firstNextInst = Inst->getNextNonDebugInstruction();
             Instruction* secondNextInst = firstNextInst->getNextNonDebugInstruction();
-            if (firstNextInst->isBinaryOp() && secondNextInst->isBinaryOp()) {
-                unsigned firstOpcode = firstNextInst->getOpcode();
-                unsigned secondOpcode = secondNextInst->getOpcode();
-                Value* lhs = nullptr;
-                Value* rhs = nullptr;
-                if (firstOpcode == Instruction::Add ||
-                    firstOpcode == Instruction::Sub ||
-                    firstOpcode == Instruction::Mul ||
-                    firstOpcode == Instruction::UDiv ||
-                    firstOpcode == Instruction::SDiv) {
-                    lhs = firstNextInst->getOperand(0);
-                    rhs = firstNextInst->getOperand(1);
-                    if (getIndVarFromHS(lhs, rhs) == IndVar) {
-                        if (secondOpcode == Instruction::Store) {
-                            lhs = secondNextInst->getOperand(0);
-                            rhs = secondNextInst->getOperand(1);
-                            if (lhs==firstNextInst && rhs==IndVar)
-                                return true;
-                            errs()<< "DEBUG INFO: In checkPatternLAS() method, the operand values' list of the StoreInst does not match the 2 insts before.\n";
-                        }
-                        errs()<< "DEBUG INFO: In checkPatternLAS() method, the StoreInst mismatched at the secondNextInst.\n";
+            unsigned secondOpcode = secondNextInst->getOpcode();
+            Value* lhs = nullptr;
+            Value* rhs = nullptr;
+            if (getValidArithOpCode(firstNextInst, lhs, rhs) != 10086) {
+                if (lhs!=nullptr && rhs!=nullptr) {
+                    if(getIndVarFromHS(lhs, rhs) == IndVar) {
+                        lhs = secondNextInst->getOperand(0);
+                        rhs = secondNextInst->getOperand(1);
+                        if (lhs==firstNextInst && rhs==IndVar)
+                            return true;
+                    } else {
+                        errs()<< "DEBUG INFO: In checkPatternLAS() method, the getIndVarFromHS() method did not return a same Value* to the IndVar.\n";
                     }
-                    errs()<< "DEBUG INFO: In checkPatternLAS() method, no IndVar is found in the firstNextInst operand list.\n";
+                } else {
+                    errs()<< "DEBUG INFO: In checkPatternLAS() method, LHS and RHS are set NULL after calling getValidArithOpCode() method.\n";
                 }
-            } else {
-                errs()<< "DEBUG INFO: In checkPatternLAS() method, the next inst of LoadInst is not a proper one.\n";
-                return false;
             }
         } else {
             errs()<< "DEBUG INFO: In checkPatternLAS() method, a NULL ptr is passed into the argu list!\n";
