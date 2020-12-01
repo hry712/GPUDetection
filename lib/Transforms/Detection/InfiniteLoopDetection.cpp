@@ -251,7 +251,7 @@ struct InfiniteLoopDetection : public FunctionPass {
         ConstantInt* stepIntLen = nullptr;
         ConstantFP* stepFPLen = nullptr;
         if (Inst!=nullptr && IndVar!=nullptr) {
-            if (Inst->isUnaryOp()) {
+            if (Inst->isBinaryOp()) {
                 unsigned opcode = Inst->getOpcode();
                 if (opcode == Instruction::Load) {
                     // Start to check the pattern
@@ -260,7 +260,7 @@ struct InfiniteLoopDetection : public FunctionPass {
                     }
                 }
             } else {
-                errs()<< "WARNING: In checkBasicArithmetic() method, the UnaryOp LoadInst is supposed to be matched firest.\n";
+                errs()<< "WARNING: In checkBasicArithmetic() method, the BinaryOp LoadInst is supposed to be matched firest.\n";
                 return false;
             }
         }
