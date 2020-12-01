@@ -210,8 +210,8 @@ struct InfiniteLoopDetection : public FunctionPass {
         unsigned opcode = Inst->getOpcode();
         if (Inst == nullptr) {
             errs()<< "DEBUG INDO: In isValidArithOp() method, the InstPtr is NULL!\n";
-            Lhs = nullptr;
-            Rhs = nullptr;
+            *Lhs = nullptr;
+            *Rhs = nullptr;
             return 10086;
         }
         if (opcode == Instruction::Add ||
@@ -224,8 +224,8 @@ struct InfiniteLoopDetection : public FunctionPass {
             return opcode;
         } else {
             errs()<< "DEBUG INDO: In getValidArithOpCode() method, an unknown inst type is passed into argu list.\n";
-            Lhs = nullptr;
-            Rhs = nullptr;
+            *Lhs = nullptr;
+            *Rhs = nullptr;
         }
         return 10086;
     }
@@ -239,13 +239,16 @@ struct InfiniteLoopDetection : public FunctionPass {
             Value* rhs = nullptr;
             if (getValidArithOpCode(firstNextInst, &lhs, &rhs) != 10086) {
                 if (lhs!=nullptr && rhs!=nullptr) {
-                    if(getIndVarFromHS(lhs, rhs) == IndVar) {
+                    if(getIndVarFromHS(lhs, rhs)==IndVar && secondOpcode==Instruction::Store) {
                         lhs = secondNextInst->getOperand(0);
                         rhs = secondNextInst->getOperand(1);
                         if (lhs==firstNextInst && rhs==IndVar)
                             return true;
                     } else {
                         errs()<< "DEBUG INFO: In checkPatternLAS() method, the getIndVarFromHS() method did not return a same Value* to the IndVar.\n";
+                        errs()<< "IndVar info: " << *IndVar << "\n";
+                        errs()<< "LHS info: " << *lhs << "\n";
+                        errs()<< "RHS info: " << *rhs << "\n";
                     }
                 } else {
                     errs()<< "DEBUG INFO: In checkPatternLAS() method, LHS and RHS are set NULL after calling getValidArithOpCode() method.\n";
@@ -261,8 +264,6 @@ struct InfiniteLoopDetection : public FunctionPass {
     // the loop has setted a valid IndVar to reach an end.
     bool checkBasicArithmetic(Instruction* Inst, Value* IndVar) {
         errs()<<"DEBUG INFO: Enter the checkBasicArithmetic() method...\n";
-        ConstantInt* stepIntLen = nullptr;
-        ConstantFP* stepFPLen = nullptr;
         if (Inst!=nullptr && IndVar!=nullptr) {
             unsigned opcode = Inst->getOpcode();
             if (opcode == Instruction::Load) {
