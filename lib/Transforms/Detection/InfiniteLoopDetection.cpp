@@ -206,7 +206,7 @@ struct InfiniteLoopDetection : public FunctionPass {
         return nullptr;
     }
 
-    unsigned getValidArithOpCode(Instruction* Inst, Value* Lhs, Value* Rhs) {
+    unsigned getValidArithOpCode(Instruction* Inst, Value** Lhs, Value** Rhs) {
         unsigned opcode = Inst->getOpcode();
         if (Inst == nullptr) {
             errs()<< "DEBUG INDO: In isValidArithOp() method, the InstPtr is NULL!\n";
@@ -219,8 +219,8 @@ struct InfiniteLoopDetection : public FunctionPass {
             opcode == Instruction::Mul ||
             opcode == Instruction::UDiv ||
             opcode == Instruction::SDiv) {
-            (*Lhs) = *(Inst->getOperand(0));
-            (*Rhs) = *(Inst->getOperand(1));
+            (*Lhs) = Inst->getOperand(0);
+            (*Rhs) = Inst->getOperand(1);
             return opcode;
         } else {
             errs()<< "DEBUG INDO: In getValidArithOpCode() method, an unknown inst type is passed into argu list.\n";
@@ -237,7 +237,7 @@ struct InfiniteLoopDetection : public FunctionPass {
             unsigned secondOpcode = secondNextInst->getOpcode();
             Value* lhs = nullptr;
             Value* rhs = nullptr;
-            if (getValidArithOpCode(firstNextInst, lhs, rhs) != 10086) {
+            if (getValidArithOpCode(firstNextInst, &lhs, &rhs) != 10086) {
                 if (lhs!=nullptr && rhs!=nullptr) {
                     if(getIndVarFromHS(lhs, rhs) == IndVar) {
                         lhs = secondNextInst->getOperand(0);
