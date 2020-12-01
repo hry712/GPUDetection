@@ -248,10 +248,9 @@ struct InfiniteLoopDetection : public FunctionPass {
     // the loop has setted a valid IndVar to reach an end.
     bool checkBasicArithmetic(Instruction* Inst, Value* IndVar) {
         errs()<<"DEBUG INFO: Enter the checkBasicArithmetic() method...\n";
-        
         ConstantInt* stepIntLen = nullptr;
         ConstantFP* stepFPLen = nullptr;
-        if (Inst != nullptr) {
+        if (Inst!=nullptr && IndVar!=nullptr) {
             if (Inst->isUnaryOp()) {
                 unsigned opcode = Inst->getOpcode();
                 if (opcode == Instruction::Load) {
@@ -260,42 +259,10 @@ struct InfiniteLoopDetection : public FunctionPass {
                         return true;
                     }
                 }
+            } else {
+                errs()<< "WARNING: In checkBasicArithmetic() method, the UnaryOp LoadInst is supposed to be matched firest.\n";
+                return false;
             }
-            // Deprecated -- Old desgin
-            // if (Inst->isBinaryOp()) {
-            //     unsigned opcode = Inst->getOpcode();
-            //     // Binary Int Opcode
-            //     // check if the operands contains the IndVar and a constant value
-            // if (opcode == Instruction::Add ||
-            //     opcode == Instruction::Sub ||
-            //     opcode == Instruction::Mul ||
-            //     opcode == Instruction::UDiv ||
-            //     opcode == Instruction::SDiv) {
-                // lhs = Inst->getOperand(0);
-                // rhs = Inst->getOperand(1);
-            //         if (lhs==IndVar && (stepIntLen=dyn_cast<ConstantInt>(rhs))!=nullptr) {
-            //             return true;
-            //         }
-            //         if (rhs==IndVar && (stepIntLen=dyn_cast<ConstantInt>(lhs))!=nullptr) {
-            //             return true;
-            //         }
-            //     } else if (opcode == Instruction::FAdd ||
-            //         opcode == Instruction::FSub ||
-            //         opcode == Instruction::FMul ||
-            //         opcode == Instruction::FDiv) { // Binary Float Opcode
-            //         lhs = Inst->getOperand(0);
-            //         rhs = Inst->getOperand(1);
-            //         // errs()<< "In checkBasicArithmetic() method, the target "
-            //         if (lhs==IndVar && (stepFPLen=dyn_cast<ConstantFP>(rhs))!=nullptr) {
-            //             return true;
-            //         }
-            //         if (rhs==IndVar && (stepFPLen=dyn_cast<ConstantFP>(lhs))!=nullptr) {
-            //             return true;
-            //         }
-            //     }
-            // } else {
-            //     return false;
-            // }
         }
         errs()<< "WARNING: In checkBasicArithmetic() method, the argu Inst is tested with NULL value.\n";
         return false;
