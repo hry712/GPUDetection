@@ -135,7 +135,6 @@ struct InfiniteLoopDetection : public FunctionPass {
         errs()<<"DEBUG INFO: Enter the getCondVarFromBrInst() method...\n";
         Value* cond = BR->getCondition();
         Instruction* condInst = nullptr;
-        Instruction* loadInst = nullptr;
         if ((condInst=dyn_cast<Instruction>(cond)) != nullptr) {
             unsigned opcode = condInst->getOpcode();
             Value* lhs = nullptr;
@@ -288,7 +287,7 @@ struct InfiniteLoopDetection : public FunctionPass {
     bool isInfiniteLoop(Loop* LP, BasicBlock* HeaderBB) {
         errs()<< "DEBUG INFO: Enter the isInfiniteLoop() method...\n";
         if (LP!=nullptr && HeaderBB!=nullptr) {
-            int lpTy = getLoopType(lp);
+            int lpTy = getLoopType(LP);
             Value* lpIndVar = getInductionVarFrom(LP, lpTy);
             if (lpIndVar != nullptr) {
                 // std::vector<BasicBlock*> lpBBs = LP->getBl
