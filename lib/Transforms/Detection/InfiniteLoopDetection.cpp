@@ -284,17 +284,32 @@ struct InfiniteLoopDetection : public FunctionPass {
     }
 
     // Maybe we need a new method to process the LoopObj iteratively
-    bool isInfiniteLoop(Loop* LP, BasicBlock* HeaderBB) {
+    bool isFiniteLoop(Loop* LP) {
         errs()<< "DEBUG INFO: Enter the isInfiniteLoop() method...\n";
-        if (LP!=nullptr && HeaderBB!=nullptr) {
-            int lpTy = getLoopType(LP);
-            Value* lpIndVar = getInductionVarFrom(LP, lpTy);
-            if (lpIndVar != nullptr) {
-                // std::vector<BasicBlock*> lpBBs = LP->getBl
+        if (LP == nullptr) {
+            errs()<< "WARNING: In isInfiniteLoop() method, the argu LP is a NULL value.\n";
+            return false;
+        }
+        std::vector<Loop*> subLoops = LP->getSubLoopsVector();
+        if (!subLoops.empty()) {
+            errs()<< "DEBUG INFO: Sub loops were found under current processing LoopObj...\n";
+            for (auto* lp : subLoops) {
+                if (isFiniteLoop(lp) == false) 
+                    return false;
+            }
+        }
+        // Detect the current processing loop obj...
+        int lpTy = getLoopType(LP);
+        Value* lpIndVar = getInductionVarFrom(LP, lpTy);
+        if (lpIndVar != nullptr) {
+            errs()<< "Found induction variable in the loop: " << *lpIndVar << "\n";
+            if (isChangedByLP(lp, lpIndVar)) {
                 return true;
+            } else {
+                return false;
             }
         } else {
-            errs()<< "DEBUG INFO: In isInfiniteLoop() method, nullptr value is passed into the argu list.\n";
+            errs()<< "WARNING: Fail to fetch the induction variable from the current Loop.\n\n";
         }
         return false;
     }
@@ -325,8 +340,6 @@ struct InfiniteLoopDetection : public FunctionPass {
     }
 
     virtual bool runOnFunction(Function &F) {
-        // Loop* LP = nullptr;
-        // PHINode* indctVar = nullptr;
         if ((F.getParent())->getTargetTriple().compare("nvptx64-nvidia-cuda") == 0) {
             errs()<< "Now, this pass is dealing with a GPU kernel module...\n";
             curFunc = &F;
@@ -340,28 +353,35 @@ struct InfiniteLoopDetection : public FunctionPass {
                 errs()<< "\n";
                 for (auto* lp : LI) {
                     // TO-DO: Check if a BB in the LoopObj is a subloop's header
-                    
-                    int lpTy = getLoopType(lp);
-                    Value* lpIndVar = getInductionVarFrom(lp, lpTy);
-                    if (lpIndVar != nullptr) {
-                        errs()<< "Found induction variable in the loop: " << *lpIndVar << "\n";
-                        errs()<< "=====-----------Infinite Loop Check Report-----------=====\n";
-                        if (isChangedByLP(lp, lpIndVar)) {
-                            //TO-DO: Print out the safety detection report
-                            errs()<< "Under current checking strategies, this loop is considered as a finite type ----- SAFE\n";
-                        } else {
-                            errs()<< "Under current checking strategies, this loop is considered as an infinite type ----- UNSAFE\n";
-                        }
-                        errs()<< "=====-----------------------End----------------------=====\n";
-                        std::vector<Loop*> subLoops = lp->getSubLoopsVector();
-                        if (!subLoops.empty()) {
-                            errs()<< "DEBUG INFO: After check report, sub loops were found under current processing LoopObj...\n";
-                        } else {
-                            errs()<< "DEBUG INFO: No sub loop exists under current processing LoopObj...\n";
-                        }
+                    errs()<< "=====-----------Infinite Loop Check Report-----------=====\n";
+                    if (isFiniteLoop(lp)) {
+                        errs()<< "Under current checking strategies, this loop is considered as a finite type ----- SAFE\n";
                     } else {
-                        errs()<< "WARNING: Fail to fetch the induction variable from the current Loop.\n";
+                        errs()<< "Under current checking strategies, this loop is considered as an infinite type ----- UNSAFE\n";
                     }
+                    errs()<< "=====-----------------------End----------------------=====\n";
+                    // std::vector<Loop*> subLoops = lp->getSubLoopsVector();
+                    // if (!subLoops.empty()) {
+                    //     errs()<< "DEBUG INFO: After check report, sub loops were found under current processing LoopObj...\n";
+                    // } else {
+                    //     errs()<< "DEBUG INFO: No sub loop exists under current processing LoopObj...\n";
+                    // }
+                    // int lpTy = getLoopType(lp);
+                    // Value* lpIndVar = getInductionVarFrom(lp, lpTy);
+                    // if (lpIndVar != nullptr) {
+                    //     errs()<< "Found induction variable in the loop: " << *lpIndVar << "\n";
+                    //     errs()<< "=====-----------Infinite Loop Check Report-----------=====\n";
+                    //     if (isChangedByLP(lp, lpIndVar)) {
+                    //         //TO-DO: Print out the safety detection report
+                    //         errs()<< "Under current checking strategies, this loop is considered as a finite type ----- SAFE\n";
+                    //     } else {
+                    //         errs()<< "Under current checking strategies, this loop is considered as an infinite type ----- UNSAFE\n";
+                    //     }
+                    //     errs()<< "=====-----------------------End----------------------=====\n";
+                        
+                    // } else {
+                    //     errs()<< "WARNING: Fail to fetch the induction variable from the current Loop.\n";
+                    // }
                 }
                 errs()<< "\n";
             }
