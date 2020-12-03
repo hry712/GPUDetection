@@ -284,6 +284,22 @@ struct InfiniteLoopDetection : public FunctionPass {
         return false;
     }
 
+    // Maybe we need a new method to process the LoopObj iteratively
+    bool isInfiniteLoop(Loop* LP, BasicBlock* HeaderBB) {
+        errs()<< "DEBUG INFO: Enter the isInfiniteLoop() method...\n";
+        if (LP!=nullptr && HeaderBB!=nullptr) {
+            int lpTy = getLoopType(lp);
+            Value* lpIndVar = getInductionVarFrom(lp, lpTy);
+            if (lpIndVar != nullptr) {
+                // std::vector<BasicBlock*> lpBBs = LP->getBl
+                return true;
+            }
+        } else {
+            errs()<< "DEBUG INFO: In isInfiniteLoop() method, nullptr value is passed into the argu list.\n";
+        }
+        return false;
+    }
+
     bool isChangedByLP(Loop* LP, Value* IndVar) {
         if (LP != nullptr && IndVar != nullptr) {
             std::vector<BasicBlock*> BBs = LP->getBlocksVector();
@@ -324,6 +340,8 @@ struct InfiniteLoopDetection : public FunctionPass {
                 LI.print(errs());
                 errs()<< "\n";
                 for (auto* lp : LI) {
+                    // TO-DO: Check if a BB in the LoopObj is a subloop's header
+                    
                     int lpTy = getLoopType(lp);
                     Value* lpIndVar = getInductionVarFrom(lp, lpTy);
                     if (lpIndVar != nullptr) {
@@ -336,6 +354,12 @@ struct InfiniteLoopDetection : public FunctionPass {
                             errs()<< "Under current checking strategies, this loop is considered as an infinite type ----- UNSAFE\n";
                         }
                         errs()<< "=====-----------------------End----------------------=====\n";
+                        std::vector<Loop*> subLoops = lp->getSubLoopsVector();
+                        if (!subLoops.empty()) {
+                            errs()<< "DEBUG INFO: After check report, sub loops were found under current processing LoopObj...\n";
+                        } else {
+                            errs()<< "DEBUG INFO: No sub loop exists under current processing LoopObj...\n";
+                        }
                     } else {
                         errs()<< "WARNING: Fail to fetch the induction variable from the current Loop.\n";
                     }
