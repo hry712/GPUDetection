@@ -303,7 +303,7 @@ struct InfiniteLoopDetection : public FunctionPass {
         Value* lpIndVar = getInductionVarFrom(LP, lpTy);
         if (lpIndVar != nullptr) {
             errs()<< "Found induction variable in the loop: " << *lpIndVar << "\n";
-            if (isChangedByLP(lp, lpIndVar)) {
+            if (isChangedByLP(LP, lpIndVar)) {
                 return true;
             } else {
                 return false;
