@@ -289,7 +289,7 @@ struct InfiniteLoopDetection : public FunctionPass {
         errs()<< "DEBUG INFO: Enter the isInfiniteLoop() method...\n";
         if (LP!=nullptr && HeaderBB!=nullptr) {
             int lpTy = getLoopType(lp);
-            Value* lpIndVar = getInductionVarFrom(lp, lpTy);
+            Value* lpIndVar = getInductionVarFrom(LP, lpTy);
             if (lpIndVar != nullptr) {
                 // std::vector<BasicBlock*> lpBBs = LP->getBl
                 return true;
