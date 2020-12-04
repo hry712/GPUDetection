@@ -10,7 +10,8 @@
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include <map>
-
+#include <vector>
+#include <algorithm>
 
 using namespace llvm;
 
@@ -53,11 +54,14 @@ struct InfiniteLoopDetection : public FunctionPass {
     Value* getInnerMostLoadOpnd(LoadInst* LD, BasicBlock* ContainerBB) {
         errs()<< "DEBUG INFO: Enter the getInnerMostLoadOpnd() method...\n";
         LoadInst* tmpInst = nullptr;
-        if (mEntryAllocaInstVector.find(LD->getOperand(0)) != mEntryAllocaInstVector.end()) {
+        std::vector<Value*>::iterator allocaInstItr;
+        allocaInstItr = find(mEntryAllocaInstVector.begin(), mEntryAllocaInstVector.end(), LD->getOperand(0));
+        if (allocaInstItr != mEntryAllocaInstVector.end()) {
             return LD->getOperand(0);
         } else if ((tmpInst=dyn_cast<LoadInst>(LD->getOperand(0))) != nullptr) {
             if (tmpInst->getParent() == ContainerBB) {
-                if (mEntryAllocaInstVector.find(tmpInst->getOperand(0)) == mEntryAllocaInstVector.end()) {
+                allocaInstItr = find(mEntryAllocaInstVector.begin(), mEntryAllocaInstVector.end(), tmpInst->getOperand(0));
+                if (allocaInstItr == mEntryAllocaInstVector.end()) {
                     return getInnerMostLoadOpnd(tmpInst, )
                 } else {
                     return tmpInst->getOperand(0);
