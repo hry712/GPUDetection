@@ -144,7 +144,7 @@ struct InfiniteLoopDetection : public FunctionPass {
             } else if (lhs->getType()==i32 || lhs->getType()==i64) {
                 //TO-DO: check the Inst Type -- LoadInst
                 if ((tmpInst=dyn_cast<LoadInst>(lhs)) != nullptr)
-                    return return getInnerMostLoadOpnd(tmpInst, tmpInst->getParent());
+                    return getInnerMostLoadOpnd(tmpInst, tmpInst->getParent());
                 else if ((tmpInst=dyn_cast<AllocaInst>(lhs)) != nullptr)
                     return tmpInst;
                 else {
