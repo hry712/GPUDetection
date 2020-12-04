@@ -51,9 +51,9 @@ struct InfiniteLoopDetection : public FunctionPass {
         }
     }
     
-    Value* getInnerMostLoadOpnd(LoadInst* LD, BasicBlock* ContainerBB) {
+    Value* getInnerMostLoadOpnd(Instruction* LD, BasicBlock* ContainerBB) {
         errs()<< "DEBUG INFO: Enter the getInnerMostLoadOpnd() method...\n";
-        LoadInst* tmpInst = nullptr;
+        Instruction* tmpInst = nullptr;
         std::vector<Value*>::iterator allocaInstItr;
         allocaInstItr = find(mEntryAllocaInstVector.begin(), mEntryAllocaInstVector.end(), LD->getOperand(0));
         if (allocaInstItr != mEntryAllocaInstVector.end()) {
