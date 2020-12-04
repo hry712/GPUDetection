@@ -62,7 +62,7 @@ struct InfiniteLoopDetection : public FunctionPass {
             if (tmpInst->getParent() == ContainerBB) {
                 allocaInstItr = find(mEntryAllocaInstVector.begin(), mEntryAllocaInstVector.end(), tmpInst->getOperand(0));
                 if (allocaInstItr == mEntryAllocaInstVector.end()) {
-                    return getInnerMostLoadOpnd(tmpInst, )
+                    return getInnerMostLoadOpnd(tmpInst, ContainerBB);
                 } else {
                     return tmpInst->getOperand(0);
                 }
