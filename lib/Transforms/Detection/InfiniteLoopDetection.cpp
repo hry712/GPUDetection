@@ -20,12 +20,55 @@ struct InfiniteLoopDetection : public FunctionPass {
     InfiniteLoopDetection() : FunctionPass(ID) {}
 
     int IndVarLimit = 0;
+    int mIndVarLoadTimes = 0;
+    std::vector<Value*> mEntryAllocaInstVector;
     Function* curFunc;
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
         AU.setPreservesCFG();
         AU.addRequired<LoopInfoWrapperPass>();
         AU.addRequired<TargetLibraryInfoWrapperPass>();
+    }
+
+    void InitAllocaInstVector(BasicBlock* EntryBB) {
+        errs()<< "DEBUG INFO: Enter the InitAllocaInstVector() method...\n";
+        mIndVarLoadTimes = 0;
+        if (EntryBB != nullptr) {
+            BasicBlock::iterator iiItr = EntryBB->begin();
+            BasicBlock::iterator endItr = EntryBB->end();
+            unsigned opcode = -1;
+            mEntryAllocaInstVector.clear();
+            while (iiItr != endItr) {
+                opcode = (*iiItr).getOpcode();
+                if (opcode == Instruction::Alloca) {
+                    mEntryAllocaInstVector.push_back(&(*iiItr));
+                }
+                ++iiItr;
+            }
+        } else {
+            errs()<< "WARNING: In InitAllocaInstVector() method, the argu EntryBB is NULL value.\n";
+        }
+    }
+    
+    Value* getInnerMostLoadOpnd(LoadInst* LD, BasicBlock* ContainerBB) {
+        errs()<< "DEBUG INFO: Enter the getInnerMostLoadOpnd() method...\n";
+        LoadInst* tmpInst = nullptr;
+        if (mEntryAllocaInstVector.find(LD->getOperand(0)) != mEntryAllocaInstVector.end()) {
+            return LD->getOperand(0);
+        } else if ((tmpInst=dyn_cast<LoadInst>(LD->getOperand(0))) != nullptr) {
+            if (tmpInst->getParent() == ContainerBB) {
+                if (mEntryAllocaInstVector.find(tmpInst->getOperand(0)) == mEntryAllocaInstVector.end()) {
+                    return getInnerMostLoadOpnd(tmpInst, )
+                } else {
+                    return tmpInst->getOperand(0);
+                }
+            } else {
+                errs()<< "WARNING: In getInnerMostLoadOpnd() method, unknown loop type may be found here...\n";
+            }
+        } else {
+            errs()<< "WARNING: In getInnerMostLoadOpnd() method, the Inst from argu list is a NULL ptr.\n";
+        }
+        return nullptr;
     }
 
     int getLoopType(Loop* LP) {
@@ -81,7 +124,7 @@ struct InfiniteLoopDetection : public FunctionPass {
             } else if (rhs->getType()==i32 || rhs->getType()==i64) {
                 //TO-DO: check the Inst Type -- LoadInst
                 if ((tmpInst=dyn_cast<LoadInst>(rhs)) != nullptr)
-                    return tmpInst->getOperand(0);
+                    return getInnerMostLoadOpnd(tmpInst, tmpInst->getParent());
                 else if ((tmpInst=dyn_cast<AllocaInst>(rhs)) != nullptr)
                     return tmpInst;
                 else {
@@ -97,7 +140,7 @@ struct InfiniteLoopDetection : public FunctionPass {
             } else if (lhs->getType()==i32 || lhs->getType()==i64) {
                 //TO-DO: check the Inst Type -- LoadInst
                 if ((tmpInst=dyn_cast<LoadInst>(lhs)) != nullptr)
-                    return tmpInst->getOperand(0);
+                    return return getInnerMostLoadOpnd(tmpInst, tmpInst->getParent());
                 else if ((tmpInst=dyn_cast<AllocaInst>(lhs)) != nullptr)
                     return tmpInst;
                 else {
@@ -297,6 +340,7 @@ struct InfiniteLoopDetection : public FunctionPass {
                 if (isFiniteLoop(lp) == false) 
                     return false;
             }
+            errs()<< "DEBUG INFO: The sub loops are finite --- safe inner\n";
         }
         // Detect the current processing loop obj...
         int lpTy = getLoopType(LP);
@@ -351,6 +395,7 @@ struct InfiniteLoopDetection : public FunctionPass {
                 errs()<< "LoopInfo obj content:\n";
                 LI.print(errs());
                 errs()<< "\n";
+                InitAllocaInstVector(&(*(F.begin())));
                 for (auto* lp : LI) {
                     // TO-DO: Check if a BB in the LoopObj is a subloop's header
                     errs()<< "=====-----------Infinite Loop Check Report-----------=====\n";
