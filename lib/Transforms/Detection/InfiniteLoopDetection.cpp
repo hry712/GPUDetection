@@ -21,7 +21,7 @@ struct InfiniteLoopDetection : public FunctionPass {
     InfiniteLoopDetection() : FunctionPass(ID) {}
 
     int IndVarLimit = 0;
-    int mIndVarLoadTimes = 0;
+    int mIndVarLoadLayers = 0;
     std::vector<Value*> mEntryAllocaInstVector;
     Function* curFunc;
 
@@ -33,7 +33,7 @@ struct InfiniteLoopDetection : public FunctionPass {
 
     void InitAllocaInstVector(BasicBlock* EntryBB) {
         errs()<< "DEBUG INFO: Enter the InitAllocaInstVector() method...\n";
-        mIndVarLoadTimes = 0;
+        mIndVarLoadLayers = 0;
         if (EntryBB != nullptr) {
             BasicBlock::iterator iiItr = EntryBB->begin();
             BasicBlock::iterator endItr = EntryBB->end();
@@ -57,9 +57,11 @@ struct InfiniteLoopDetection : public FunctionPass {
         std::vector<Value*>::iterator allocaInstItr;
         allocaInstItr = find(mEntryAllocaInstVector.begin(), mEntryAllocaInstVector.end(), LD->getOperand(0));
         if (allocaInstItr != mEntryAllocaInstVector.end()) {
+            mIndVarLoadLayers += 1;
             return LD->getOperand(0);
         } else if ((tmpInst=dyn_cast<LoadInst>(LD->getOperand(0))) != nullptr) {
             if (tmpInst->getParent() == ContainerBB) {
+                mIndVarLoadLayers += 1;
                 allocaInstItr = find(mEntryAllocaInstVector.begin(), mEntryAllocaInstVector.end(), tmpInst->getOperand(0));
                 if (allocaInstItr == mEntryAllocaInstVector.end()) {
                     return getInnerMostLoadOpnd(tmpInst, ContainerBB);
@@ -285,6 +287,7 @@ struct InfiniteLoopDetection : public FunctionPass {
 
     bool checkPatternLAS(Instruction* Inst, Value* IndVar) {
         if (Inst != nullptr && IndVar != nullptr) {
+            errs()<< "DEBUG INFO: In checkPatternLAS() method, print out the LoadInst layer number -- " << mIndVarLoadLayers << "\n";
             Instruction* firstNextInst = Inst->getNextNonDebugInstruction();
             Instruction* secondNextInst = firstNextInst->getNextNonDebugInstruction();
             unsigned secondOpcode = secondNextInst->getOpcode();
@@ -322,6 +325,7 @@ struct InfiniteLoopDetection : public FunctionPass {
             if (opcode == Instruction::Load) {
                 // Start to check the pattern
                 if (checkPatternLAS(Inst, IndVar)) {
+                    mIndVarLoadLayers = 0;
                     return true;
                 }
             }
@@ -341,12 +345,14 @@ struct InfiniteLoopDetection : public FunctionPass {
         if (!subLoops.empty()) {
             errs()<< "DEBUG INFO: Sub loops were found under current processing LoopObj...\n";
             for (auto* lp : subLoops) {
+                mIndVarLoadLayers = 0;
                 if (isFiniteLoop(lp) == false) 
                     return false;
             }
             errs()<< "DEBUG INFO: The sub loops are finite --- safe inner\n";
         }
         // Detect the current processing loop obj...
+        mIndVarLoadLayers = 0;
         int lpTy = getLoopType(LP);
         Value* lpIndVar = getInductionVarFrom(LP, lpTy);
         if (lpIndVar != nullptr) {
