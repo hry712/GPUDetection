@@ -18,7 +18,7 @@ using namespace llvm;
 namespace {
 struct InfiniteLoopDetection : public FunctionPass {
     static char ID;
-    InfiniteLoopDetection() k: FunctionPass(ID) {}
+    InfiniteLoopDetection() : FunctionPass(ID) {}
 
     int IndVarLimit = 0;
     int mIndVarLoadLayers = 0;
@@ -277,7 +277,7 @@ struct InfiniteLoopDetection : public FunctionPass {
             (*Rhs) = Inst->getOperand(1);
             return true;
         } else {
-            errs()<< "DEBUG INDO: In getValidArithOpCode() method, an unknown inst type is passed into argu list.\n";
+            errs()<< "DEBUG INDO: In isValidArithInst() method, an unknown inst type is passed into argu list.\n";
             *Lhs = nullptr;
             *Rhs = nullptr;
         }
@@ -298,12 +298,7 @@ struct InfiniteLoopDetection : public FunctionPass {
                     return nullptr;
                 }
             } else {
-                if ((tmpInst=dyn_cast<StoreInst>(curInst)) != nullptr) {
-                    firstOprd = tmpInst->getOperand(0);
-                    return (firstOprd == lastInst)?curInst : nullptr;
-                } else {
-                    errs()<< "WARNING: In passIncessantLoadInst() method, the current inst is not expected StoreInst.\n";
-                }
+                return curInst;
             }
         } else {
             errs()<< "WARNING: In checkIncessantLoadInst() method, the argu list contains NULL value.\n";
@@ -314,20 +309,21 @@ struct InfiniteLoopDetection : public FunctionPass {
     bool checkPatternLAS(Instruction* Inst, Value* IndVar) {
         if (Inst != nullptr && IndVar != nullptr) {
             errs()<< "DEBUG INFO: In checkPatternLAS() method, print out the LoadInst layer number -- " << mIndVarLoadLayers << "\n";
-            // Instruction* firstNextInst = Inst->getNextNonDebugInstruction();
-            // Instruction* secondNextInst = firstNextInst->getNextNonDebugInstruction();
-            // unsigned secondOpcode = secondNextInst->getOpcode();
+            unsigned opcode = 0;
             Value* lhs = nullptr;
             Value* rhs = nullptr;
             // First, check the incessant LoadInsts before checking the arithmetic ops
-            Instruction* storeInst = passIncessantLoadInst(Inst, IndVar);
-            if (storeInst!=nullptr && getValidArithOpCode(storeInst, &lhs, &rhs)!=10086) {
+            Instruction* arithInst = passIncessantLoadInst(Inst, IndVar);
+            Instruction* storeInst = nullptr;
+            if (arithInst!=nullptr && isValidArithInst(arithInst, &lhs, &rhs)) {
                 errs()<< "DEBUG INFO: In checkPatternLAS() method, the content of expected StoreInst is : " << *storeInst << "\n";
+                storeInst = arithInst->getNextNonDebugInstruction();
+                opcode = storeInst->getOpcode();
                 if (lhs!=nullptr && rhs!=nullptr) {
-                    if(getIndVarFromHS(lhs, rhs)==IndVar && secondOpcode==Instruction::Store) {
-                        lhs = secondNextInst->getOperand(0);
-                        rhs = secondNextInst->getOperand(1);
-                        if (lhs==firstNextInst && rhs==IndVar)
+                    if(getIndVarFromHS(lhs, rhs)==IndVar && opcode==Instruction::Store) {
+                        lhs = storeInst->getOperand(0);
+                        rhs = storeInst->getOperand(1);
+                        if (lhs==arithInst && rhs==IndVar)
                             return true;
                     } else {
                         errs()<< "DEBUG INFO: In checkPatternLAS() method, the getIndVarFromHS() method did not return a same Value* to the IndVar.\n";
@@ -336,7 +332,7 @@ struct InfiniteLoopDetection : public FunctionPass {
                         errs()<< "RHS info: " << *rhs << "\n";
                     }
                 } else {
-                    errs()<< "DEBUG INFO: In checkPatternLAS() method, LHS and RHS are set NULL after calling getValidArithOpCode() method.\n";
+                    errs()<< "DEBUG INFO: In checkPatternLAS() method, LHS and RHS are set NULL after calling isValidArithInst() method.\n";
                 }
             } else {
                 errs()<< "DEBUG INFO: In checkPatternLAS() method, no artichmetic inst exists behind the current LoadInst.\n";
