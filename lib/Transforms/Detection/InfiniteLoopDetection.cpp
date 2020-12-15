@@ -316,7 +316,7 @@ struct InfiniteLoopDetection : public FunctionPass {
             Instruction* arithInst = passIncessantLoadInst(Inst, IndVar);
             Instruction* storeInst = nullptr;
             if (arithInst!=nullptr && isValidArithInst(arithInst, &lhs, &rhs)) {
-                errs()<< "DEBUG INFO: In checkPatternLAS() method, the content of expected StoreInst is : " << *storeInst << "\n";
+                errs()<< "DEBUG INFO: In checkPatternLAS() method, the content of expected ArithmeticInst is : " << *arithInst << "\n";
                 storeInst = arithInst->getNextNonDebugInstruction();
                 opcode = storeInst->getOpcode();
                 if (lhs!=nullptr && rhs!=nullptr) {
