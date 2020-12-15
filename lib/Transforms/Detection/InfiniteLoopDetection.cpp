@@ -284,7 +284,7 @@ struct InfiniteLoopDetection : public FunctionPass {
         return false;
     }
 
-    Value* passIncessantLoadInst(Value* curInst, Value* lastInst) {
+    Instruction* passIncessantLoadInst(Instruction* curInst, Value* lastInst) {
         if (curInst!=nullptr && lastInst!=nullptr) {
             Instruction* tmpInst = nullptr;
             Value* firstOprd = nullptr;
