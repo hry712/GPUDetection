@@ -18,7 +18,7 @@ using namespace llvm;
 namespace {
 struct InfiniteLoopDetection : public FunctionPass {
     static char ID;
-    InfiniteLoopDetection() : FunctionPass(ID) {}
+    InfiniteLoopDetection() k: FunctionPass(ID) {}
 
     int IndVarLimit = 0;
     int mIndVarLoadLayers = 0;
@@ -260,14 +260,13 @@ struct InfiniteLoopDetection : public FunctionPass {
         return nullptr;
     }
 
-    unsigned getValidArithOpCode(Instruction* Inst, Value** Lhs, Value** Rhs) {
+    bool isValidArithInst(Instruction* Inst, Value** Lhs, Value** Rhs) {
         unsigned opcode = Inst->getOpcode();
-        
         if (Inst == nullptr) {
             errs()<< "DEBUG INDO: In isValidArithOp() method, the InstPtr is NULL!\n";
             *Lhs = nullptr;
             *Rhs = nullptr;
-            return 10086;
+            return false;
         }
         if (opcode == Instruction::Add ||
             opcode == Instruction::Sub ||
@@ -276,24 +275,54 @@ struct InfiniteLoopDetection : public FunctionPass {
             opcode == Instruction::SDiv) {
             (*Lhs) = Inst->getOperand(0);
             (*Rhs) = Inst->getOperand(1);
-            return opcode;
+            return true;
         } else {
             errs()<< "DEBUG INDO: In getValidArithOpCode() method, an unknown inst type is passed into argu list.\n";
             *Lhs = nullptr;
             *Rhs = nullptr;
         }
-        return 10086;
+        return false;
+    }
+
+    Value* passIncessantLoadInst(Value* curInst, Value* lastInst) {
+        if (curInst!=nullptr && lastInst!=nullptr) {
+            Instruction* tmpInst = nullptr;
+            Value* firstOprd = nullptr;
+            if ((tmpInst=dyn_cast<LoadInst>(curInst)) != nullptr) {
+                firstOprd = tmpInst->getOperand(0);
+                if (firstOprd==lastInst) {
+                    tmpInst = tmpInst->getNextNonDebugInstruction();
+                    return passIncessantLoadInst(tmpInst, curInst);
+                } else {
+                    errs()<< "WARNING: In passIncessantLoadInst() method, the LoadInst's argu mismatched.\n";
+                    return nullptr;
+                }
+            } else {
+                if ((tmpInst=dyn_cast<StoreInst>(curInst)) != nullptr) {
+                    firstOprd = tmpInst->getOperand(0);
+                    return (firstOprd == lastInst)?curInst : nullptr;
+                } else {
+                    errs()<< "WARNING: In passIncessantLoadInst() method, the current inst is not expected StoreInst.\n";
+                }
+            }
+        } else {
+            errs()<< "WARNING: In checkIncessantLoadInst() method, the argu list contains NULL value.\n";
+        }
+        return nullptr;
     }
 
     bool checkPatternLAS(Instruction* Inst, Value* IndVar) {
         if (Inst != nullptr && IndVar != nullptr) {
             errs()<< "DEBUG INFO: In checkPatternLAS() method, print out the LoadInst layer number -- " << mIndVarLoadLayers << "\n";
-            Instruction* firstNextInst = Inst->getNextNonDebugInstruction();
-            Instruction* secondNextInst = firstNextInst->getNextNonDebugInstruction();
-            unsigned secondOpcode = secondNextInst->getOpcode();
+            // Instruction* firstNextInst = Inst->getNextNonDebugInstruction();
+            // Instruction* secondNextInst = firstNextInst->getNextNonDebugInstruction();
+            // unsigned secondOpcode = secondNextInst->getOpcode();
             Value* lhs = nullptr;
             Value* rhs = nullptr;
-            if (getValidArithOpCode(firstNextInst, &lhs, &rhs) != 10086) {
+            // First, check the incessant LoadInsts before checking the arithmetic ops
+            Instruction* storeInst = passIncessantLoadInst(Inst, IndVar);
+            if (storeInst!=nullptr && getValidArithOpCode(storeInst, &lhs, &rhs)!=10086) {
+                errs()<< "DEBUG INFO: In checkPatternLAS() method, the content of expected StoreInst is : " << *storeInst << "\n";
                 if (lhs!=nullptr && rhs!=nullptr) {
                     if(getIndVarFromHS(lhs, rhs)==IndVar && secondOpcode==Instruction::Store) {
                         lhs = secondNextInst->getOperand(0);
@@ -309,6 +338,8 @@ struct InfiniteLoopDetection : public FunctionPass {
                 } else {
                     errs()<< "DEBUG INFO: In checkPatternLAS() method, LHS and RHS are set NULL after calling getValidArithOpCode() method.\n";
                 }
+            } else {
+                errs()<< "DEBUG INFO: In checkPatternLAS() method, no artichmetic inst exists behind the current LoadInst.\n";
             }
         } else {
             errs()<< "DEBUG INFO: In checkPatternLAS() method, a NULL ptr is passed into the argu list!\n";
@@ -322,7 +353,7 @@ struct InfiniteLoopDetection : public FunctionPass {
         errs()<<"DEBUG INFO: Enter the checkBasicArithmetic() method...\n";
         if (Inst!=nullptr && IndVar!=nullptr) {
             unsigned opcode = Inst->getOpcode();
-            if (opcode == Instruction::Load) {
+            if (opcode==Instruction::Load && Inst->getOperand(0)==IndVar) {
                 // Start to check the pattern
                 if (checkPatternLAS(Inst, IndVar)) {
                     mIndVarLoadLayers = 0;
