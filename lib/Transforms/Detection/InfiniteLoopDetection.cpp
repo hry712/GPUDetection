@@ -285,6 +285,7 @@ struct InfiniteLoopDetection : public FunctionPass {
     }
 
     Instruction* passIncessantLoadInst(Instruction* curInst, Value* lastInst) {
+        errs()<< "DEBUG INFO: Enter the passIncessantLoadInst() method...\n";
         if (curInst!=nullptr && lastInst!=nullptr) {
             Instruction* tmpInst = nullptr;
             Value* firstOprd = nullptr;
@@ -301,12 +302,13 @@ struct InfiniteLoopDetection : public FunctionPass {
                 return curInst;
             }
         } else {
-            errs()<< "WARNING: In checkIncessantLoadInst() method, the argu list contains NULL value.\n";
+            errs()<< "WARNING: In passIncessantLoadInst() method, the argu list contains NULL value.\n";
         }
         return nullptr;
     }
 
     bool checkPatternLAS(Instruction* Inst, Value* IndVar) {
+        errs()<< "DEBUG INFO: Enter the checkPatternLAS() method...\n";
         if (Inst != nullptr && IndVar != nullptr) {
             errs()<< "DEBUG INFO: In checkPatternLAS() method, print out the LoadInst layer number -- " << mIndVarLoadLayers << "\n";
             unsigned opcode = 0;
