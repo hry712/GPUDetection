@@ -23,7 +23,7 @@ struct InfiniteLoopDetection : public FunctionPass {
     int IndVarLimit = 0;
     int mIndVarLoadLayers = 0;
     std::vector<Value*> mEntryAllocaInstVector;
-    std::vector<Instruction*> mLoadInstVector;
+    std::vector<Value*> mLoadInstVector;
     Function* curFunc;
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -331,7 +331,7 @@ struct InfiniteLoopDetection : public FunctionPass {
                             rhs = storeInst->getOperand(1);
                             // TO-DO: We need a new design of the Opnd check mechanism
                             if (lhs==arithInst) {
-                                std::vector<Instruction*>::iterator result = find(mLoadInstVector.begin(), mLoadInstVector.end(), rhs);
+                                std::vector<Value*>::iterator result = find(mLoadInstVector.begin(), mLoadInstVector.end(), rhs);
                                 if (rhs==IndVar || result!=mLoadInstVector.end())
                                     return true;
                                 else {
