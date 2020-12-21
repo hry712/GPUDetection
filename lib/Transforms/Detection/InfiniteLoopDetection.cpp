@@ -291,7 +291,7 @@ struct InfiniteLoopDetection : public FunctionPass {
             Instruction* tmpInst = nullptr;
             Value* firstOprd = nullptr;
             if ((tmpInst=dyn_cast<LoadInst>(curInst)) != nullptr) {
-                mLoadInstVector.push_back(curInst)
+                mLoadInstVector.push_back(curInst);
                 firstOprd = tmpInst->getOperand(0);
                 if (firstOprd==lastInst) {
                     tmpInst = tmpInst->getNextNonDebugInstruction();
