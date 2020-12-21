@@ -23,6 +23,7 @@ struct InfiniteLoopDetection : public FunctionPass {
     int IndVarLimit = 0;
     int mIndVarLoadLayers = 0;
     std::vector<Value*> mEntryAllocaInstVector;
+    std::vector<Instruction*> mLoadInstVector;
     Function* curFunc;
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -290,6 +291,7 @@ struct InfiniteLoopDetection : public FunctionPass {
             Instruction* tmpInst = nullptr;
             Value* firstOprd = nullptr;
             if ((tmpInst=dyn_cast<LoadInst>(curInst)) != nullptr) {
+                mLoadInstVector.push_back(curInst)
                 firstOprd = tmpInst->getOperand(0);
                 if (firstOprd==lastInst) {
                     tmpInst = tmpInst->getNextNonDebugInstruction();
@@ -315,26 +317,38 @@ struct InfiniteLoopDetection : public FunctionPass {
             Value* lhs = nullptr;
             Value* rhs = nullptr;
             // First, check the incessant LoadInsts before checking the arithmetic ops
+            mLoadInstVector.clear();
             Instruction* arithInst = passIncessantLoadInst(Inst, IndVar);
             Instruction* storeInst = nullptr;
             if (arithInst!=nullptr && isValidArithInst(arithInst, &lhs, &rhs)) {
                 errs()<< "DEBUG INFO: In checkPatternLAS() method, the content of expected ArithmeticInst is : " << *arithInst << "\n";
                 storeInst = arithInst->getNextNonDebugInstruction();
                 opcode = storeInst->getOpcode();
-                if (lhs!=nullptr && rhs!=nullptr) {
-                    if(getIndVarFromHS(lhs, rhs)==IndVar && opcode==Instruction::Store) {
-                        lhs = storeInst->getOperand(0);
-                        rhs = storeInst->getOperand(1);
-                        if (lhs==arithInst && rhs==IndVar)
-                            return true;
+                if (opcode == Instruction::Store) {
+                    if (lhs!=nullptr && rhs!=nullptr) {
+                        if(getIndVarFromHS(lhs, rhs)==IndVar) {
+                            lhs = storeInst->getOperand(0);
+                            rhs = storeInst->getOperand(1);
+                            // TO-DO: We need a new design of the Opnd check mechanism
+                            if (lhs==arithInst) {
+                                std::vector<Instruction*>::iterator result = find(mLoadInstVector.begin(), mLoadInstVector.end(), rhs);
+                                if (rhs==IndVar || result!=mLoadInstVector.end())
+                                    return true;
+                                else {
+                                    errs()<< "DEBUG INFO: In checkPatternLAS() method, the operand(1) of StoreInst does NOT match the LoadInst vector or IndVar.\n";
+                                }
+                            }
+                        } else {
+                            errs()<< "DEBUG INFO: In checkPatternLAS() method, the getIndVarFromHS() method did not return a same Value* to the IndVar.\n";
+                            errs()<< "IndVar info: " << *IndVar << "\n";
+                            errs()<< "LHS info: " << *lhs << "\n";
+                            errs()<< "RHS info: " << *rhs << "\n";
+                        }
                     } else {
-                        errs()<< "DEBUG INFO: In checkPatternLAS() method, the getIndVarFromHS() method did not return a same Value* to the IndVar.\n";
-                        errs()<< "IndVar info: " << *IndVar << "\n";
-                        errs()<< "LHS info: " << *lhs << "\n";
-                        errs()<< "RHS info: " << *rhs << "\n";
+                        errs()<< "DEBUG INFO: In checkPatternLAS() method, LHS and RHS are set NULL after calling isValidArithInst() method.\n";
                     }
                 } else {
-                    errs()<< "DEBUG INFO: In checkPatternLAS() method, LHS and RHS are set NULL after calling isValidArithInst() method.\n";
+                        errs()<< "DEBUG INFO: In checkPatternLAS() method, the instruction next to the arith inst is NOT store inst.\n";
                 }
             } else {
                 errs()<< "DEBUG INFO: In checkPatternLAS() method, no artichmetic inst exists behind the current LoadInst.\n";
