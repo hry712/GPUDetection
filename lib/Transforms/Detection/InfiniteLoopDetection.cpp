@@ -449,6 +449,14 @@ struct InfiniteLoopDetection : public FunctionPass {
                 LI.print(errs());
                 errs()<< "\n";
                 InitAllocaInstVector(&(*(F.begin())));
+                // std::vector<LoopT*>& loops = LI.getSubLoopsVector();
+                errs()<< "DEBUG INFO: In runOnFunction() method, use the begin()/end() itr instead of foreach parsing.\n";                std::vector<Loop*>::iterator lpItr = LI.begin();
+                std::vector<Loop*>::iterator lpEnd = LI.end();
+                while (lpItr != lpEnd) {
+                    errs()<< "DEBUG INFO: In runOnFunction() method, try to print out the content of Loops' iterator... \n";
+                    errs()<< *(*lpItr) << "\n";
+                    ++lpItr;
+                }
                 for (auto* lp : LI) {
                     // TO-DO: Check if a BB in the LoopObj is a subloop's header
                     errs()<< "=====-----------Infinite Loop Check Report-----------=====\n";
