@@ -436,6 +436,21 @@ struct InfiniteLoopDetection : public FunctionPass {
         return false;
     }
 
+    bool detectLoop(Loop* LP) {
+        bool ans = false;
+        if (LP != nullptr) {
+            ans = isFiniteLoop(LP);
+            std::vector<Loop*> subLoops = LP->getSubLoops();
+            if (subLoops.empty() == false) {
+                Loop::iterator i, e;
+                for (i=subLoops.begin(), e=subLoops.end(); i!=e; i++) {
+                    ans = ans && detectLoop(*i);
+                }
+            }
+        }
+        return ans;
+    }
+
     virtual bool runOnFunction(Function &F) {
         if ((F.getParent())->getTargetTriple().compare("nvptx64-nvidia-cuda") == 0) {
             errs()<< "Now, this pass is dealing with a GPU kernel module...\n";
@@ -449,22 +464,18 @@ struct InfiniteLoopDetection : public FunctionPass {
                 LI.print(errs());
                 errs()<< "\n";
                 InitAllocaInstVector(&(*(F.begin())));
-                errs()<< "DEBUG INFO: In runOnFunction() method, use the begin()/end() itr instead of foreach parsing.\n";
-                // std::vector<Loop*> loops = LI.getLoopsInPreorder();
-                // std::vector<Loop*>::iterator lpsItr = loops.begin();
-                // std::vector<Loop*>::iterator lpsEnd = loops.end();
-
-                LoopInfoBase<BasicBlock, Loop>::iterator lpItr = LI.begin();
-                LoopInfoBase<BasicBlock, Loop>::iterator lpEnd = LI.end();
-                while (lpItr != lpEnd) {
-                    errs()<< "DEBUG INFO: In runOnFunction() method, try to print out the content of Loops' iterator... \n";
-                    errs()<< *(*lpItr) << "\n";
-                    ++lpItr;
-                }
+                // errs()<< "DEBUG INFO: In runOnFunction() method, use the begin()/end() itr instead of foreach parsing.\n";
+                // LoopInfoBase<BasicBlock, Loop>::iterator lpItr = LI.begin();
+                // LoopInfoBase<BasicBlock, Loop>::iterator lpEnd = LI.end();
+                // while (lpItr != lpEnd) {
+                //     errs()<< "DEBUG INFO: In runOnFunction() method, try to print out the content of Loops' iterator... \n";
+                //     errs()<< *(*lpItr) << "\n";
+                //     ++lpItr;
+                // }
                 for (auto* lp : LI) {
                     // TO-DO: Check if a BB in the LoopObj is a subloop's header
                     errs()<< "=====-----------Infinite Loop Check Report-----------=====\n";
-                    if (isFiniteLoop(lp)) {
+                    if (detectLoop(lp)) {
                         errs()<< "Under current checking strategies, this loop is considered as a finite type ----- SAFE\n";
                     } else {
                         errs()<< "Under current checking strategies, this loop is considered as an infinite type ----- UNSAFE\n";
