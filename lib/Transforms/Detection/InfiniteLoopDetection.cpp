@@ -449,8 +449,8 @@ struct InfiniteLoopDetection : public FunctionPass {
                 LI.print(errs());
                 errs()<< "\n";
                 InitAllocaInstVector(&(*(F.begin())));
-                errs()<< "DEBUG INFO: In runOnFunction() method, use the begin()/end() itr instead of foreach parsing.\n";                std::vector<Loop*>::iterator lpItr = LI.begin();
-                std::vector<Loop*> loops = LI.getLoopsInPreorder();
+                errs()<< "DEBUG INFO: In runOnFunction() method, use the begin()/end() itr instead of foreach parsing.\n";
+                // std::vector<Loop*> loops = LI.getLoopsInPreorder();
                 // std::vector<Loop*>::iterator lpsItr = loops.begin();
                 // std::vector<Loop*>::iterator lpsEnd = loops.end();
 
