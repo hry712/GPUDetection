@@ -444,10 +444,14 @@ struct InfiniteLoopDetection : public FunctionPass {
             errs()<< "DEBUG INFO: In detectLoop() method, isFiniteLoop() is finished.\n";
             std::vector<Loop*> subLoops = LP->getSubLoops();
             if (subLoops.empty() == false) {
-                Loop::iterator i, e;
-                for (i=subLoops.begin(), e=subLoops.end(); i!=e; i++) {
-                    errs()<< "DEBUG INFO: In detectLoop() method, start to call the detectLoop() method for further detection.\n";
+                Loop::iterator i = subLoops.begin();
+                Loop::iterator e = subLoops.end();
+                errs()<< "DEBUG INFO: In detectLoop() method, the number of sub loops is -- " << subLoops.size() << "\n";
+                while (i!=e) {
+                    errs()<< "DEBUG INFO: In detectLoop() method, start to call the detectLoop() method for subloops' detection.\n";
                     ans = ans && detectLoop(*i);
+                    errs()<< "DEBUG INFO: In detectLoop() method, a sub loop detection has finished.\n";
+                    ++i;
                 }
             }
         }
