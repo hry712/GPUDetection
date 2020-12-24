@@ -86,12 +86,12 @@ struct InfiniteLoopDetection : public FunctionPass {
         BasicBlock* latchBB = LP->getLoopLatch();
         // for(){...}, while(){...}
         if (headerBB == exitBB) {
-            errs()<< "In getLoopType() method, we judge current LoopObj is for/while type.\n";
+            errs()<< "DEBUG INFO: In getLoopType() method, we judge current LoopObj is for/while type.\n";
             return 0;
         }
         // do{...} while()
         if (latchBB == exitBB) {
-            errs()<< "In getLoopType() method, we judge current LoopObj is do...while type.\n";
+            errs()<< "DEBUG INFO: In getLoopType() method, we judge current LoopObj is do...while type.\n";
             return 1;
         }
         errs()<<"DEBUG INFO: In getLoopType() method, the header, latch, exiting BBs do not match the detection strategies.\n";
@@ -384,16 +384,16 @@ struct InfiniteLoopDetection : public FunctionPass {
             errs()<< "WARNING: In isInfiniteLoop() method, the argu LP is a NULL value.\n";
             return false;
         }
-        std::vector<Loop*> subLoops = LP->getSubLoopsVector();
-        if (!subLoops.empty()) {
-            errs()<< "DEBUG INFO: Sub loops were found under current processing LoopObj...\n";
-            for (auto* lp : subLoops) {
-                mIndVarLoadLayers = 0;
-                if (isFiniteLoop(lp) == false) 
-                    return false;
-            }
-            errs()<< "DEBUG INFO: The sub loops are finite --- safe inner\n";
-        }
+        // std::vector<Loop*> subLoops = LP->getSubLoopsVector();
+        // if (!subLoops.empty()) {
+        //     errs()<< "DEBUG INFO: Sub loops were found under current processing LoopObj...\n";
+        //     for (auto* lp : subLoops) {
+        //         mIndVarLoadLayers = 0;
+        //         if (isFiniteLoop(lp) == false) 
+        //             return false;
+        //     }
+        //     errs()<< "DEBUG INFO: The sub loops are finite --- safe inner\n";
+        // }
         // Detect the current processing loop obj...
         mIndVarLoadLayers = 0;
         int lpTy = getLoopType(LP);
@@ -484,28 +484,6 @@ struct InfiniteLoopDetection : public FunctionPass {
                         errs()<< "Under current checking strategies, this loop is considered as an infinite type ----- UNSAFE\n";
                     }
                     errs()<< "=====-----------------------End----------------------=====\n";
-                    // std::vector<Loop*> subLoops = lp->getSubLoopsVector();
-                    // if (!subLoops.empty()) {
-                    //     errs()<< "DEBUG INFO: After check report, sub loops were found under current processing LoopObj...\n";
-                    // } else {
-                    //     errs()<< "DEBUG INFO: No sub loop exists under current processing LoopObj...\n";
-                    // }
-                    // int lpTy = getLoopType(lp);
-                    // Value* lpIndVar = getInductionVarFrom(lp, lpTy);
-                    // if (lpIndVar != nullptr) {
-                    //     errs()<< "Found induction variable in the loop: " << *lpIndVar << "\n";
-                    //     errs()<< "=====-----------Infinite Loop Check Report-----------=====\n";
-                    //     if (isChangedByLP(lp, lpIndVar)) {
-                    //         //TO-DO: Print out the safety detection report
-                    //         errs()<< "Under current checking strategies, this loop is considered as a finite type ----- SAFE\n";
-                    //     } else {
-                    //         errs()<< "Under current checking strategies, this loop is considered as an infinite type ----- UNSAFE\n";
-                    //     }
-                    //     errs()<< "=====-----------------------End----------------------=====\n";
-                        
-                    // } else {
-                    //     errs()<< "WARNING: Fail to fetch the induction variable from the current Loop.\n";
-                    // }
                 }
                 errs()<< "\n";
             }
