@@ -438,7 +438,8 @@ struct InfiniteLoopDetection : public FunctionPass {
 
     bool detectLoop(Loop* LP) {
         errs()<< "DEBUG INFO: Enter the detectLoop() method...\n";
-        bool ans = false;
+        bool ans = true;
+        bool tmp = false;
         if (LP != nullptr) {
             ans = isFiniteLoop(LP);
             errs()<< "DEBUG INFO: In detectLoop() method, isFiniteLoop() is finished.\n";
@@ -449,7 +450,8 @@ struct InfiniteLoopDetection : public FunctionPass {
                 errs()<< "DEBUG INFO: In detectLoop() method, the number of sub loops is -- " << subLoops.size() << "\n";
                 while (i!=e) {
                     errs()<< "DEBUG INFO: In detectLoop() method, start to call the detectLoop() method for subloops' detection.\n";
-                    ans = ans && detectLoop(*i);
+                    tmp = detectLoop(*i);
+                    ans = ans && tmp;
                     errs()<< "DEBUG INFO: In detectLoop() method, a sub loop detection has finished.\n";
                     ++i;
                 }
