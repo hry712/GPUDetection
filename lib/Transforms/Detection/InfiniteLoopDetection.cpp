@@ -1,5 +1,6 @@
 #include "llvm/Pass.h"
 #include "llvm/IR/Type.h"
+#include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
@@ -435,6 +436,149 @@ struct InfiniteLoopDetection : public FunctionPass {
         errs()<< "WARNING: In isChangedByLP() method, the NULL value exists in the argus.\n";
         return false;
     }
+    //TO-DO: This method is going to detect the type of operand pairs.
+    int getPairTypeFromHS(Value* lhs, Value* rhs) {
+        errs()<< "DEBUG INFO: Enter the getPairTypeFromHS() method...\n";
+        ConstantInt* constIntVar = nullptr;
+        ConstantFP* constFpVar = nullptr;
+        IntegerType* i32 = IntegerType::get(curFunc->getParent()->getContext(), 32);
+        IntegerType* i64 = IntegerType::get(curFunc->getParent()->getContext(), 64);
+        Type* fltTy =  Type::getFloatTy(curFunc->getParent()->getContext());
+        Type* dblTy =  Type::getDoubleTy(curFunc->getParent()->getContext());
+        // int operand
+        if ((constIntVar=dyn_cast<ConstantInt>(lhs)) != nullptr) {              // suppose the left opnd is a constant value
+            if ((constIntVar=dyn_cast<ConstantInt>(rhs)) != nullptr) {
+                errs()<< "WARNING: In getPairTypeFromHS() method, \n";
+                return 0;
+            } else if (rhs->getType()==i32 || rhs->getType()==i64) {
+                if ((tmpInst=dyn_cast<LoadInst>(rhs)) != nullptr) {
+                    if (getInnerMostLoadOpnd(tmpInst, tmpInst->getParent()) != nullptr) {
+                        return 2;
+                    } else {
+                        errs()<< "WARNING: In getPairTypeFromHS() method, \n";
+                    }
+                } else {
+                    errs()<< "WARNING: In getPairTypeFromHS() method, \n";
+                }
+            } else {
+                errs()<< "WARNING: In getPairTypeFromHS() method, \n";
+            }
+        } else if ((constIntVar=dyn_cast<ConstantInt>(rhs)) != nullptr) {
+            if ((constIntVar=dyn_cast<ConstantInt>(lhs)) != nullptr) {
+                errs()<< "WARNING: In getPairTypeFromHS() method, \n";
+                return 0;
+            } else if (lhs->getType()==i32 || lhs->getType()==i64) {
+                if ((tmpInst=dyn_cast<LoadInst>(lhs)) != nullptr) {
+                    if (getInnerMostLoadOpnd(tmpInst, tmpInst->getParent()) != nullptr) {
+                        return 1;
+                    } else {
+                        errs()<< "WARNING: In getPairTypeFromHS() method, \n";
+                    }
+                } else {
+                    errs()<< "WARNING: In getPairTypeFromHS() method, \n";
+                }
+            } else {
+                errs()<< "WARNING: In getPairTypeFromHS() method, \n";
+            }
+        }
+        // float operand
+        if ((constFpVar=dyn_cast<ConstantFP>(lhs)) != nullptr) {         // suppose the left opnd is a constant float value
+            if ((constIntVar=dyn_cast<ConstantInt>(rhs)) != nullptr) {
+                errs()<< "WARNING: In \n";
+            } else if (rhs->getType()==flt || rhs->getType()==dbl) {
+                return 1;
+            } else {
+                errs()<< "WARNING: In \n";
+            }
+        } else if ((constIntVar=dyn_cast<ConstantInt>(rhs)) != nullptr) {
+            if ((constIntVar=dyn_cast<ConstantInt>(lhs)) != nullptr) {
+                errs()<< "WARNING: In \n";
+            } else if (lhs->getType()==flt || lhs->getType()==dbl) {
+                return 1;
+            } else {
+                errs()<< "WARNING: In \n";
+            }
+        }
+        errs()<< "WARNING: In \n";
+        return 0;
+    }
+
+    //TO-DO: we need a method to detect the trend type of ctrlBB
+    int getTrendCodeFromCtrlBB(BasicBlock* CtrlBB, Value* IndVar) {
+        errs()<< "DEBUG INFO: Enter the getTrendCodeFromCtrlBB() method...\n";
+        Instruction* termInst = CtrlBB->getTerminator();
+        BranchInst* brInst = nullptr;
+        if ((brInst=dyn_cast<BranchInst>(termInst)) != nullptr) {
+            Value* cond = BR->getCondition();
+            CmpInst* condInst = nullptr;
+            if ((condInst=dyn_cast<CmpInst>(cond)) != nullptr) {
+                unsigned opcode = condInst->getPredicate();
+                // ConstantInt* lhs = dyn_cast<ConstantInt>(condInst->getOperand(0));
+                // ConstantInt* rhs = dyn_cast<ConstantInt>(condInst->getOperand(1));
+                Value* lhs = condInst->getOperand(0);
+                Value* rhs = condInst->getOperand(1);
+                int opndPairTy = getPairTypeFromHS(lhs, rhs);
+                // Value* tmpVal = getIndVarFromHS(lhs, rhs);
+                // detect if it's positive or negative
+                if (opcode==CmpInst::ICMP_SLT ||
+                    opcode==CmpInst::ICMP_SLE ||
+                    opcode==CmpInst::ICMP_ULT ||
+                    opcode==CmpInst::ICMP_ULE) {
+                    if (opndPairTy == 1) {      // suppose positive trend
+                        return 1;
+                    } else if (opndPairTy == 2) {       // suppose negative trend
+                        return -1;
+                    } else {
+                        errs()<< "WARNING: In getTrendCodeFromCtrlBB() method, \n";
+                    }
+                } else if (opcode==CmpInst::ICMP_UGT ||
+                    opcode==CmpInst::ICMP_UGE ||
+                    opcode==CmpInst::ICMP_SGT ||
+                    opcode==CmpInst::ICMP_SGE) {
+                    if (opndPairTy == 1) {      // suppose negative trend
+                        return -1;
+                    } else if (opndPairTy == 2) {       // suppose positive trend
+                        return 1;
+                    } else {
+                        errs()<< "WARNING: In getTrendCodeFromCtrlBB() method, \n";
+                    }
+                } else if (opcode==CmpInst::FCMP_OGT ||
+                    opcode==CmpInst::FCMP_OGE ||
+                    opcode==CmpInst::FCMP_UGT ||
+                    opcode==CmpInst::FCMP_UGE) {
+                    if (opndPairTy == 1) {      // suppose negative trend
+                        return -1;
+                    } else if (opndPairTy == 2) {       // suppose positive trend
+                        return 1;
+                    } else {
+                        errs()<< "WARNING: In getTrendCodeFromCtrlBB() method, \n";
+                    }
+                } else if (opcode==CmpInst::FCMP_OLT ||
+                    opcode==CmpInst::FCMP_OLE ||
+                    opcode==CmpInst::FCMP_ULT ||
+                    opcode==CmpInst::FCMP_ULE ||) {
+                    if (opndPairTy == 1) {      // suppose positive trend
+                        return 1;
+                    } else if (opndPairTy == 2) {       // suppose negative trend
+                        return -1;
+                    } else {
+                        errs()<< "WARNING: In getTrendCodeFromCtrlBB() method, \n";
+                    }
+                } else {
+                    errs()<<"WARNING: In getTrendCodeFromCtrlBB() method, an unknown ICMP opcode type is passed inside.\n";
+                }
+            } else {
+                errs()<< "WARNING: In getTrendCodeFromCtrlBB() method, the ";
+            }
+        } else {
+            errs()<< "WARNING: In getTrendCodeFromCtrlBB() method, ";
+        }
+        return 0;
+    }
+    //TO-DO: we need a method to detect the trend type of arithInst
+    int getTrendCodeFromArithInst(Instruction* ArithInst, Value* IndVar) {
+        return -1;
+    }
 
     bool detectLoop(Loop* LP) {
         errs()<< "DEBUG INFO: Enter the detectLoop() method...\n";
@@ -473,14 +617,6 @@ struct InfiniteLoopDetection : public FunctionPass {
                 LI.print(errs());
                 errs()<< "\n";
                 InitAllocaInstVector(&(*(F.begin())));
-                // errs()<< "DEBUG INFO: In runOnFunction() method, use the begin()/end() itr instead of foreach parsing.\n";
-                // LoopInfoBase<BasicBlock, Loop>::iterator lpItr = LI.begin();
-                // LoopInfoBase<BasicBlock, Loop>::iterator lpEnd = LI.end();
-                // while (lpItr != lpEnd) {
-                //     errs()<< "DEBUG INFO: In runOnFunction() method, try to print out the content of Loops' iterator... \n";
-                //     errs()<< *(*lpItr) << "\n";
-                //     ++lpItr;
-                // }
                 for (auto* lp : LI) {
                     // TO-DO: Check if a BB in the LoopObj is a subloop's header
                     errs()<< "=====-----------Infinite Loop Check Report-----------=====\n";
