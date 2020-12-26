@@ -454,6 +454,7 @@ struct InfiniteLoopDetection : public FunctionPass {
         IntegerType* i64 = IntegerType::get(curFunc->getParent()->getContext(), 64);
         Type* fltTy =  Type::getFloatTy(curFunc->getParent()->getContext());
         Type* dblTy =  Type::getDoubleTy(curFunc->getParent()->getContext());
+        Instruction* tmpInst = nullptr;
         // int operand
         if ((constIntVar=dyn_cast<ConstantInt>(lhs)) != nullptr) {              // suppose the left opnd is a constant value
             if ((constIntVar=dyn_cast<ConstantInt>(rhs)) != nullptr) {
@@ -494,7 +495,7 @@ struct InfiniteLoopDetection : public FunctionPass {
         if ((constFpVar=dyn_cast<ConstantFP>(lhs)) != nullptr) {         // suppose the left opnd is a constant float value
             if ((constIntVar=dyn_cast<ConstantInt>(rhs)) != nullptr) {
                 errs()<< "WARNING: In \n";
-            } else if (rhs->getType()==flt || rhs->getType()==dbl) {
+            } else if (rhs->getType()==fltTy || rhs->getType()==dblTy) {
                 return 1;
             } else {
                 errs()<< "WARNING: In \n";
@@ -502,7 +503,7 @@ struct InfiniteLoopDetection : public FunctionPass {
         } else if ((constIntVar=dyn_cast<ConstantInt>(rhs)) != nullptr) {
             if ((constIntVar=dyn_cast<ConstantInt>(lhs)) != nullptr) {
                 errs()<< "WARNING: In \n";
-            } else if (lhs->getType()==flt || lhs->getType()==dbl) {
+            } else if (lhs->getType()==fltTy || lhs->getType()==dblTy) {
                 return 1;
             } else {
                 errs()<< "WARNING: In \n";
@@ -518,7 +519,7 @@ struct InfiniteLoopDetection : public FunctionPass {
         Instruction* termInst = CtrlBB->getTerminator();
         BranchInst* brInst = nullptr;
         if ((brInst=dyn_cast<BranchInst>(termInst)) != nullptr) {
-            Value* cond = BR->getCondition();
+            Value* cond = brInst->getCondition();
             CmpInst* condInst = nullptr;
             if ((condInst=dyn_cast<CmpInst>(cond)) != nullptr) {
                 unsigned opcode = condInst->getPredicate();
@@ -565,7 +566,7 @@ struct InfiniteLoopDetection : public FunctionPass {
                 } else if (opcode==CmpInst::FCMP_OLT ||
                     opcode==CmpInst::FCMP_OLE ||
                     opcode==CmpInst::FCMP_ULT ||
-                    opcode==CmpInst::FCMP_ULE ||) {
+                    opcode==CmpInst::FCMP_ULE) {
                     if (opndPairTy == 1) {      // suppose positive trend
                         return 1;
                     } else if (opndPairTy == 2) {       // suppose negative trend
