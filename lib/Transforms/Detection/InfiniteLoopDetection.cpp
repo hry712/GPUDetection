@@ -1,9 +1,10 @@
 #include "llvm/Pass.h"
+#include "llvm/IR/Constants.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/InstrTypes.h"
-#include "llvm/IR/Function.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/Function.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/raw_ostream.h"
@@ -23,6 +24,8 @@ struct InfiniteLoopDetection : public FunctionPass {
 
     int IndVarLimit = 0;
     int mIndVarLoadLayers = 0;
+    int mLoopCtrlBBTrendCode = 0;
+    int mLoopArithInstTrendCode = 0;
     std::vector<Value*> mEntryAllocaInstVector;
     std::vector<Value*> mLoadInstVector;
     Function* curFunc;
@@ -36,6 +39,8 @@ struct InfiniteLoopDetection : public FunctionPass {
     void InitAllocaInstVector(BasicBlock* EntryBB) {
         errs()<< "DEBUG INFO: Enter the InitAllocaInstVector() method...\n";
         mIndVarLoadLayers = 0;
+        mLoopCtrlBBTrendCode = 0;
+        mLoopArithInstTrendCode = 0;
         if (EntryBB != nullptr) {
             BasicBlock::iterator iiItr = EntryBB->begin();
             BasicBlock::iterator endItr = EntryBB->end();
@@ -219,6 +224,7 @@ struct InfiniteLoopDetection : public FunctionPass {
         if (headerBB == exitBB) {
             Instruction* termInst = headerBB->getTerminator();
             BranchInst* brInst = nullptr;
+            mLoopCtrlBBTrendCode = getTrendCodeFromCtrlBB(exitBB);
             if ((brInst=dyn_cast<BranchInst>(termInst)) != nullptr) {
                 errs()<<"DEBUG INFO: Enter the getCondVarFromBrInst() method...\n";
                 return getCondVarFromBrInst(brInst);
@@ -239,6 +245,7 @@ struct InfiniteLoopDetection : public FunctionPass {
         if (latchBB == exitBB) {
             Instruction* termInst = latchBB->getTerminator();
             BranchInst* brInst = nullptr;
+            mLoopCtrlBBTrendCode = getTrendCodeFromCtrlBB(exitBB);
             if ((brInst=dyn_cast<BranchInst>(termInst)) != nullptr) {
                 return getCondVarFromBrInst(brInst);
             }
@@ -323,6 +330,7 @@ struct InfiniteLoopDetection : public FunctionPass {
             Instruction* storeInst = nullptr;
             if (arithInst!=nullptr && isValidArithInst(arithInst, &lhs, &rhs)) {
                 errs()<< "DEBUG INFO: In checkPatternLAS() method, the content of expected ArithmeticInst is : " << *arithInst << "\n";
+                mLoopArithInstTrendCode = getTrendCodeFromArithInst(arithInst);
                 storeInst = arithInst->getNextNonDebugInstruction();
                 opcode = storeInst->getOpcode();
                 if (opcode == Instruction::Store) {
@@ -427,7 +435,8 @@ struct InfiniteLoopDetection : public FunctionPass {
                 errs()<< "DEBUG INFO: In isChangedByLP() method, we are processing the BB as fllowing...\n" << *bb << "\n";
                 while (iiItr != ieItr) {
                     if (checkBasicArithmetic(&(*iiItr), IndVar))
-                        return true;
+                        if (mLoopCtrlBBTrendCode*mLoopArithInstTrendCode == 1)
+                            return true;
                     ++iiItr;
                 }
                 ++bbItr;
@@ -504,7 +513,7 @@ struct InfiniteLoopDetection : public FunctionPass {
     }
 
     //TO-DO: we need a method to detect the trend type of ctrlBB
-    int getTrendCodeFromCtrlBB(BasicBlock* CtrlBB, Value* IndVar) {
+    int getTrendCodeFromCtrlBB(BasicBlock* CtrlBB) {
         errs()<< "DEBUG INFO: Enter the getTrendCodeFromCtrlBB() method...\n";
         Instruction* termInst = CtrlBB->getTerminator();
         BranchInst* brInst = nullptr;
@@ -575,9 +584,116 @@ struct InfiniteLoopDetection : public FunctionPass {
         }
         return 0;
     }
+    int getAddInstTrendCode(int PairCode, Value* LHS, Value* RHS) {
+        errs()<< "DEBUG INFO: Enter the getAddInstTrendCode() method...\n";
+        ConstantInt* constVal = nullptr;
+        if (LHS==nullptr || RHS==nullptr) {
+            errs()<< "WARNING: In getAddInstTrendCode() method, the argu list contains NULL ptr.\n";
+            return 0;
+        }
+        if (PairCode == 1) {
+            if ((constVal=dyn_cast<ConstantInt>(RHS)) != nullptr) {
+                int64_t limitValue = constVal->getSExtValue();
+                return (limitValue > 0)?1:-1;
+            }
+        } else if (PairCode == 2) {
+            if ((constVal=dyn_cast<ConstantInt>(LHS)) != nullptr) {
+                int64_t limitValue = constVal->getSExtValue();
+                return (limitValue > 0)?1:-1;
+            }
+        }
+        return 0;
+    }
+
+    int getSubInstTrendCode(int PairCode, Value* LHS, Value* RHS) {
+        errs()<< "DEBUG INFO: Enter the getSubInstTrendCode() method...\n";
+        ConstantInt* constVal = nullptr;
+        if (LHS==nullptr || RHS==nullptr) {
+            errs()<< "WARNING: In getSubInstTrendCode() method, the argu list contains NULL ptr.\n";
+            return 0;
+        }
+        if (PairCode == 1) {
+            if ((constVal=dyn_cast<ConstantInt>(RHS)) != nullptr) {
+                int64_t limitValue = constVal->getSExtValue();
+                return (limitValue > 0)?-1:1;
+            }
+        } else if (PairCode == 2) {
+            errs()<< "WARNING: In getSubInstTrendCode() method, the var-const pair is met here.\n";
+        }
+        return 0;
+    }
+
+    int getMulInstTrendCode(int PairCode, Value* LHS, Value* RHS) {
+        errs()<< "DEBUG INFO: Enter the getMulInstTrendCode() method...\n";
+        ConstantInt* constVal = nullptr;
+        if (LHS==nullptr || RHS==nullptr) {
+            errs()<< "WARNING: In getMulInstTrendCode() method, the argu list contains NULL ptr.\n";
+            return 0;
+        }
+        if (PairCode == 1) {
+            if ((constVal=dyn_cast<ConstantInt>(RHS)) != nullptr) {
+                int64_t limitValue = constVal->getSExtValue();
+                if (limitValue>0 && limitValue <1)
+                    return -1;
+                else if (limitValue > 1)
+                    return 1;
+            }
+        } else if (PairCode == 2) {
+            if ((constVal=dyn_cast<ConstantInt>(LHS)) != nullptr) {
+                int64_t limitValue = constVal->getSExtValue();
+                if (limitValue>0 && limitValue <1)
+                    return -1;
+                else if (limitValue > 1)
+                    return 1;
+            }
+        }
+        return 0;
+    }
+
+    int getDivInstTrendCode(int PairCode, Value* LHS, Value* RHS) {
+        errs()<< "DEBUG INFO: Enter the getDivInstTrendCode() method...\n";
+        ConstantInt* constVal = nullptr;
+        if (LHS==nullptr || RHS==nullptr) {
+            errs()<< "WARNING: In getDivInstTrendCode() method, the argu list contains NULL ptr.\n";
+            return 0;
+        }
+        if (PairCode == 1) {
+            if ((constVal=dyn_cast<ConstantInt>(RHS)) != nullptr) {
+                int64_t limitValue = constVal->getSExtValue();
+                if (limitValue>0 && limitValue <1)
+                    return 1;
+                else if (limitValue > 1)
+                    return -1;
+            }
+        } else if (PairCode == 2) {
+            errs()<< "WARNING: In getDivInstTrendCode() method, the const-var pair can not be handled under current strategies.\n";
+        }
+        return 0;
+    }
+
     //TO-DO: we need a method to detect the trend type of arithInst
-    int getTrendCodeFromArithInst(Instruction* ArithInst, Value* IndVar) {
-        return -1;
+    int getTrendCodeFromArithInst(Instruction* ArithInst) {
+        errs()<< "DEBUG INFO: Enter the getTrendCodeFromArithInst() method...\n";
+        if (ArithInst != nullptr) {
+            unsigned opcode = ArithInst->getOpcode();
+            Value* lhs = ArithInst->getOperand(0);
+            Value* rhs = ArithInst->getOperand(1);
+            int opndPairTy = getPairTypeFromHS(lhs, rhs);
+            if (opcode == Instruction::Add) {
+                return getAddInstTrendCode(opndPairTy, lhs, rhs);
+            } else if (opcode == Instruction::Sub) {
+                return getSubInstTrendCode(opndPairTy, lhs, rhs);
+            } else if (opcode == Instruction::Mul) {
+                return getMulInstTrendCode(opndPairTy, lhs, rhs);
+            } else if (opcode==Instruction::UDiv || opcode==Instruction::SDiv) {
+                return getDivInstTrendCode(opndPairTy, lhs, rhs);
+            } else {
+                errs()<< "WARNING: In getTrendCodeFromArithInst() method, an unknown arith opcode is met here.\n";
+            }
+        } else {
+            errs()<< "WARNING: In getTrendCodeFromArithInst() method, the argu list contains NULL ptr.\n";
+        }
+        return 0;
     }
 
     bool detectLoop(Loop* LP) {
