@@ -368,8 +368,8 @@ struct InfiniteLoopDetection : public FunctionPass {
         return false;
     }
 
-    // If the IndVar is used in the arithmetic instruction, this method will deem that
-    // the loop has setted a valid IndVar to reach an end.
+    // If the IndVar is used in the arithmetic instruction, this method will deem whether
+    // the loop has been set a valid IndVar to reach an end.
     bool checkBasicArithmetic(Instruction* Inst, Value* IndVar) {
         errs()<<"DEBUG INFO: Enter the checkBasicArithmetic() method...\n";
         if (Inst!=nullptr && IndVar!=nullptr) {
@@ -421,6 +421,7 @@ struct InfiniteLoopDetection : public FunctionPass {
     }
 
     bool isChangedByLP(Loop* LP, Value* IndVar) {
+        errs()<< "DEBUG INFO: Enter the isChangedByLP() method...\n";
         if (LP != nullptr && IndVar != nullptr) {
             std::vector<BasicBlock*> BBs = LP->getBlocksVector();
             std::vector<BasicBlock*>::iterator bbItr = BBs.begin();
@@ -457,59 +458,77 @@ struct InfiniteLoopDetection : public FunctionPass {
         Instruction* tmpInst = nullptr;
         // int operand
         if ((constIntVar=dyn_cast<ConstantInt>(lhs)) != nullptr) {              // suppose the left opnd is a constant value
-            if ((constIntVar=dyn_cast<ConstantInt>(rhs)) != nullptr) {
-                errs()<< "WARNING: In getPairTypeFromHS() method, \n";
+            if ((constIntVar=dyn_cast<ConstantInt>(rhs)) != nullptr) {          // both the two opnds are constant values 
+                errs()<< "WARNING: In getPairTypeFromHS() method, the two operands of the CMPInst are constant, which can give a constant value to the CMPInst.\n";
                 return 0;
-            } else if (rhs->getType()==i32 || rhs->getType()==i64) {
+            } else if (rhs->getType()==i32 || rhs->getType()==i64) {            // the right opnd is varying
                 if ((tmpInst=dyn_cast<LoadInst>(rhs)) != nullptr) {
-                    if (getInnerMostLoadOpnd(tmpInst, tmpInst->getParent()) != nullptr) {
+                    if (getInnerMostLoadOpnd(tmpInst, tmpInst->getParent()) != nullptr) {   // cheers! maybe a formative comparing inst exists
                         return 2;
                     } else {
-                        errs()<< "WARNING: In getPairTypeFromHS() method, \n";
+                        errs()<< "WARNING: In getPairTypeFromHS() method, the current CMPInst may NOT be the flow control condition.\n";
                     }
                 } else {
-                    errs()<< "WARNING: In getPairTypeFromHS() method, \n";
+                    errs()<< "WARNING: In getPairTypeFromHS() method, an unknown opnd type is met at the right int opnd site.\n";
                 }
             } else {
-                errs()<< "WARNING: In getPairTypeFromHS() method, \n";
+                errs()<< "WARNING: In getPairTypeFromHS() method, an unknown opnd data type is met at the right int opnd site.\n";
             }
-        } else if ((constIntVar=dyn_cast<ConstantInt>(rhs)) != nullptr) {
-            if ((constIntVar=dyn_cast<ConstantInt>(lhs)) != nullptr) {
-                errs()<< "WARNING: In getPairTypeFromHS() method, \n";
+        } else if ((constIntVar=dyn_cast<ConstantInt>(rhs)) != nullptr) {       // suppose the right opnd is a constant value
+            if ((constIntVar=dyn_cast<ConstantInt>(lhs)) != nullptr) {          // both the two opnds are constant values 
+                errs()<< "WARNING: In getPairTypeFromHS() method, the two operands of the CMPInst are constant, which can give a constant value to the CMPInst.\n";
                 return 0;
             } else if (lhs->getType()==i32 || lhs->getType()==i64) {
                 if ((tmpInst=dyn_cast<LoadInst>(lhs)) != nullptr) {
                     if (getInnerMostLoadOpnd(tmpInst, tmpInst->getParent()) != nullptr) {
                         return 1;
                     } else {
-                        errs()<< "WARNING: In getPairTypeFromHS() method, \n";
+                        errs()<< "WARNING: In getPairTypeFromHS() method, the current CMPInst may NOT be the flow control condition.\n";
                     }
                 } else {
-                    errs()<< "WARNING: In getPairTypeFromHS() method, \n";
+                    errs()<< "WARNING: In getPairTypeFromHS() method, an unknown opnd type is met at the left opnd site.\n";
                 }
             } else {
-                errs()<< "WARNING: In getPairTypeFromHS() method, \n";
+                errs()<< "WARNING: In getPairTypeFromHS() method, an unknown opnd data type is met at the left opnd site.\n";
             }
         }
         // float operand
-        if ((constFpVar=dyn_cast<ConstantFP>(lhs)) != nullptr) {         // suppose the left opnd is a constant float value
-            if ((constIntVar=dyn_cast<ConstantInt>(rhs)) != nullptr) {
-                errs()<< "WARNING: In \n";
+        if ((constFpVar=dyn_cast<ConstantFP>(lhs)) != nullptr) {            // suppose the left opnd is a constant float value
+            if ((constIntVar=dyn_cast<ConstantInt>(rhs)) != nullptr) {      // both the two opnds are constant values 
+                errs()<< "WARNING: In getPairTypeFromHS() method, the two operands of the CMPInst are constant, which can give a constant value to the CMPInst.\n";
+                return 0;
             } else if (rhs->getType()==fltTy || rhs->getType()==dblTy) {
-                return 1;
+                if ((tmpInst=dyn_cast<LoadInst>(rhs)) != nullptr) {
+                    if (getInnerMostLoadOpnd(tmpInst, tmpInst->getParent()) != nullptr) {
+                        return 2;
+                    } else {
+                        errs()<< "WARNING: In getPairTypeFromHS() method, the current CMPInst may NOT be the flow control condition.\n";
+                    }
+                } else {
+                    errs()<< "WARNING: In getPairTypeFromHS() method, an unknown opnd type is met at the right float opnd site.\n";
+                }
             } else {
-                errs()<< "WARNING: In \n";
+                errs()<< "WARNING: In getPairTypeFromHS() method, an unknown opnd type is met at the right float opnd site.\n";
             }
         } else if ((constIntVar=dyn_cast<ConstantInt>(rhs)) != nullptr) {
             if ((constIntVar=dyn_cast<ConstantInt>(lhs)) != nullptr) {
-                errs()<< "WARNING: In \n";
+                errs()<< "WARNING: In getPairTypeFromHS() method, the two operands of the CMPInst are constant, which can give a constant value to the CMPInst.\n";
+                return 0;
             } else if (lhs->getType()==fltTy || lhs->getType()==dblTy) {
-                return 1;
+                if ((tmpInst=dyn_cast<LoadInst>(lhs)) != nullptr) {
+                    if (getInnerMostLoadOpnd(tmpInst, tmpInst->getParent()) != nullptr) {
+                        return 1;
+                    } else {
+                        errs()<< "WARNING: In getPairTypeFromHS() method, the current CMPInst may NOT be the flow control condition.\n";
+                    }
+                } else {
+                    errs()<< "WARNING: In getPairTypeFromHS() method, an unknown opnd type is met at the left float opnd site.\n";
+                }
             } else {
-                errs()<< "WARNING: In \n";
+                errs()<< "WARNING: In getPairTypeFromHS() method, an unknown opnd date type is met at the left float opnd site.\n";
             }
         }
-        errs()<< "WARNING: In \n";
+        errs()<< "WARNING: In getPairTypeFromHS() method, the current two opnds from CMPInst belongs to certain unknown types and can not be recognized.\n";
         return 0;
     }
 
@@ -528,7 +547,6 @@ struct InfiniteLoopDetection : public FunctionPass {
                 Value* lhs = condInst->getOperand(0);
                 Value* rhs = condInst->getOperand(1);
                 int opndPairTy = getPairTypeFromHS(lhs, rhs);
-                // Value* tmpVal = getIndVarFromHS(lhs, rhs);
                 // detect if it's positive or negative
                 if (opcode==CmpInst::ICMP_SLT ||
                     opcode==CmpInst::ICMP_SLE ||
@@ -585,6 +603,7 @@ struct InfiniteLoopDetection : public FunctionPass {
         }
         return 0;
     }
+    
     int getAddInstTrendCode(int PairCode, Value* LHS, Value* RHS) {
         errs()<< "DEBUG INFO: Enter the getAddInstTrendCode() method...\n";
         ConstantInt* constVal = nullptr;
