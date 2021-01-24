@@ -90,21 +90,28 @@ struct InfiniteLoopDetection : public FunctionPass {
         BasicBlock* exitBB = LP->getExitingBlock();
         // std::vector<BasicBlock*> exitBBs = LP->getExitBlocks();
         BasicBlock* latchBB = LP->getLoopLatch();
-        // for(){...}, while(){...}
-        if (headerBB == exitBB) {
-            errs()<< "DEBUG INFO: In getLoopType() method, we judge current LoopObj is for/while type.\n";
-            return 0;
+        if (LP != nullptr) {
+            // for(){...}, while(){...}
+            if (headerBB == exitBB) {
+                errs()<< "DEBUG INFO: In getLoopType() method, we judge current LoopObj is for/while type.\n";
+                return 0;
+            }
+            // do{...} while()
+            if (latchBB == exitBB) {
+                errs()<< "DEBUG INFO: In getLoopType() method, we judge current LoopObj is do...while type.\n";
+                return 1;
+            }
+            errs()<< "DEBUG INFO: In getLoopType() method, the header, latch, exiting BBs do not match the detection strategies.\n";
+            errs()<< "DEBUG INFO: In getLoopType() method, print the processed Loop obj info as following...\n" << *LP << "\n";
+            if (headerBB != nullptr)
+                errs()<< "DEBUG INFO: In getLoopType() method, print the header as following...\n" << *headerBB << "\n";
+            if (latchBB != nullptr)
+                errs()<< "DEBUG INFO: In getLoopType() method, print the latch as following...\n" << *latchBB << "\n";
+            if (exitBB != nullptr)
+                errs()<< "DEBUG INFO: In getLoopType() method, print the exiting as following...\n" << *exitBB << "\n";
+        } else {
+            errs()<< "DEBUG INFO: In getLoopType() method, the argu ptr *LP is NULL value!\n";
         }
-        // do{...} while()
-        if (latchBB == exitBB) {
-            errs()<< "DEBUG INFO: In getLoopType() method, we judge current LoopObj is do...while type.\n";
-            return 1;
-        }
-        errs()<<"DEBUG INFO: In getLoopType() method, the header, latch, exiting BBs do not match the detection strategies.\n";
-        errs()<<"DEBUG INFO: In getLoopType() method, print the processed Loop obj info as following...\n" << *LP << "\n";
-        errs()<<"DEBUG INFO: In getLoopType() method, print the header as following...\n" << *headerBB << "\n";
-        errs()<<"DEBUG INFO: In getLoopType() method, print the latch as following...\n" << *latchBB << "\n";
-        errs()<<"DEBUG INFO: In getLoopType() method, print the exiting as following...\n" << *exitBB << "\n";
         return -1;
     }
 
@@ -360,7 +367,7 @@ struct InfiniteLoopDetection : public FunctionPass {
                         errs()<< "DEBUG INFO: In checkPatternLAS() method, the instruction next to the arith inst is NOT store inst.\n";
                 }
             } else {
-                errs()<< "DEBUG INFO: In checkPatternLAS() method, no artichmetic inst exists behind the current LoadInst.\n";
+                errs()<< "DEBUG INFO: In checkPatternLAS() method, no arithmetic inst exists behind the current LoadInst.\n";
             }
         } else {
             errs()<< "DEBUG INFO: In checkPatternLAS() method, a NULL ptr is passed into the argu list!\n";
@@ -603,7 +610,7 @@ struct InfiniteLoopDetection : public FunctionPass {
         }
         return 0;
     }
-    
+
     int getAddInstTrendCode(int PairCode, Value* LHS, Value* RHS) {
         errs()<< "DEBUG INFO: Enter the getAddInstTrendCode() method...\n";
         ConstantInt* constVal = nullptr;
@@ -691,7 +698,6 @@ struct InfiniteLoopDetection : public FunctionPass {
         return 0;
     }
 
-    //TO-DO: we need a method to detect the trend type of arithInst
     int getTrendCodeFromArithInst(Instruction* ArithInst) {
         errs()<< "DEBUG INFO: Enter the getTrendCodeFromArithInst() method...\n";
         if (ArithInst != nullptr) {
