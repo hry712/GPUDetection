@@ -231,7 +231,7 @@ struct InfiniteLoopDetection : public FunctionPass {
         if (headerBB == exitBB) {
             Instruction* termInst = headerBB->getTerminator();
             BranchInst* brInst = nullptr;
-            mLoopCtrlBBTrendCode = getTrendCodeFromCtrlBB(exitBB);
+            // mLoopCtrlBBTrendCode = getTrendCodeFromCtrlBB(exitBB);
             if ((brInst=dyn_cast<BranchInst>(termInst)) != nullptr) {
                 errs()<<"DEBUG INFO: Enter the getCondVarFromBrInst() method...\n";
                 return getCondVarFromBrInst(brInst);
@@ -252,7 +252,7 @@ struct InfiniteLoopDetection : public FunctionPass {
         if (latchBB == exitBB) {
             Instruction* termInst = latchBB->getTerminator();
             BranchInst* brInst = nullptr;
-            mLoopCtrlBBTrendCode = getTrendCodeFromCtrlBB(exitBB);
+            // mLoopCtrlBBTrendCode = getTrendCodeFromCtrlBB(exitBB);
             if ((brInst=dyn_cast<BranchInst>(termInst)) != nullptr) {
                 return getCondVarFromBrInst(brInst);
             }
@@ -276,6 +276,7 @@ struct InfiniteLoopDetection : public FunctionPass {
         return nullptr;
     }
 
+    // TO-DO: Add the shl and shr to the opcode types
     bool isValidArithInst(Instruction* Inst, Value** Lhs, Value** Rhs) {
         unsigned opcode = Inst->getOpcode();
         if (Inst == nullptr) {
@@ -288,7 +289,9 @@ struct InfiniteLoopDetection : public FunctionPass {
             opcode == Instruction::Sub ||
             opcode == Instruction::Mul ||
             opcode == Instruction::UDiv ||
-            opcode == Instruction::SDiv) {
+            opcode == Instruction::SDiv ||
+            opcode == Instruction::AShr ||
+            opcode == Instruction::LShr) {
             (*Lhs) = Inst->getOperand(0);
             (*Rhs) = Inst->getOperand(1);
             return true;
@@ -337,7 +340,7 @@ struct InfiniteLoopDetection : public FunctionPass {
             Instruction* storeInst = nullptr;
             if (arithInst!=nullptr && isValidArithInst(arithInst, &lhs, &rhs)) {
                 errs()<< "DEBUG INFO: In checkPatternLAS() method, the content of expected ArithmeticInst is : " << *arithInst << "\n";
-                mLoopArithInstTrendCode = getTrendCodeFromArithInst(arithInst);
+                mLoopArithInstTrendCode = getTrendCodeFromArithInst(arithInst, IndVar);
                 storeInst = arithInst->getNextNonDebugInstruction();
                 opcode = storeInst->getOpcode();
                 if (opcode == Instruction::Store) {
@@ -400,22 +403,12 @@ struct InfiniteLoopDetection : public FunctionPass {
             errs()<< "WARNING: In isInfiniteLoop() method, the argu LP is a NULL value.\n";
             return false;
         }
-        // std::vector<Loop*> subLoops = LP->getSubLoopsVector();
-        // if (!subLoops.empty()) {
-        //     errs()<< "DEBUG INFO: Sub loops were found under current processing LoopObj...\n";
-        //     for (auto* lp : subLoops) {
-        //         mIndVarLoadLayers = 0;
-        //         if (isFiniteLoop(lp) == false) 
-        //             return false;
-        //     }
-        //     errs()<< "DEBUG INFO: The sub loops are finite --- safe inner\n";
-        // }
-        // Detect the current processing loop obj...
         mIndVarLoadLayers = 0;
         int lpTy = getLoopType(LP);
         Value* lpIndVar = getInductionVarFrom(LP, lpTy);
         if (lpIndVar != nullptr) {
             errs()<< "Found induction variable in the loop: " << *lpIndVar << "\n";
+            mLoopCtrlBBTrendCode = getTrendCodeFromCtrlBB(LP->getExitBlock(), lpIndVar);
             if (isChangedByLP(LP, lpIndVar)) {
                 return true;
             } else {
@@ -453,6 +446,40 @@ struct InfiniteLoopDetection : public FunctionPass {
         errs()<< "WARNING: In isChangedByLP() method, the NULL value exists in the argus.\n";
         return false;
     }
+
+    // TO-DO: lhs and rhs may be not the direct IndVar
+    int getSequenceTypeFromHS(Value* lhs, Value* rhs, Value* IndVar) {
+        errs()<< "DEBUG INFO: Enter the getSequenceTypeFromHS() method...\n";
+        ConstantInt* constIntVar = nullptr;
+        LoadInst* tmpLDInst = nullptr;
+        IntegerType* i32 = IntegerType::get(curFunc->getParent()->getContext(), 32);
+        IntegerType* i64 = IntegerType::get(curFunc->getParent()->getContext(), 64);
+        if (lhs==nullptr || rhs==nullptr) {
+            errs()<< "WARNING: In getSequenceTypeFromHS() method, the argu list contains NULL value.\n";
+        } else {
+            if ((tmpLDInst=dyn_cast<LoadInst>(lhs)) != nullptr) {
+                if (getInnerMostLoadOpnd(tmpLDInst, tmpLDInst->getParent()) == IndVar) {    // Suppose the left opnd is the IndVar value
+                    if (rhs->getType()==i32 || rhs->getType()==i64 || (constIntVar=dyn_cast<ConstantInt>(rhs))!=nullptr) {
+                        return 1;
+                    } else {
+                        errs()<< "WARNING: In getSequenceTypeFromHS() method, the argu rhs contains unknown content.\n";
+                    }
+                }
+            } else if ((tmpLDInst=dyn_cast<LoadInst>(rhs)) != nullptr) {        // Suppose the right opnd is the IndVar value
+                if (getInnerMostLoadOpnd(tmpLDInst, tmpLDInst->getParent()) == IndVar) {
+                    if (lhs->getType()==i32 || lhs->getType()==i64 || (constIntVar=dyn_cast<ConstantInt>(lhs))!=nullptr) {
+                        return 2;
+                    } else {
+                        errs()<< "WARNING: In getSequenceTypeFromHS() method, the argu lhs contains unknown content.\n";
+                    }
+                }
+            } else {
+                errs()<< "WARNING: In getSequenceTypeFromHS() method, something unknown is passed into the lhs and the rhs.\n";
+            }
+        }
+        return 0;
+    }
+
     //TO-DO: This method is going to detect the type of operand pairs.
     int getPairTypeFromHS(Value* lhs, Value* rhs) {
         errs()<< "DEBUG INFO: Enter the getPairTypeFromHS() method...\n";
@@ -540,7 +567,7 @@ struct InfiniteLoopDetection : public FunctionPass {
     }
 
     //TO-DO: we need a method to detect the trend type of ctrlBB
-    int getTrendCodeFromCtrlBB(BasicBlock* CtrlBB) {
+    int getTrendCodeFromCtrlBB(BasicBlock* CtrlBB, Value* IndVar) {
         errs()<< "DEBUG INFO: Enter the getTrendCodeFromCtrlBB() method...\n";
         Instruction* termInst = CtrlBB->getTerminator();
         BranchInst* brInst = nullptr;
@@ -553,13 +580,14 @@ struct InfiniteLoopDetection : public FunctionPass {
                 // ConstantInt* rhs = dyn_cast<ConstantInt>(condInst->getOperand(1));
                 Value* lhs = condInst->getOperand(0);
                 Value* rhs = condInst->getOperand(1);
-                int opndPairTy = getPairTypeFromHS(lhs, rhs);
+                // int opndPairTy = getPairTypeFromHS(lhs, rhs);
+                int opndPairSeq = getSequenceTypeFromHS(lhs, rhs, IndVar);
                 // detect if it's positive or negative
                 if (opcode==CmpInst::ICMP_SLT ||
                     opcode==CmpInst::ICMP_SLE ||
                     opcode==CmpInst::ICMP_ULT ||
                     opcode==CmpInst::ICMP_ULE) {
-                    if (opndPairTy == 1) {      // suppose positive trend
+                    if (opndPairSeq == 1) {      // suppose positive trend
                         return 1;
                     } else if (opndPairTy == 2) {       // suppose negative trend
                         return -1;
@@ -570,7 +598,7 @@ struct InfiniteLoopDetection : public FunctionPass {
                     opcode==CmpInst::ICMP_UGE ||
                     opcode==CmpInst::ICMP_SGT ||
                     opcode==CmpInst::ICMP_SGE) {
-                    if (opndPairTy == 1) {      // suppose negative trend
+                    if (opndPairSeq == 1) {      // suppose negative trend
                         return -1;
                     } else if (opndPairTy == 2) {       // suppose positive trend
                         return 1;
@@ -581,7 +609,7 @@ struct InfiniteLoopDetection : public FunctionPass {
                     opcode==CmpInst::FCMP_OGE ||
                     opcode==CmpInst::FCMP_UGT ||
                     opcode==CmpInst::FCMP_UGE) {
-                    if (opndPairTy == 1) {      // suppose negative trend
+                    if (opndPairSeq == 1) {      // suppose negative trend
                         return -1;
                     } else if (opndPairTy == 2) {       // suppose positive trend
                         return 1;
@@ -592,9 +620,9 @@ struct InfiniteLoopDetection : public FunctionPass {
                     opcode==CmpInst::FCMP_OLE ||
                     opcode==CmpInst::FCMP_ULT ||
                     opcode==CmpInst::FCMP_ULE) {
-                    if (opndPairTy == 1) {      // suppose positive trend
+                    if (opndPairSeq == 1) {      // suppose positive trend
                         return 1;
-                    } else if (opndPairTy == 2) {       // suppose negative trend
+                    } else if (opndPairSeq == 2) {       // suppose negative trend
                         return -1;
                     } else {
                         errs()<< "WARNING: In getTrendCodeFromCtrlBB() method, \n";
@@ -698,21 +726,24 @@ struct InfiniteLoopDetection : public FunctionPass {
         return 0;
     }
 
-    int getTrendCodeFromArithInst(Instruction* ArithInst) {
+    // TO-DO: Add some to handle the shl and shr opcode types
+    // TO-DO: the getPairTypeFromHS() method needs some improvement.
+    int getTrendCodeFromArithInst(Instruction* ArithInst, Value* IndVar) {
         errs()<< "DEBUG INFO: Enter the getTrendCodeFromArithInst() method...\n";
         if (ArithInst != nullptr) {
             unsigned opcode = ArithInst->getOpcode();
             Value* lhs = ArithInst->getOperand(0);
             Value* rhs = ArithInst->getOperand(1);
-            int opndPairTy = getPairTypeFromHS(lhs, rhs);
+            // int opndPairTy = getPairTypeFromHS(lhs, rhs);
+            int opndPairSeq = getSequenceTypeFromHS(lhs, rhs, IndVar);
             if (opcode == Instruction::Add) {
-                return getAddInstTrendCode(opndPairTy, lhs, rhs);
+                return getAddInstTrendCode(opndPairSeq, lhs, rhs);
             } else if (opcode == Instruction::Sub) {
-                return getSubInstTrendCode(opndPairTy, lhs, rhs);
+                return getSubInstTrendCode(opndPairSeq, lhs, rhs);
             } else if (opcode == Instruction::Mul) {
-                return getMulInstTrendCode(opndPairTy, lhs, rhs);
+                return getMulInstTrendCode(opndPairSeq, lhs, rhs);
             } else if (opcode==Instruction::UDiv || opcode==Instruction::SDiv) {
-                return getDivInstTrendCode(opndPairTy, lhs, rhs);
+                return getDivInstTrendCode(opndPairSeq, lhs, rhs);
             } else {
                 errs()<< "WARNING: In getTrendCodeFromArithInst() method, an unknown arith opcode is met here.\n";
             }
