@@ -589,7 +589,7 @@ struct InfiniteLoopDetection : public FunctionPass {
                     opcode==CmpInst::ICMP_ULE) {
                     if (opndPairSeq == 1) {      // suppose positive trend
                         return 1;
-                    } else if (opndPairTy == 2) {       // suppose negative trend
+                    } else if (opndPairSeq == 2) {       // suppose negative trend
                         return -1;
                     } else {
                         errs()<< "WARNING: In getTrendCodeFromCtrlBB() method, \n";
@@ -600,7 +600,7 @@ struct InfiniteLoopDetection : public FunctionPass {
                     opcode==CmpInst::ICMP_SGE) {
                     if (opndPairSeq == 1) {      // suppose negative trend
                         return -1;
-                    } else if (opndPairTy == 2) {       // suppose positive trend
+                    } else if (opndPairSeq == 2) {       // suppose positive trend
                         return 1;
                     } else {
                         errs()<< "WARNING: In getTrendCodeFromCtrlBB() method, \n";
@@ -611,7 +611,7 @@ struct InfiniteLoopDetection : public FunctionPass {
                     opcode==CmpInst::FCMP_UGE) {
                     if (opndPairSeq == 1) {      // suppose negative trend
                         return -1;
-                    } else if (opndPairTy == 2) {       // suppose positive trend
+                    } else if (opndPairSeq == 2) {       // suppose positive trend
                         return 1;
                     } else {
                         errs()<< "WARNING: In getTrendCodeFromCtrlBB() method, \n";
