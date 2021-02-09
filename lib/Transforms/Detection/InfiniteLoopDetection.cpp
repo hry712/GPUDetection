@@ -272,7 +272,6 @@ struct InfiniteLoopDetection : public FunctionPass {
         if (headerBB == exitBB) {
             Instruction* termInst = headerBB->getTerminator();
             BranchInst* brInst = nullptr;
-            // mLoopCtrlBBTrendCode = getTrendCodeFromCtrlBB(exitBB);
             if ((brInst=dyn_cast<BranchInst>(termInst)) != nullptr) {
                 errs()<<"DEBUG INFO: Enter the getCondVarFromBrInst() method...\n";
                 return getCondVarFromBrInst(brInst);
@@ -293,7 +292,6 @@ struct InfiniteLoopDetection : public FunctionPass {
         if (latchBB == exitBB) {
             Instruction* termInst = latchBB->getTerminator();
             BranchInst* brInst = nullptr;
-            // mLoopCtrlBBTrendCode = getTrendCodeFromCtrlBB(exitBB);
             if ((brInst=dyn_cast<BranchInst>(termInst)) != nullptr) {
                 return getCondVarFromBrInst(brInst);
             }
@@ -628,54 +626,54 @@ struct InfiniteLoopDetection : public FunctionPass {
                     opcode==CmpInst::ICMP_SLE ||
                     opcode==CmpInst::ICMP_ULT ||
                     opcode==CmpInst::ICMP_ULE) {
-                    if (opndPairSeq == 1) {      // suppose positive trend
+                    if (opndPairSeq == 1) {                 // suppose positive trend
                         return 1;
-                    } else if (opndPairSeq == 2) {       // suppose negative trend
+                    } else if (opndPairSeq == 2) {          // suppose negative trend
                         return -1;
                     } else {
-                        errs()<< "WARNING: In getTrendCodeFromCtrlBB() method, \n";
+                        errs()<< "WARNING: In getTrendCodeFromCtrlBB() method, an unknown pair seq is met in the getSequenceTypeFromHS() method.\n";
                     }
                 } else if (opcode==CmpInst::ICMP_UGT ||
                     opcode==CmpInst::ICMP_UGE ||
                     opcode==CmpInst::ICMP_SGT ||
                     opcode==CmpInst::ICMP_SGE) {
-                    if (opndPairSeq == 1) {      // suppose negative trend
+                    if (opndPairSeq == 1) {                 // suppose negative trend
                         return -1;
-                    } else if (opndPairSeq == 2) {       // suppose positive trend
+                    } else if (opndPairSeq == 2) {          // suppose positive trend
                         return 1;
                     } else {
-                        errs()<< "WARNING: In getTrendCodeFromCtrlBB() method, \n";
+                        errs()<< "WARNING: In getTrendCodeFromCtrlBB() method, an unknown pair seq is met in the getSequenceTypeFromHS() method.\n";
                     }
                 } else if (opcode==CmpInst::FCMP_OGT ||
                     opcode==CmpInst::FCMP_OGE ||
                     opcode==CmpInst::FCMP_UGT ||
                     opcode==CmpInst::FCMP_UGE) {
-                    if (opndPairSeq == 1) {      // suppose negative trend
+                    if (opndPairSeq == 1) {                 // suppose negative trend
                         return -1;
-                    } else if (opndPairSeq == 2) {       // suppose positive trend
+                    } else if (opndPairSeq == 2) {          // suppose positive trend
                         return 1;
                     } else {
-                        errs()<< "WARNING: In getTrendCodeFromCtrlBB() method, \n";
+                        errs()<< "WARNING: In getTrendCodeFromCtrlBB() method, an unknown pair seq is met in the getSequenceTypeFromHS() method.\n";
                     }
                 } else if (opcode==CmpInst::FCMP_OLT ||
                     opcode==CmpInst::FCMP_OLE ||
                     opcode==CmpInst::FCMP_ULT ||
                     opcode==CmpInst::FCMP_ULE) {
-                    if (opndPairSeq == 1) {      // suppose positive trend
+                    if (opndPairSeq == 1) {                 // suppose positive trend
                         return 1;
-                    } else if (opndPairSeq == 2) {       // suppose negative trend
+                    } else if (opndPairSeq == 2) {          // suppose negative trend
                         return -1;
                     } else {
-                        errs()<< "WARNING: In getTrendCodeFromCtrlBB() method, \n";
+                        errs()<< "WARNING: In getTrendCodeFromCtrlBB() method, an unknown pair seq is met in the getSequenceTypeFromHS() method.\n";
                     }
                 } else {
                     errs()<<"WARNING: In getTrendCodeFromCtrlBB() method, an unknown ICMP opcode type is passed inside.\n";
                 }
             } else {
-                errs()<< "WARNING: In getTrendCodeFromCtrlBB() method, the ";
+                errs()<< "WARNING: In getTrendCodeFromCtrlBB() method, an unknown calculation type of BR Inst condition is met.\n";
             }
         } else {
-            errs()<< "WARNING: In getTrendCodeFromCtrlBB() method, ";
+            errs()<< "WARNING: In getTrendCodeFromCtrlBB() method, the terminator of argu CtrlBB is not the BRInst.\n";
         }
         return 0;
     }
