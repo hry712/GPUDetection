@@ -446,15 +446,16 @@ struct InfiniteLoopDetection : public FunctionPass {
         int lpTy = getLoopType(LP);
         Value* lpIndVar = getInductionVarFrom(LP, lpTy);
         if (lpIndVar != nullptr) {
-            errs()<< "Found induction variable in the loop: " << *lpIndVar << "\n";
+            errs()<< "DEBUG INFO: In isInfiniteLoop() method, found induction variable in the loop: " << *lpIndVar << "\n";
             mLoopCtrlBBTrendCode = getTrendCodeFromCtrlBB(LP->getExitBlock(), lpIndVar);
+            errs()<< "DEBUG INFO: In isInfiniteLoop() method, the value of the trend code from ctrl BB is " << mLoopCtrlBBTrendCode <<"\n";
             if (isChangedByLP(LP, lpIndVar)) {
                 return true;
             } else {
                 return false;
             }
         } else {
-            errs()<< "WARNING: Fail to fetch the induction variable from the current Loop.\n\n";
+            errs()<< "WARNING: In isInfiniteLoop() method, fail to fetch the induction variable from the current Loop.\n\n";
         }
         return false;
     }
@@ -474,9 +475,11 @@ struct InfiniteLoopDetection : public FunctionPass {
                 ieItr = bb->end();
                 errs()<< "DEBUG INFO: In isChangedByLP() method, we are processing the BB as fllowing...\n" << *bb << "\n";
                 while (iiItr != ieItr) {
-                    if (checkBasicArithmetic(&(*iiItr), IndVar))
+                    if (checkBasicArithmetic(&(*iiItr), IndVar)){
+                        errs()<< "DEBUG INFO: In isChangedByLP() method, the value of the arith inst trend code is " << mLoopArithInstTrendCode << "\n";
                         if (mLoopCtrlBBTrendCode*mLoopArithInstTrendCode == 1)
                             return true;
+                    }
                     ++iiItr;
                 }
                 ++bbItr;
@@ -611,6 +614,10 @@ struct InfiniteLoopDetection : public FunctionPass {
         errs()<< "DEBUG INFO: Enter the getTrendCodeFromCtrlBB() method...\n";
         Instruction* termInst = CtrlBB->getTerminator();
         BranchInst* brInst = nullptr;
+        if (CtrlBB==nullptr || IndVar==nullptr) {
+            errs()<< "WARNING: In getTrendCodeFromCtrlBB() method, the argu list contains NULL values.\n";
+            return nullptr;
+        }
         if ((brInst=dyn_cast<BranchInst>(termInst)) != nullptr) {
             Value* cond = brInst->getCondition();
             CmpInst* condInst = nullptr;
@@ -620,7 +627,6 @@ struct InfiniteLoopDetection : public FunctionPass {
                 // ConstantInt* rhs = dyn_cast<ConstantInt>(condInst->getOperand(1));
                 Value* lhs = condInst->getOperand(0);
                 Value* rhs = condInst->getOperand(1);
-                // int opndPairTy = getPairTypeFromHS(lhs, rhs);
                 int opndPairSeq = getSequenceTypeFromHS(lhs, rhs, IndVar);
                 // detect if it's positive or negative
                 if (opcode==CmpInst::ICMP_SLT ||
