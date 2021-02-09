@@ -513,7 +513,8 @@ struct InfiniteLoopDetection : public FunctionPass {
                     }
                 }
             } else {
-                errs()<< "WARNING: In getSequenceTypeFromHS() method, something unknown is passed into the lhs and the rhs.\n";
+                errs()<< "WARNING: In getSequenceTypeFromHS() method, something unknown is passed into the lhs and the rhs. Return the default state code 2.\n";
+                return 2;
             }
         }
         return 0;
