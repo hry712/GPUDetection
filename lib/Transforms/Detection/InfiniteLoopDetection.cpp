@@ -616,7 +616,7 @@ struct InfiniteLoopDetection : public FunctionPass {
         BranchInst* brInst = nullptr;
         if (CtrlBB==nullptr || IndVar==nullptr) {
             errs()<< "WARNING: In getTrendCodeFromCtrlBB() method, the argu list contains NULL values.\n";
-            return nullptr;
+            return 0;
         }
         if ((brInst=dyn_cast<BranchInst>(termInst)) != nullptr) {
             Value* cond = brInst->getCondition();
