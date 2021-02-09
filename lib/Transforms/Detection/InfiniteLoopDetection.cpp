@@ -130,8 +130,8 @@ struct InfiniteLoopDetection : public FunctionPass {
         ConstantFP* constFpVar = nullptr;
         IntegerType* i32 = IntegerType::get(curFunc->getParent()->getContext(), 32);
         IntegerType* i64 = IntegerType::get(curFunc->getParent()->getContext(), 64);
-        Type* flt =  Type::getFloatTy(curFunc->getParent()->getContext());
-        Type* dbl =  Type::getDoubleTy(curFunc->getParent()->getContext());
+        Type* flt = Type::getFloatTy(curFunc->getParent()->getContext());
+        Type* dbl = Type::getDoubleTy(curFunc->getParent()->getContext());
         Instruction* tmpInst = nullptr;
         
         // check the left operand first
@@ -139,10 +139,11 @@ struct InfiniteLoopDetection : public FunctionPass {
         if ((constIntVar=dyn_cast<ConstantInt>(lhs)) != nullptr) {         // suppose the left opnd is a constant value
                 IndVarLimit = getValueFromConstInt(constIntVar);
             if ((constIntVar=dyn_cast<ConstantInt>(rhs)) != nullptr) {
+                errs()<< "WARNING: In getIndVarFromHS() method, both lhs and rhs are constant values!\n";
                 IndVarLimit = -10010;   // the special value with nullptr return value denote that condition part may be a constant value
                 return nullptr;
             } else if (rhs->getType()==i32 || rhs->getType()==i64) {
-                //TO-DO: check the Inst Type -- LoadInst
+                // check the Inst Type -- LoadInst or AllocaInst is expected
                 if ((tmpInst=dyn_cast<LoadInst>(rhs)) != nullptr)
                     return getInnerMostLoadOpnd(tmpInst, tmpInst->getParent());
                 else if ((tmpInst=dyn_cast<AllocaInst>(rhs)) != nullptr)
@@ -155,6 +156,7 @@ struct InfiniteLoopDetection : public FunctionPass {
         } else if ((constIntVar=dyn_cast<ConstantInt>(rhs)) != nullptr) { // suppose the right opnd is a constant value
             IndVarLimit = getValueFromConstInt(constIntVar);
             if ((constIntVar=dyn_cast<ConstantInt>(lhs)) != nullptr) {
+                errs()<< "WARNING: In getIndVarFromHS() method, both lhs and rhs are constant values!\n";
                 IndVarLimit = -10011;   // Give the member IndVarLimit a special int value to indicate the detecting result
                 return nullptr;
             } else if (lhs->getType()==i32 || lhs->getType()==i64) {
@@ -168,29 +170,68 @@ struct InfiniteLoopDetection : public FunctionPass {
                     return nullptr;
                 }
             }
+        } else {                                                        // suppose both lhs and rhs are variables
+            if (lhs->getType()==i32 || lhs->getType()==i64) {           // lhs is an int type variable
+                if (rhs->getType()==i32 || rhs->getType()==i64) {       // rhs is also an int variable
+                    if ((tmpInst=dyn_cast<LoadInst>(lhs)) != nullptr) {
+                        return getInnerMostLoadOpnd(tmpInst, tmpInst->getParent());
+                    } else if ((tmpInst=dyn_cast<AllocaInst>(lhs)) != nullptr) {
+                        return tmpInst;
+                    } else {
+                        errs()<< "DEBUG INFO: In getIndVarFromHS() method, the lhs and rhs are not int type.\n";
+                    }
+                }
+            }
         }
         // Binary Float Opnd
         if ((constFpVar=dyn_cast<ConstantFP>(lhs)) != nullptr) {         // suppose the left opnd is a constant float value
             // IndVarLimit = getValueFromConstInt(constIntVar);
             if ((constIntVar=dyn_cast<ConstantInt>(rhs)) != nullptr) {
                 // IndVarLimit = -10010; 
-                errs()<< "WARNING: In method getIndVarFromHS(), both operands are judged as constant int values.\n";
+                errs()<< "WARNING: In getIndVarFromHS() method, both operands are judged as constant int values.\n";
                 return nullptr;
             } else if (rhs->getType()==flt || rhs->getType()==dbl) {
-                return rhs;
+                // check the Inst Type -- LoadInst or AllocaInst is expected
+                if ((tmpInst=dyn_cast<LoadInst>(rhs)) != nullptr)
+                    return getInnerMostLoadOpnd(tmpInst, tmpInst->getParent());
+                else if ((tmpInst=dyn_cast<AllocaInst>(rhs)) != nullptr)
+                    return tmpInst;
+                else {
+                    errs()<< "DEBUG INFO: In getIndVarFromHS() method, the potential IndVar inst is not Load or Alloca.\n";
+                    return nullptr;
+                }
             }
         } else if ((constIntVar=dyn_cast<ConstantInt>(rhs)) != nullptr) { // suppose the right opnd is a constant value
             // IndVarLimit = getValueFromConstInt(constIntVar);
             if ((constIntVar=dyn_cast<ConstantInt>(lhs)) != nullptr) {
                 // IndVarLimit = -10010;
-                errs()<< "WARNING: In method getIndVarFromHS(), both operands are judged as constant int values.\n";
+                errs()<< "WARNING: In getIndVarFromHS() method, both operands are judged as constant int values.\n";
                 return nullptr;
             } else if (lhs->getType()==flt || lhs->getType()==dbl) {
-                // IndVarLimit = rhs;
-                return lhs;
+                // check the Inst Type -- LoadInst or AllocaInst is expected
+                if ((tmpInst=dyn_cast<LoadInst>(lhs)) != nullptr)
+                    return getInnerMostLoadOpnd(tmpInst, tmpInst->getParent());
+                else if ((tmpInst=dyn_cast<AllocaInst>(lhs)) != nullptr)
+                    return tmpInst;
+                else {
+                    errs()<< "DEBUG INFO: In getIndVarFromHS() method, the potential IndVar inst is not Load or Alloca.\n";
+                    return nullptr;
+                }
+            }
+        } else {                    // suppose both lhs and rhs are variables
+            if (lhs->getType()==flt || lhs->getType()==dbl) {
+                if (rhs->getType()==flt || rhs->getType()==dbl) {
+                    if ((tmpInst=dyn_cast<LoadInst>(lhs)) != nullptr) {
+                        return getInnerMostLoadOpnd(tmpInst, tmpInst->getParent());
+                    } else if ((tmpInst=dyn_cast<AllocaInst>(lhs)) != nullptr) {
+                        return tmpInst;
+                    } else {
+                        errs()<< "DEBUG INFO: In getIndVarFromHS() method, the lhs and rhs are not float/double type.\n";
+                    }
+                }
             }
         }
-        errs()<< "WARNING: both operands in the BR condition area are variables, whick is hard to detect the induction variable.\n";
+        errs()<< "WARNING: In getIndVarFromHS() method, both operands are not clear, which is hard to detect the induction variable.\n";
         return nullptr;
     }
 
