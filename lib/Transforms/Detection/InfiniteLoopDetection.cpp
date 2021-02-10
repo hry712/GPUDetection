@@ -612,7 +612,10 @@ struct InfiniteLoopDetection : public FunctionPass {
     //TO-DO: we need a method to detect the trend type of ctrlBB
     int getTrendCodeFromCtrlBB(BasicBlock* CtrlBB, Value* IndVar) {
         errs()<< "DEBUG INFO: Enter the getTrendCodeFromCtrlBB() method...\n";
-        Instruction* termInst = CtrlBB->getTerminator();
+        // Instruction* termInst = CtrlBB->getTerminator();
+        BasicBlock::iterator ieItr = CtrlBB->end();
+        --ieItr;
+        Instruction* termInst = &(*ieItr);
         BranchInst* brInst = nullptr;
         if (CtrlBB==nullptr || IndVar==nullptr) {
             errs()<< "WARNING: In getTrendCodeFromCtrlBB() method, the argu list contains NULL values.\n";
