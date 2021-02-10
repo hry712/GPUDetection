@@ -447,7 +447,7 @@ struct InfiniteLoopDetection : public FunctionPass {
         Value* lpIndVar = getInductionVarFrom(LP, lpTy);
         if (lpIndVar != nullptr) {
             errs()<< "DEBUG INFO: In isInfiniteLoop() method, found induction variable in the loop: " << *lpIndVar << "\n";
-            mLoopCtrlBBTrendCode = getTrendCodeFromCtrlBB(LP->getExitBlock(), lpIndVar);
+            mLoopCtrlBBTrendCode = getTrendCodeFromCtrlBB(LP->getExitingBlock(), lpIndVar);
             errs()<< "DEBUG INFO: In isInfiniteLoop() method, the value of the trend code from ctrl BB is " << mLoopCtrlBBTrendCode <<"\n";
             if (isChangedByLP(LP, lpIndVar)) {
                 return true;
