@@ -616,6 +616,9 @@ struct InfiniteLoopDetection : public FunctionPass {
         BasicBlock::iterator ieItr = CtrlBB->end();
         --ieItr;
         Instruction* termInst = &(*ieItr);
+        if (termInst != nullptr) {
+            errs()<< "DEBUG INFO: In getTrendCodeFromCtrlBB() method, the content of termInst is " << *termInst << "\n";
+        }
         BranchInst* brInst = nullptr;
         if (CtrlBB==nullptr || IndVar==nullptr) {
             errs()<< "WARNING: In getTrendCodeFromCtrlBB() method, the argu list contains NULL values.\n";
