@@ -618,6 +618,7 @@ struct InfiniteLoopDetection : public FunctionPass {
         Instruction* termInst = &(*ieItr);
         if (termInst != nullptr) {
             errs()<< "DEBUG INFO: In getTrendCodeFromCtrlBB() method, the content of termInst is " << *termInst << "\n";
+            errs()<< "DEBUG INFO: In getTrendCodeFromCtrlBB() method, the content of CtrlBB is\n" << *CtrlBB << "\n";
         }
         BranchInst* brInst = nullptr;
         if (CtrlBB==nullptr || IndVar==nullptr) {
