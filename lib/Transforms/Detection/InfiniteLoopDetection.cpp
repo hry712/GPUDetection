@@ -681,6 +681,11 @@ struct InfiniteLoopDetection : public FunctionPass {
             }
         } else {
             errs()<< "WARNING: In getTrendCodeFromCtrlBB() method, the terminator of argu CtrlBB is not the BRInst.\n";
+            if (termInst == nullptr) {
+                errs()<< "WARNING: In getTrendCodeFromCtrlBB() method, fail to fetch the terminator inst from the ctrl BB.\n";
+            } else {
+                errs()<< "WARNING: In getTrendCodeFromCtrlBB() method, the content of terminator inst is " << *termInst << "\n";
+            }
         }
         return 0;
     }
