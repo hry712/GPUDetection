@@ -450,8 +450,12 @@ struct InfiniteLoopDetection : public FunctionPass {
             mLoopCtrlBBTrendCode = getTrendCodeFromCtrlBB(LP->getExitingBlock(), lpIndVar);
             errs()<< "DEBUG INFO: In isInfiniteLoop() method, the value of the trend code from ctrl BB is " << mLoopCtrlBBTrendCode <<"\n";
             if (isChangedByLP(LP, lpIndVar)) {
+                mLoopCtrlBBTrendCode = 0;
+                mLoopArithInstTrendCode = 0;
                 return true;
             } else {
+                mLoopCtrlBBTrendCode = 0;
+                mLoopArithInstTrendCode = 0;
                 return false;
             }
         } else {
