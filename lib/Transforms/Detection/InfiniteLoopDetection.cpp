@@ -513,6 +513,8 @@ struct InfiniteLoopDetection : public FunctionPass {
                     } else {
                         errs()<< "WARNING: In getSequenceTypeFromHS() method, the argu rhs contains unknown content.\n";
                     }
+                } else {
+                    errs()<< "WARNING: In getSequenceTypeFromHS() method, the lhs of argu list is not related to IndVar.\n";
                 }
             } else if ((tmpLDInst=dyn_cast<LoadInst>(rhs)) != nullptr) {        // Suppose the right opnd is the IndVar value
                 if (getInnerMostLoadOpnd(tmpLDInst, tmpLDInst->getParent()) == IndVar) {
@@ -521,6 +523,8 @@ struct InfiniteLoopDetection : public FunctionPass {
                     } else {
                         errs()<< "WARNING: In getSequenceTypeFromHS() method, the argu lhs contains unknown content.\n";
                     }
+                } else {
+                    errs()<< "WARNING: In getSequenceTypeFromHS() method, the rhs of argu list is not related to IndVar.\n";
                 }
             } else {
                 errs()<< "WARNING: In getSequenceTypeFromHS() method, something unknown is passed into the lhs and the rhs. Return the default state code 2.\n";
@@ -794,6 +798,7 @@ struct InfiniteLoopDetection : public FunctionPass {
             Value* rhs = ArithInst->getOperand(1);
             // int opndPairTy = getPairTypeFromHS(lhs, rhs);
             int opndPairSeq = getSequenceTypeFromHS(lhs, rhs, IndVar);
+            errs()<< "DEBUG INFO: In getTrendCodeFromArithInst() method, the media value of SeqType is " << opndPairSeq <<"\n";
             if (opcode == Instruction::Add) {
                 return getAddInstTrendCode(opndPairSeq, lhs, rhs);
             } else if (opcode == Instruction::Sub) {
