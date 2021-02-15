@@ -725,10 +725,14 @@ struct InfiniteLoopDetection : public FunctionPass {
         if (PairCode == 1) {
             if (hasIndVar(RHS, IndVar)) {
                 return 1;
+            } else {
+                errs()<< "WARNING: In getAddInstTrendCode() method, under the pair code 1, the rhs is not the IndVar\n";
             }
         } else if (PairCode == 2) {
             if (hasIndVar(LHS, IndVar)) {
                 return 1;
+            } else {
+                errs()<< "WARNING: In getAddInstTrendCode() method, under the pair code 2, the lhs is not the IndVar\n";
             }
         }
         return 0;
@@ -744,10 +748,14 @@ struct InfiniteLoopDetection : public FunctionPass {
         if (PairCode == 1) {
             if (hasIndVar(RHS, IndVar)) {
                 return -1;
+            } else {
+                errs()<< "WARNING: In getSubInstTrendCode() method, under the pair code 1, the rhs is not the IndVar\n";
             }
         } else if (PairCode == 2) {
             if (hasIndVar(LHS, IndVar)) {
                 return 1;
+            } else {
+                errs()<< "WARNING: In getSubInstTrendCode() method, under the pair code 2, the lhs is not the IndVar\n";
             }
         }
         return 0;
@@ -763,10 +771,14 @@ struct InfiniteLoopDetection : public FunctionPass {
         if (PairCode == 1) {
             if (hasIndVar(RHS, IndVar)) {
                 return 1;
+            } else {
+                errs()<< "WARNING: In getMulInstTrendCode() method, under the pair code 1, the rhs is not the IndVar\n";
             }
         } else if (PairCode == 2) {
             if (hasIndVar(LHS, IndVar)) {
                 return 1;
+            } else {
+                errs()<< "WARNING: In getMulInstTrendCode() method, under the pair code 2, the lhs is not the IndVar\n";
             }
         }
         return 0;
@@ -783,12 +795,15 @@ struct InfiniteLoopDetection : public FunctionPass {
             // this part has no sense
             if (hasIndVar(RHS, IndVar)) {
                 return -1;
+            } else {
+                errs()<< "WARNING: In getDivInstTrendCode() method, under the pair code 1, the rhs is not the IndVar\n";
             }
         } else if (PairCode == 2) {
             if (hasIndVar(LHS, IndVar)) {
                 return 1;
+            } else {
+                errs()<< "WARNING: In getDivInstTrendCode() method, under the pair code 2, the lhs is not the IndVar\n";
             }
-            // errs()<< "WARNING: In getDivInstTrendCode() method, the const-var pair can not be handled under current strategies.\n";
         }
         return 0;
     }
@@ -803,10 +818,14 @@ struct InfiniteLoopDetection : public FunctionPass {
             // this part has no sense
             if (hasIndVar(RHS, IndVar)) {
                 return 1;
+            } else {
+                errs()<< "WARNING: In getAShrInstTrendCode() method, under the pair code 1, the rhs is not the IndVar\n";
             }
         } else if (PairCode == 2) {
             if (hasIndVar(LHS, IndVar)) {
                 return -1;
+            } else {
+                errs()<< "WARNING: In getAShrInstTrendCode() method, under the pair code 2, the lhs is not the IndVar\n";
             }
         }
         return 0;
@@ -822,10 +841,14 @@ struct InfiniteLoopDetection : public FunctionPass {
             // this part has no sense
             if (hasIndVar(RHS, IndVar)) {
                 return -1;
+            } else {
+                errs()<< "WARNING: In getLShrInstTrendCode() method, under the pair code 1, the rhs is not the IndVar\n";
             }
         } else if (PairCode == 2) {
             if (hasIndVar(LHS, IndVar)) {
                 return 1;
+            } else {
+                errs()<< "WARNING: In getLShrInstTrendCode() method, under the pair code 2, the lhs is not the IndVar\n";
             }
         }
         return 0;
