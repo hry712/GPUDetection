@@ -317,13 +317,13 @@ struct InfiniteLoopDetection : public FunctionPass {
 
     // TO-DO: Add the shl and shr to the opcode types
     bool isValidArithInst(Instruction* Inst, Value** Lhs, Value** Rhs) {
-        unsigned opcode = Inst->getOpcode();
         if (Inst == nullptr) {
             errs()<< "DEBUG INDO: In isValidArithOp() method, the InstPtr is NULL!\n";
             *Lhs = nullptr;
             *Rhs = nullptr;
             return false;
         }
+        unsigned opcode = Inst->getOpcode();
         if (opcode == Instruction::Add ||
             opcode == Instruction::Sub ||
             opcode == Instruction::Mul ||
@@ -379,7 +379,10 @@ struct InfiniteLoopDetection : public FunctionPass {
             Instruction* storeInst = nullptr;
             if (arithInst!=nullptr && isValidArithInst(arithInst, &lhs, &rhs)) {
                 errs()<< "DEBUG INFO: In checkPatternLAS() method, the content of expected ArithmeticInst is : " << *arithInst << "\n";
+                errs()<< "DEBUG INFO: In checkPatternLAS() method, the content of arith inst left opnd is " << *lhs << "\n";
+                errs()<< "DEBUG INFO: In checkPatternLAS() method, the content of arith inst right opnd is " << *rhs << "\n";
                 mLoopArithInstTrendCode = getTrendCodeFromArithInst(arithInst, IndVar);
+                errs()<< "DEBUG INFO: In checkPatternLAS() method, the value of the trend code member of current arith inst is "<< mLoopArithInstTrendCode <<"\n";
                 storeInst = arithInst->getNextNonDebugInstruction();
                 opcode = storeInst->getOpcode();
                 if (opcode == Instruction::Store) {
