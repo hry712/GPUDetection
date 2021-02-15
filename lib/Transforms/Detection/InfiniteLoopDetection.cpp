@@ -701,89 +701,132 @@ struct InfiniteLoopDetection : public FunctionPass {
         return 0;
     }
 
-    int getAddInstTrendCode(int PairCode, Value* LHS, Value* RHS) {
+    bool hasIndVar(Value* HS, Value* IndVar) {
+        errs()<< "DEBUG INFO: Enter the hasIndVar() method...\n";
+        Instruction* tmpLoadInst = nullptr;
+        BasicBlock* containerBB = nullptr;
+        tmpLoadInst = dyn_cast<Instruction>(HS);
+        if (tmpLoadInst != nullptr) {
+            containerBB = tmpLoadInst->getParent();
+            if (getInnerMostLoadOpnd(tmpLoadInst, containerBB) == IndVar) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    int getAddInstTrendCode(int PairCode, Value* LHS, Value* RHS, Value* IndVar) {
         errs()<< "DEBUG INFO: Enter the getAddInstTrendCode() method...\n";
-        ConstantInt* constVal = nullptr;
-        if (LHS==nullptr || RHS==nullptr) {
+        // ConstantInt* constVal = nullptr;
+        if (LHS==nullptr || RHS==nullptr || IndVar==nullptr) {
             errs()<< "WARNING: In getAddInstTrendCode() method, the argu list contains NULL ptr.\n";
             return 0;
         }
         if (PairCode == 1) {
-            if ((constVal=dyn_cast<ConstantInt>(RHS)) != nullptr) {
-                int64_t limitValue = constVal->getSExtValue();
-                return (limitValue > 0)?1:-1;
+            if (hasIndVar(RHS, IndVar)) {
+                return 1;
             }
         } else if (PairCode == 2) {
-            if ((constVal=dyn_cast<ConstantInt>(LHS)) != nullptr) {
-                int64_t limitValue = constVal->getSExtValue();
-                return (limitValue > 0)?1:-1;
+            if (hasIndVar(LHS, IndVar)) {
+                return 1;
             }
         }
         return 0;
     }
 
-    int getSubInstTrendCode(int PairCode, Value* LHS, Value* RHS) {
+    int getSubInstTrendCode(int PairCode, Value* LHS, Value* RHS, Value* IndVar) {
         errs()<< "DEBUG INFO: Enter the getSubInstTrendCode() method...\n";
-        ConstantInt* constVal = nullptr;
-        if (LHS==nullptr || RHS==nullptr) {
+        // ConstantInt* constVal = nullptr;
+        if (LHS==nullptr || RHS==nullptr || IndVar==nullptr) {
             errs()<< "WARNING: In getSubInstTrendCode() method, the argu list contains NULL ptr.\n";
             return 0;
         }
         if (PairCode == 1) {
-            if ((constVal=dyn_cast<ConstantInt>(RHS)) != nullptr) {
-                int64_t limitValue = constVal->getSExtValue();
-                return (limitValue > 0)?-1:1;
+            if (hasIndVar(RHS, IndVar)) {
+                return -1;
             }
         } else if (PairCode == 2) {
-            errs()<< "WARNING: In getSubInstTrendCode() method, the var-const pair is met here.\n";
+            if (hasIndVar(LHS, IndVar)) {
+                return 1;
+            }
         }
         return 0;
     }
 
-    int getMulInstTrendCode(int PairCode, Value* LHS, Value* RHS) {
+    int getMulInstTrendCode(int PairCode, Value* LHS, Value* RHS, Value* IndVar) {
         errs()<< "DEBUG INFO: Enter the getMulInstTrendCode() method...\n";
-        ConstantInt* constVal = nullptr;
-        if (LHS==nullptr || RHS==nullptr) {
+        // ConstantInt* constVal = nullptr;
+        if (LHS==nullptr || RHS==nullptr || IndVar==nullptr) {
             errs()<< "WARNING: In getMulInstTrendCode() method, the argu list contains NULL ptr.\n";
             return 0;
         }
         if (PairCode == 1) {
-            if ((constVal=dyn_cast<ConstantInt>(RHS)) != nullptr) {
-                int64_t limitValue = constVal->getSExtValue();
-                if (limitValue>0 && limitValue <1)
-                    return -1;
-                else if (limitValue > 1)
-                    return 1;
+            if (hasIndVar(RHS, IndVar)) {
+                return 1;
             }
         } else if (PairCode == 2) {
-            if ((constVal=dyn_cast<ConstantInt>(LHS)) != nullptr) {
-                int64_t limitValue = constVal->getSExtValue();
-                if (limitValue>0 && limitValue <1)
-                    return -1;
-                else if (limitValue > 1)
-                    return 1;
+            if (hasIndVar(LHS, IndVar)) {
+                return 1;
             }
         }
         return 0;
     }
 
-    int getDivInstTrendCode(int PairCode, Value* LHS, Value* RHS) {
+    int getDivInstTrendCode(int PairCode, Value* LHS, Value* RHS, Value* IndVar) {
         errs()<< "DEBUG INFO: Enter the getDivInstTrendCode() method...\n";
-        ConstantInt* constVal = nullptr;
-        if (LHS==nullptr || RHS==nullptr) {
+        // ConstantInt* constVal = nullptr;
+        if (LHS==nullptr || RHS==nullptr || IndVar==nullptr) {
             errs()<< "WARNING: In getDivInstTrendCode() method, the argu list contains NULL ptr.\n";
             return 0;
         }
         if (PairCode == 1) {
-            if ((constVal=dyn_cast<ConstantInt>(RHS)) != nullptr) {
-                int64_t limitValue = constVal->getSExtValue();
-                if (limitValue>0 && limitValue <1)
-                    return 1;
-                else if (limitValue > 1)
-                    return -1;
+            // this part has no sense
+            if (hasIndVar(RHS, IndVar)) {
+                return -1;
             }
         } else if (PairCode == 2) {
-            errs()<< "WARNING: In getDivInstTrendCode() method, the const-var pair can not be handled under current strategies.\n";
+            if (hasIndVar(LHS, IndVar)) {
+                return 1;
+            }
+            // errs()<< "WARNING: In getDivInstTrendCode() method, the const-var pair can not be handled under current strategies.\n";
+        }
+        return 0;
+    }
+
+    int getAShrInstTrendCode(int PairCode, Value* LHS, Value* RHS, Value* IndVar) {
+        errs()<< "DEBUG INFO: Enter the getAShrInstTrendCode() method...\n";
+        if (LHS==nullptr || RHS==nullptr || IndVar==nullptr) {
+            errs()<< "WARNING: In getAShrInstTrendCode() method, the argu list contains NULL ptr.\n";
+            return 0;
+        }
+        if (PairCode == 1) {
+            // this part has no sense
+            if (hasIndVar(RHS, IndVar)) {
+                return 1;
+            }
+        } else if (PairCode == 2) {
+            if (hasIndVar(LHS, IndVar)) {
+                return -1;
+            }
+        }
+        return 0;
+    }
+
+    int getLShrInstTrendCode(int PairCode, Value* LHS, Value* RHS, Value* IndVar) {
+        errs()<< "DEBUG INFO: Enter the getLShrInstTrendCode() method...\n";
+        if (LHS==nullptr || RHS==nullptr || IndVar==nullptr) {
+            errs()<< "WARNING: In getLShrInstTrendCode() method, the argu list contains NULL ptr.\n";
+            return 0;
+        }
+        if (PairCode == 1) {
+            // this part has no sense
+            if (hasIndVar(RHS, IndVar)) {
+                return -1;
+            }
+        } else if (PairCode == 2) {
+            if (hasIndVar(LHS, IndVar)) {
+                return 1;
+            }
         }
         return 0;
     }
@@ -800,13 +843,17 @@ struct InfiniteLoopDetection : public FunctionPass {
             int opndPairSeq = getSequenceTypeFromHS(lhs, rhs, IndVar);
             errs()<< "DEBUG INFO: In getTrendCodeFromArithInst() method, the media value of SeqType is " << opndPairSeq <<"\n";
             if (opcode == Instruction::Add) {
-                return getAddInstTrendCode(opndPairSeq, lhs, rhs);
+                return getAddInstTrendCode(opndPairSeq, lhs, rhs, IndVar);
             } else if (opcode == Instruction::Sub) {
-                return getSubInstTrendCode(opndPairSeq, lhs, rhs);
+                return getSubInstTrendCode(opndPairSeq, lhs, rhs, IndVar);
             } else if (opcode == Instruction::Mul) {
-                return getMulInstTrendCode(opndPairSeq, lhs, rhs);
+                return getMulInstTrendCode(opndPairSeq, lhs, rhs, IndVar);
             } else if (opcode==Instruction::UDiv || opcode==Instruction::SDiv) {
-                return getDivInstTrendCode(opndPairSeq, lhs, rhs);
+                return getDivInstTrendCode(opndPairSeq, lhs, rhs, IndVar);
+            } else if (opcode == Instruction::AShr) {
+                return getAShrInstTrendCode(opndPairSeq, lhs, rhs, IndVar);
+            } else if (opcode == Instruction::LShr) {
+                return getLShrInstTrendCode(opndPairSeq, lhs, rhs, IndVar);
             } else {
                 errs()<< "WARNING: In getTrendCodeFromArithInst() method, an unknown arith opcode is met here.\n";
             }
