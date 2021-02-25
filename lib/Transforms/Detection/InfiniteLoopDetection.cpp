@@ -409,7 +409,7 @@ struct InfiniteLoopDetection : public FunctionPass {
                         errs()<< "DEBUG INFO: In checkPatternLAS() method, LHS and RHS are set NULL after calling isValidArithInst() method.\n";
                     }
                 } else {
-                        errs()<< "DEBUG INFO: In checkPatternLAS() method, the instruction next to the arith inst is NOT store inst.\n";
+                    errs()<< "DEBUG INFO: In checkPatternLAS() method, the instruction next to the arith inst is NOT store inst.\n";
                 }
             } else {
                 errs()<< "DEBUG INFO: In checkPatternLAS() method, no arithmetic inst exists behind the current LoadInst.\n";
